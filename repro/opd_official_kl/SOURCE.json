@@ -1,0 +1,1925 @@
+{
+  "status": "explicit_override_resolved",
+  "reason": "User approved base script with explicit direction overrides; base default remains k3/k3.",
+  "repository_root": "/home/mcy/Projects/Draft-OPD",
+  "repository_HEAD": "d6f0ec859321959785c65b59eb311fd25f042158",
+  "reference_root": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD",
+  "script_last_commit": "d1476f5d00a5fb187eb1637dc3f0f610ddbe1e1d",
+  "script_diff_empty": true,
+  "sources": [
+    {
+      "path": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD/verl/examples/on_policy_distillation_trainer/run_qwen_gsm8k.sh",
+      "sha256": "9abf6320feab0502488e80f28403577b8649ccf579fabb1ab2a89fdd607294ea",
+      "size": 11976,
+      "git_HEAD_blob_matches": true,
+      "functions": []
+    },
+    {
+      "path": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD/verl/examples/on_policy_distillation_trainer/run_qwen_gsm8k_forward-ins.sh",
+      "sha256": "251dfc09255a2dee428d3de367edc24bb36543019fd697f974af24c172401f62",
+      "size": 5694,
+      "git_HEAD_blob_matches": true,
+      "functions": []
+    },
+    {
+      "path": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD/verl/verl/trainer/distillation/losses.py",
+      "sha256": "f9242c54b6c453317b4605ffea02781afa28da79a82bedd1cba0608dbc6609e7",
+      "size": 48359,
+      "git_HEAD_blob_matches": true,
+      "functions": [
+        {
+          "name": "is_distillation_enabled",
+          "line": 44,
+          "end_line": 48
+        },
+        {
+          "name": "register_distillation_loss",
+          "line": 80,
+          "end_line": 93
+        },
+        {
+          "name": "get_distillation_loss_fn",
+          "line": 96,
+          "end_line": 102
+        },
+        {
+          "name": "get_distillation_loss_settings",
+          "line": 105,
+          "end_line": 111
+        },
+        {
+          "name": "_flatten_nested_tensor",
+          "line": 114,
+          "end_line": 117
+        },
+        {
+          "name": "_padded_response_mask",
+          "line": 120,
+          "end_line": 123
+        },
+        {
+          "name": "get_effective_distillation_response_mask",
+          "line": 126,
+          "end_line": 137
+        },
+        {
+          "name": "compute_distillation_loss_range",
+          "line": 140,
+          "end_line": 154
+        },
+        {
+          "name": "compute_opd_distillation_metrics",
+          "line": 157,
+          "end_line": 232
+        },
+        {
+          "name": "get_rejected_draft_distillation_stream",
+          "line": 235,
+          "end_line": 260
+        },
+        {
+          "name": "compute_topk_loss",
+          "line": 263,
+          "end_line": 302
+        },
+        {
+          "name": "distillation_ppo_loss",
+          "line": 305,
+          "end_line": 393
+        },
+        {
+          "name": "_scalar_like",
+          "line": 396,
+          "end_line": 400
+        },
+        {
+          "name": "_compute_loss_clamp_fraction",
+          "line": 403,
+          "end_line": 407
+        },
+        {
+          "name": "_global_sum",
+          "line": 410,
+          "end_line": 415
+        },
+        {
+          "name": "_loss_weight",
+          "line": 418,
+          "end_line": 422
+        },
+        {
+          "name": "_sampled_kl_loss_mode",
+          "line": 425,
+          "end_line": 429
+        },
+        {
+          "name": "_local_bernoulli_forward_kl",
+          "line": 432,
+          "end_line": 453
+        },
+        {
+          "name": "_valid_mean",
+          "line": 456,
+          "end_line": 460
+        },
+        {
+          "name": "_combine_sampled_reverse_forward_losses",
+          "line": 463,
+          "end_line": 529
+        },
+        {
+          "name": "_build_rejected_draft_position_weights",
+          "line": 532,
+          "end_line": 561
+        },
+        {
+          "name": "_build_response_position_weights",
+          "line": 564,
+          "end_line": 592
+        },
+        {
+          "name": "_agg_loss_global_batch_info",
+          "line": 595,
+          "end_line": 597
+        },
+        {
+          "name": "_exact_tv_distillation_loss",
+          "line": 600,
+          "end_line": 677
+        },
+        {
+          "name": "distillation_loss",
+          "line": 680,
+          "end_line": 895
+        },
+        {
+          "name": "compute_forward_kl_topk",
+          "line": 901,
+          "end_line": 946
+        },
+        {
+          "name": "compute_eagle3_native_target_distribution_loss",
+          "line": 952,
+          "end_line": 1006
+        },
+        {
+          "name": "compute_distillation_loss_reverse_kl_estimator",
+          "line": 1012,
+          "end_line": 1059
+        },
+        {
+          "name": "__post_init__",
+          "line": 68,
+          "end_line": 73
+        },
+        {
+          "name": "decorator",
+          "line": 85,
+          "end_line": 91
+        },
+        {
+          "name": "_required_scalar",
+          "line": 639,
+          "end_line": 647
+        }
+      ]
+    },
+    {
+      "path": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD/verl/verl/trainer/ppo/core_algos.py",
+      "sha256": "536bb7e472927302ce98b7a4907126d041dab340ca7af923deb5701a0a85f2ab",
+      "size": 101761,
+      "git_HEAD_blob_matches": true,
+      "functions": [
+        {
+          "name": "register_policy_loss",
+          "line": 53,
+          "end_line": 67
+        },
+        {
+          "name": "get_policy_loss_fn",
+          "line": 70,
+          "end_line": 85
+        },
+        {
+          "name": "register_adv_est",
+          "line": 116,
+          "end_line": 134
+        },
+        {
+          "name": "get_adv_estimator_fn",
+          "line": 137,
+          "end_line": 150
+        },
+        {
+          "name": "get_kl_controller",
+          "line": 193,
+          "end_line": 212
+        },
+        {
+          "name": "compute_gae_advantage_return",
+          "line": 216,
+          "end_line": 263
+        },
+        {
+          "name": "compute_grpo_outcome_advantage",
+          "line": 268,
+          "end_line": 331
+        },
+        {
+          "name": "compute_grpo_vectorized_outcome_advantage",
+          "line": 335,
+          "end_line": 358
+        },
+        {
+          "name": "compute_gdpo_outcome_advantage",
+          "line": 362,
+          "end_line": 468
+        },
+        {
+          "name": "compute_grpo_passk_outcome_advantage",
+          "line": 472,
+          "end_line": 530
+        },
+        {
+          "name": "compute_reinforce_plus_plus_baseline_outcome_advantage",
+          "line": 536,
+          "end_line": 584
+        },
+        {
+          "name": "compute_rloo_outcome_advantage",
+          "line": 588,
+          "end_line": 636
+        },
+        {
+          "name": "compute_opo_outcome_advantage",
+          "line": 640,
+          "end_line": 690
+        },
+        {
+          "name": "compute_reinforce_plus_plus_outcome_advantage",
+          "line": 694,
+          "end_line": 729
+        },
+        {
+          "name": "compute_remax_outcome_advantage",
+          "line": 733,
+          "end_line": 765
+        },
+        {
+          "name": "compute_gpg_outcome_advantage",
+          "line": 769,
+          "end_line": 828
+        },
+        {
+          "name": "compute_rloo_vectorized_outcome_advantage",
+          "line": 832,
+          "end_line": 866
+        },
+        {
+          "name": "compute_optimal_token_baseline_advantage",
+          "line": 870,
+          "end_line": 985
+        },
+        {
+          "name": "compute_multi_turn_optimal_token_baseline_advantage",
+          "line": 989,
+          "end_line": 1119
+        },
+        {
+          "name": "compute_rewards",
+          "line": 1122,
+          "end_line": 1135
+        },
+        {
+          "name": "agg_loss",
+          "line": 1138,
+          "end_line": 1199
+        },
+        {
+          "name": "compute_policy_loss",
+          "line": 1203,
+          "end_line": 1275
+        },
+        {
+          "name": "compute_policy_loss_vanilla",
+          "line": 1279,
+          "end_line": 1369
+        },
+        {
+          "name": "compute_policy_loss_dppo_tv",
+          "line": 1373,
+          "end_line": 1450
+        },
+        {
+          "name": "compute_policy_loss_dppo_kl",
+          "line": 1454,
+          "end_line": 1535
+        },
+        {
+          "name": "compute_policy_loss_gspo",
+          "line": 1539,
+          "end_line": 1611
+        },
+        {
+          "name": "compute_policy_loss_sapo",
+          "line": 1615,
+          "end_line": 1696
+        },
+        {
+          "name": "compute_policy_loss_gpg",
+          "line": 1700,
+          "end_line": 1732
+        },
+        {
+          "name": "compute_policy_loss_clip_cov",
+          "line": 1736,
+          "end_line": 1837
+        },
+        {
+          "name": "compute_policy_loss_kl_cov",
+          "line": 1841,
+          "end_line": 1917
+        },
+        {
+          "name": "compute_policy_loss_geo_mean",
+          "line": 1921,
+          "end_line": 2003
+        },
+        {
+          "name": "compute_policy_loss_cispo",
+          "line": 2007,
+          "end_line": 2064
+        },
+        {
+          "name": "compute_entropy_loss",
+          "line": 2067,
+          "end_line": 2081
+        },
+        {
+          "name": "compute_value_loss",
+          "line": 2084,
+          "end_line": 2123
+        },
+        {
+          "name": "kl_penalty",
+          "line": 2126,
+          "end_line": 2151
+        },
+        {
+          "name": "kl_penalty_forward",
+          "line": 2154,
+          "end_line": 2189
+        },
+        {
+          "name": "compute_pf_ppo_reweight_data",
+          "line": 2192,
+          "end_line": 2268
+        },
+        {
+          "name": "compute_policy_loss_reinforce",
+          "line": 2271,
+          "end_line": 2348
+        },
+        {
+          "name": "compute_policy_loss_bypass_mode",
+          "line": 2352,
+          "end_line": 2487
+        },
+        {
+          "name": "decorator",
+          "line": 63,
+          "end_line": 65
+        },
+        {
+          "name": "decorator",
+          "line": 125,
+          "end_line": 132
+        },
+        {
+          "name": "__init__",
+          "line": 159,
+          "end_line": 162
+        },
+        {
+          "name": "update",
+          "line": 164,
+          "end_line": 174
+        },
+        {
+          "name": "__init__",
+          "line": 180,
+          "end_line": 181
+        },
+        {
+          "name": "update",
+          "line": 183,
+          "end_line": 190
+        },
+        {
+          "name": "gate_function",
+          "line": 1649,
+          "end_line": 1651
+        },
+        {
+          "name": "compute_weights",
+          "line": 2209,
+          "end_line": 2234
+        }
+      ]
+    },
+    {
+      "path": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD/verl/verl/trainer/config/distillation/distillation.yaml",
+      "sha256": "9c31d20f5121d109d6e1a7feb8355fa32e2c3e1c0f9d06e8fc90f5af1f19d1ed",
+      "size": 5422,
+      "git_HEAD_blob_matches": true,
+      "functions": []
+    },
+    {
+      "path": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD/verl/verl/trainer/config/ppo_trainer.yaml",
+      "sha256": "2f2d4746e00010b10c7acde09015dce387648a4f27f311a0afc8a4956775c214",
+      "size": 12362,
+      "git_HEAD_blob_matches": true,
+      "functions": []
+    },
+    {
+      "path": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD/verl/verl/models/transformers/dflash_student.py",
+      "sha256": "5b9f3921857c4d3736b927ad03d653d24f4ff1706902dc3a2a3e9711852d7a01",
+      "size": 109813,
+      "git_HEAD_blob_matches": true,
+      "functions": [
+        {
+          "name": "full_vocab_tv_distance",
+          "line": 40,
+          "end_line": 53
+        },
+        {
+          "name": "build_target_layer_ids",
+          "line": 65,
+          "end_line": 71
+        },
+        {
+          "name": "resolve_target_layer_ids",
+          "line": 74,
+          "end_line": 85
+        },
+        {
+          "name": "create_dflash_sdpa_mask",
+          "line": 88,
+          "end_line": 111
+        },
+        {
+          "name": "create_dflash_block_mask",
+          "line": 114,
+          "end_line": 146
+        },
+        {
+          "name": "_set_config_attn_implementation",
+          "line": 149,
+          "end_line": 152
+        },
+        {
+          "name": "build_composed_dflash_student",
+          "line": 2192,
+          "end_line": 2223
+        },
+        {
+          "name": "dflash_mask_mod",
+          "line": 128,
+          "end_line": 142
+        },
+        {
+          "name": "_normalize_wrapper_attn_implementation",
+          "line": 163,
+          "end_line": 174
+        },
+        {
+          "name": "__init__",
+          "line": 176,
+          "end_line": 187
+        },
+        {
+          "name": "_configure_draft_attention",
+          "line": 189,
+          "end_line": 214
+        },
+        {
+          "name": "freeze_main_model",
+          "line": 216,
+          "end_line": 219
+        },
+        {
+          "name": "train",
+          "line": 221,
+          "end_line": 225
+        },
+        {
+          "name": "gradient_checkpointing_enable",
+          "line": 227,
+          "end_line": 233
+        },
+        {
+          "name": "gradient_checkpointing_disable",
+          "line": 235,
+          "end_line": 240
+        },
+        {
+          "name": "_set_gradient_checkpointing",
+          "line": 242,
+          "end_line": 268
+        },
+        {
+          "name": "get_input_embeddings",
+          "line": 270,
+          "end_line": 271
+        },
+        {
+          "name": "set_input_embeddings",
+          "line": 273,
+          "end_line": 274
+        },
+        {
+          "name": "get_output_embeddings",
+          "line": 276,
+          "end_line": 277
+        },
+        {
+          "name": "set_output_embeddings",
+          "line": 279,
+          "end_line": 280
+        },
+        {
+          "name": "_forward_main_hidden_only",
+          "line": 282,
+          "end_line": 301
+        },
+        {
+          "name": "_extract_target_hidden",
+          "line": 303,
+          "end_line": 312
+        },
+        {
+          "name": "_resolve_position_ids",
+          "line": 314,
+          "end_line": 325
+        },
+        {
+          "name": "_get_mask_token_id",
+          "line": 327,
+          "end_line": 338
+        },
+        {
+          "name": "_get_block_size",
+          "line": 340,
+          "end_line": 346
+        },
+        {
+          "name": "_get_lm_head_chunk_size",
+          "line": 348,
+          "end_line": 355
+        },
+        {
+          "name": "_get_response_anchor_stride",
+          "line": 357,
+          "end_line": 364
+        },
+        {
+          "name": "_get_random_response_anchor_enabled",
+          "line": 366,
+          "end_line": 370
+        },
+        {
+          "name": "_get_random_response_anchor_seed",
+          "line": 372,
+          "end_line": 376
+        },
+        {
+          "name": "_get_rejected_draft_max_tokens_per_sample",
+          "line": 378,
+          "end_line": 387
+        },
+        {
+          "name": "_is_dflash_profiling_enabled",
+          "line": 389,
+          "end_line": 390
+        },
+        {
+          "name": "_maybe_sync_for_profile",
+          "line": 392,
+          "end_line": 394
+        },
+        {
+          "name": "_is_oom_error",
+          "line": 396,
+          "end_line": 398
+        },
+        {
+          "name": "_draft_sdpa_context",
+          "line": 400,
+          "end_line": 408
+        },
+        {
+          "name": "_create_position_ids_for_anchors",
+          "line": 410,
+          "end_line": 415
+        },
+        {
+          "name": "_create_noise_embedding_for_anchors",
+          "line": 417,
+          "end_line": 446
+        },
+        {
+          "name": "_compute_selected_lm_log_probs",
+          "line": 448,
+          "end_line": 477
+        },
+        {
+          "name": "_compute_reverse_kl_sums",
+          "line": 479,
+          "end_line": 502
+        },
+        {
+          "name": "_build_replay_dis_anchor_plan",
+          "line": 504,
+          "end_line": 551
+        },
+        {
+          "name": "_compute_replay_dis_mismatch",
+          "line": 553,
+          "end_line": 672
+        },
+        {
+          "name": "_build_random_response_anchor_plan",
+          "line": 674,
+          "end_line": 714
+        },
+        {
+          "name": "_build_opd_anchor_plan",
+          "line": 716,
+          "end_line": 879
+        },
+        {
+          "name": "_build_rejected_draft_anchor_plan",
+          "line": 881,
+          "end_line": 947
+        },
+        {
+          "name": "_collect_rejected_draft_log_probs",
+          "line": 949,
+          "end_line": 1042
+        },
+        {
+          "name": "_build_tv_position_plan",
+          "line": 1044,
+          "end_line": 1246
+        },
+        {
+          "name": "_compute_tv_teacher_branch_hidden",
+          "line": 1248,
+          "end_line": 1298
+        },
+        {
+          "name": "_compute_full_vocab_tv_from_hidden",
+          "line": 1300,
+          "end_line": 1346
+        },
+        {
+          "name": "_compute_e2e_tv_block_outputs",
+          "line": 1349,
+          "end_line": 1367
+        },
+        {
+          "name": "_run_dflash_draft_forward",
+          "line": 1369,
+          "end_line": 1474
+        },
+        {
+          "name": "_forward_opd_tv",
+          "line": 1476,
+          "end_line": 1663
+        },
+        {
+          "name": "_forward_opd",
+          "line": 1665,
+          "end_line": 2071
+        },
+        {
+          "name": "forward",
+          "line": 2073,
+          "end_line": 2189
+        },
+        {
+          "name": "_long_tensor",
+          "line": 1235,
+          "end_line": 1236
+        },
+        {
+          "name": "_linear_with_frozen_head",
+          "line": 1316,
+          "end_line": 1322
+        },
+        {
+          "name": "_draft_forward",
+          "line": 1426,
+          "end_line": 1437
+        },
+        {
+          "name": "_maybe_checkpoint_draft_forward",
+          "line": 1439,
+          "end_line": 1447
+        },
+        {
+          "name": "_plan_block_stats",
+          "line": 1788,
+          "end_line": 1799
+        },
+        {
+          "name": "_tv_chunk",
+          "line": 1330,
+          "end_line": 1334
+        }
+      ]
+    },
+    {
+      "path": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD/verl/verl/trainer/ppo/ray_trainer.py",
+      "sha256": "30c5ecbe4813bfda883c67215b8b8fe280cb08f99a9a1ea76fcc2fd52d8d1ba0",
+      "size": 113850,
+      "git_HEAD_blob_matches": true,
+      "functions": [
+        {
+          "name": "_repo_root",
+          "line": 82,
+          "end_line": 83
+        },
+        {
+          "name": "_safe_experiment_path",
+          "line": 86,
+          "end_line": 90
+        },
+        {
+          "name": "apply_kl_penalty",
+          "line": 93,
+          "end_line": 132
+        },
+        {
+          "name": "compute_response_mask",
+          "line": 135,
+          "end_line": 150
+        },
+        {
+          "name": "compute_advantage",
+          "line": 153,
+          "end_line": 248
+        },
+        {
+          "name": "__init__",
+          "line": 261,
+          "end_line": 339
+        },
+        {
+          "name": "_as_path_list",
+          "line": 342,
+          "end_line": 345
+        },
+        {
+          "name": "_speed_test_name_from_path",
+          "line": 348,
+          "end_line": 363
+        },
+        {
+          "name": "_create_rollout_speed_test_dataloaders",
+          "line": 365,
+          "end_line": 395
+        },
+        {
+          "name": "_create_dataloader",
+          "line": 397,
+          "end_line": 492
+        },
+        {
+          "name": "_dump_generations",
+          "line": 494,
+          "end_line": 520
+        },
+        {
+          "name": "_log_rollout_data",
+          "line": 522,
+          "end_line": 552
+        },
+        {
+          "name": "_maybe_log_val_generations",
+          "line": 554,
+          "end_line": 576
+        },
+        {
+          "name": "_get_gen_batch",
+          "line": 578,
+          "end_line": 592
+        },
+        {
+          "name": "_compute_reward_colocate",
+          "line": 594,
+          "end_line": 600
+        },
+        {
+          "name": "_validate",
+          "line": 602,
+          "end_line": 725
+        },
+        {
+          "name": "_validate_rollout_speed",
+          "line": 727,
+          "end_line": 822
+        },
+        {
+          "name": "_run_validation",
+          "line": 824,
+          "end_line": 827
+        },
+        {
+          "name": "_val_metrics_update",
+          "line": 829,
+          "end_line": 854
+        },
+        {
+          "name": "_merge_validation_results",
+          "line": 856,
+          "end_line": 878
+        },
+        {
+          "name": "init_workers",
+          "line": 880,
+          "end_line": 1084
+        },
+        {
+          "name": "_save_checkpoint",
+          "line": 1086,
+          "end_line": 1153
+        },
+        {
+          "name": "_load_checkpoint",
+          "line": 1155,
+          "end_line": 1220
+        },
+        {
+          "name": "_start_profiling",
+          "line": 1222,
+          "end_line": 1229
+        },
+        {
+          "name": "_stop_profiling",
+          "line": 1231,
+          "end_line": 1238
+        },
+        {
+          "name": "_get_dp_size",
+          "line": 1240,
+          "end_line": 1258
+        },
+        {
+          "name": "_balance_batch",
+          "line": 1260,
+          "end_line": 1328
+        },
+        {
+          "name": "_compute_values",
+          "line": 1330,
+          "end_line": 1342
+        },
+        {
+          "name": "_compute_ref_log_prob",
+          "line": 1344,
+          "end_line": 1366
+        },
+        {
+          "name": "_compute_old_log_prob",
+          "line": 1368,
+          "end_line": 1394
+        },
+        {
+          "name": "_is_direct_distillation_only",
+          "line": 1396,
+          "end_line": 1400
+        },
+        {
+          "name": "_is_replay_distribution_enabled",
+          "line": 1402,
+          "end_line": 1405
+        },
+        {
+          "name": "_compute_replay_distribution_mismatch",
+          "line": 1407,
+          "end_line": 1419
+        },
+        {
+          "name": "_update_actor",
+          "line": 1421,
+          "end_line": 1488
+        },
+        {
+          "name": "_update_critic",
+          "line": 1490,
+          "end_line": 1515
+        },
+        {
+          "name": "_add_timing",
+          "line": 1518,
+          "end_line": 1521
+        },
+        {
+          "name": "_flatten_update_results",
+          "line": 1524,
+          "end_line": 1532
+        },
+        {
+          "name": "_extract_weight_sync_metrics",
+          "line": 1535,
+          "end_line": 1553
+        },
+        {
+          "name": "_split_string_metrics",
+          "line": 1556,
+          "end_line": 1559
+        },
+        {
+          "name": "_initial_val_repeat_times",
+          "line": 1561,
+          "end_line": 1567
+        },
+        {
+          "name": "_rollout_speed_test_max_samples_per_benchmark",
+          "line": 1569,
+          "end_line": 1582
+        },
+        {
+          "name": "_rollout_speed_test_worker_count",
+          "line": 1584,
+          "end_line": 1596
+        },
+        {
+          "name": "_rollout_speed_test_kwargs",
+          "line": 1598,
+          "end_line": 1623
+        },
+        {
+          "name": "_run_rollout_speed_validation",
+          "line": 1625,
+          "end_line": 1626
+        },
+        {
+          "name": "_initial_eval_log_path",
+          "line": 1628,
+          "end_line": 1630
+        },
+        {
+          "name": "_filter_accept_metrics",
+          "line": 1633,
+          "end_line": 1642
+        },
+        {
+          "name": "_config_bool",
+          "line": 1645,
+          "end_line": 1648
+        },
+        {
+          "name": "_optional_float",
+          "line": 1651,
+          "end_line": 1658
+        },
+        {
+          "name": "_save_by_test_metric_enabled",
+          "line": 1660,
+          "end_line": 1661
+        },
+        {
+          "name": "_should_save_by_test_metric",
+          "line": 1663,
+          "end_line": 1693
+        },
+        {
+          "name": "_format_initial_eval_line",
+          "line": 1696,
+          "end_line": 1698
+        },
+        {
+          "name": "_write_initial_eval_log",
+          "line": 1700,
+          "end_line": 1705
+        },
+        {
+          "name": "_run_initial_validation_repeats",
+          "line": 1707,
+          "end_line": 1729
+        },
+        {
+          "name": "fit",
+          "line": 1731,
+          "end_line": 2261
+        }
+      ]
+    },
+    {
+      "path": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD/verl/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "size": 11358,
+      "git_HEAD_blob_matches": true,
+      "functions": []
+    },
+    {
+      "path": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD/sglang-dflash/python/sglang/srt/speculative/dflash_info.py",
+      "sha256": "2f45edae1db805cd5ea07cea59fc1a10c6bd91473b36e1690ddbb0242d8cc380",
+      "size": 22003,
+      "git_HEAD_blob_matches": true,
+      "functions": [
+        {
+          "name": "_compute_paged_keep_slots",
+          "line": 33,
+          "end_line": 56
+        },
+        {
+          "name": "__post_init__",
+          "line": 90,
+          "end_line": 91
+        },
+        {
+          "name": "get_spec_adjust_token_coefficient",
+          "line": 93,
+          "end_line": 95
+        },
+        {
+          "name": "filter_batch",
+          "line": 97,
+          "end_line": 135
+        },
+        {
+          "name": "merge_batch",
+          "line": 137,
+          "end_line": 150
+        },
+        {
+          "name": "__post_init__",
+          "line": 176,
+          "end_line": 179
+        },
+        {
+          "name": "get_spec_adjust_token_coefficient",
+          "line": 181,
+          "end_line": 182
+        },
+        {
+          "name": "prepare_for_verify",
+          "line": 184,
+          "end_line": 257
+        },
+        {
+          "name": "generate_attn_arg_prefill",
+          "line": 259,
+          "end_line": 316
+        },
+        {
+          "name": "verify",
+          "line": 318,
+          "end_line": 553
+        }
+      ]
+    },
+    {
+      "path": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD/sglang-dflash/python/sglang/srt/speculative/dflash_worker.py",
+      "sha256": "2cd58e1e05e7e47c10298bbab1663beba365f6aee6ec178ec035d75bba239647",
+      "size": 58831,
+      "git_HEAD_blob_matches": true,
+      "functions": [
+        {
+          "name": "_get_fused_kv_materialize_helper",
+          "line": 39,
+          "end_line": 47
+        },
+        {
+          "name": "__init__",
+          "line": 53,
+          "end_line": 224
+        },
+        {
+          "name": "_init_fused_kv_helper",
+          "line": 226,
+          "end_line": 303
+        },
+        {
+          "name": "_ensure_draft_block_buffers",
+          "line": 305,
+          "end_line": 331
+        },
+        {
+          "name": "__getattr__",
+          "line": 333,
+          "end_line": 335
+        },
+        {
+          "name": "update_weights_from_tensor",
+          "line": 337,
+          "end_line": 341
+        },
+        {
+          "name": "clear_cache_pool",
+          "line": 343,
+          "end_line": 348
+        },
+        {
+          "name": "_gather_req_to_token_masked",
+          "line": 350,
+          "end_line": 385
+        },
+        {
+          "name": "_gather_req_to_token_segments",
+          "line": 387,
+          "end_line": 418
+        },
+        {
+          "name": "_compute_compact_draft_seq_lens",
+          "line": 420,
+          "end_line": 436
+        },
+        {
+          "name": "_resolve_mask_token_id",
+          "line": 438,
+          "end_line": 518
+        },
+        {
+          "name": "_prepare_for_speculative_decoding",
+          "line": 520,
+          "end_line": 697
+        },
+        {
+          "name": "_greedy_sample_from_vocab_parallel_head",
+          "line": 699,
+          "end_line": 871
+        },
+        {
+          "name": "_append_target_hidden_to_draft_kv",
+          "line": 873,
+          "end_line": 1010
+        },
+        {
+          "name": "_append_target_hidden_to_draft_kv_by_loc",
+          "line": 1012,
+          "end_line": 1132
+        },
+        {
+          "name": "_append_target_hidden_sequential",
+          "line": 1134,
+          "end_line": 1154
+        },
+        {
+          "name": "_append_target_hidden_fused",
+          "line": 1156,
+          "end_line": 1183
+        },
+        {
+          "name": "_update_target_mamba_state_after_verify",
+          "line": 1185,
+          "end_line": 1229
+        },
+        {
+          "name": "forward_batch_generation",
+          "line": 1231,
+          "end_line": 1375
+        },
+        {
+          "name": "_cast_hs",
+          "line": 742,
+          "end_line": 743
+        },
+        {
+          "name": "_write_layer_kv",
+          "line": 1166,
+          "end_line": 1177
+        },
+        {
+          "name": "_to_int32_device_tensor",
+          "line": 1274,
+          "end_line": 1279
+        }
+      ]
+    },
+    {
+      "path": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD/sglang-dflash/python/sglang/srt/speculative/spec_info.py",
+      "sha256": "dba7459550ceb7381e89f630ecf54f37d0d8185937375b2e436611c5fa70b306",
+      "size": 6018,
+      "git_HEAD_blob_matches": true,
+      "functions": [
+        {
+          "name": "from_string",
+          "line": 28,
+          "end_line": 34
+        },
+        {
+          "name": "is_none",
+          "line": 36,
+          "end_line": 37
+        },
+        {
+          "name": "is_speculative",
+          "line": 39,
+          "end_line": 40
+        },
+        {
+          "name": "is_eagle",
+          "line": 42,
+          "end_line": 44
+        },
+        {
+          "name": "is_eagle3",
+          "line": 46,
+          "end_line": 47
+        },
+        {
+          "name": "is_dflash",
+          "line": 49,
+          "end_line": 50
+        },
+        {
+          "name": "is_standalone",
+          "line": 52,
+          "end_line": 53
+        },
+        {
+          "name": "is_ngram",
+          "line": 55,
+          "end_line": 56
+        },
+        {
+          "name": "supports_spec_v2",
+          "line": 58,
+          "end_line": 63
+        },
+        {
+          "name": "create_worker",
+          "line": 65,
+          "end_line": 133
+        },
+        {
+          "name": "__init__",
+          "line": 147,
+          "end_line": 148
+        },
+        {
+          "name": "is_draft_input",
+          "line": 150,
+          "end_line": 156
+        },
+        {
+          "name": "is_verify_input",
+          "line": 158,
+          "end_line": 163
+        },
+        {
+          "name": "get_spec_adjust_token_coefficient",
+          "line": 166,
+          "end_line": 167
+        },
+        {
+          "name": "get_spec_adjusted_global_num_tokens",
+          "line": 169,
+          "end_line": 177
+        }
+      ]
+    },
+    {
+      "path": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD/sglang-dflash/python/sglang/srt/managers/customized_info_utils.py",
+      "sha256": "594a9ff62d0b3c7cf29398fa944905a44a85023ab0684a52bbf464d9a475ec06",
+      "size": 7339,
+      "git_HEAD_blob_matches": true,
+      "functions": [
+        {
+          "name": "_as_list",
+          "line": 20,
+          "end_line": 31
+        },
+        {
+          "name": "_flatten_dflash_rejected_draft_chunk",
+          "line": 34,
+          "end_line": 41
+        },
+        {
+          "name": "extend_customized_info_chunk",
+          "line": 44,
+          "end_line": 64
+        },
+        {
+          "name": "update_customized_info_meta",
+          "line": 67,
+          "end_line": 88
+        },
+        {
+          "name": "append_dflash_reject_token_mask",
+          "line": 91,
+          "end_line": 114
+        },
+        {
+          "name": "_pad_token_aligned_metadata",
+          "line": 117,
+          "end_line": 119
+        },
+        {
+          "name": "append_dflash_rejected_draft_metadata",
+          "line": 122,
+          "end_line": 174
+        },
+        {
+          "name": "append_dflash_replay_block_metadata",
+          "line": 177,
+          "end_line": 216
+        }
+      ]
+    },
+    {
+      "path": "/home/mcy/Projects/Draft-OPD/refs/Draft-OPD/sglang-dflash/LICENSE",
+      "sha256": "1495e1e757ef4d0925a2350563cf5754bb23c51701a8ec4fb3c5cdcbedae6747",
+      "size": 11346,
+      "git_HEAD_blob_matches": true,
+      "functions": []
+    }
+  ],
+  "effective_base": {
+    "loss_mode": "k3",
+    "forward_kl_weight": 0.0,
+    "reverse_kl_weight": 1.0,
+    "rejected_draft_use_reverse_kl": false,
+    "rejected_draft_position_decay": 0.9,
+    "response_stream_weight": 1.0,
+    "rejected_draft_stream_weight": 2.0,
+    "first_token_only": false,
+    "response_anchor_stride": 1,
+    "random_response_anchor_enabled": false,
+    "log_prob_min_clamp": -10.0,
+    "loss_max_clamp": 10.0,
+    "rollout_temperature": 0.0,
+    "teacher_temperature": 1.0
+  },
+  "requested_overrides": {
+    "forward_kl_weight": 1.0,
+    "reverse_kl_weight": 0.0,
+    "rejected_draft_use_reverse_kl": true
+  },
+  "license": "verl/LICENSE Apache-2.0; preserve individual copyright headers",
+  "rollout_mapping": {
+    "dispatch": "spec_info.py: DFlashWorker unless explicit v2 env; runtime environment not independently reproduced",
+    "verify": "dflash_info.py::DFlashVerifyInput.verify constructs rejected offsets range(acc_len+1,draft_token_num), proposal token IDs and teacher logprobs",
+    "record": "managers/customized_info_utils.py::append_dflash_rejected_draft_metadata stores response-coordinate anchors and suffix",
+    "plan": "dflash_student.py::_build_opd_position_plan constructs response segments from rollout reject/correction indices, adds rejected anchors",
+    "equivalence": "not established; new GLANCE runtime not implemented while contract blocked"
+  },
+  "frozen_combination": "All reference sources from repository HEAD; script blob unchanged since script_last_commit. Do not use script_last_commit as repository version.",
+  "selected_sources_diff_sha256": "ee1aed5dca8ccf307de0fc54ab78c0c20154e061672bd560c955ed01ac123cd2",
+  "selected_sources_diff_bytes": 55675,
+  "user_approved_override": {
+    "forward_kl_weight": 1.0,
+    "reverse_kl_weight": 0.0,
+    "rejected_draft_use_reverse_kl": true,
+    "response_stream_weight": 1.0,
+    "rejected_draft_stream_weight": 2.0,
+    "rejected_draft_position_decay": 0.9,
+    "authorization": "2026-10-16 user: 按照你建议的来"
+  },
+  "additional_global_count_sources": [
+    {
+      "path": "verl/verl/workers/engine/fsdp/transformer_impl.py",
+      "sha256": "c6f4e8a743e0f89b79f59f8e16f66fa27027daaabb37be6253a2845933012ebd",
+      "matches_HEAD": true,
+      "functions": [
+        {
+          "name": "__init__",
+          "line": 91,
+          "end_line": 151
+        },
+        {
+          "name": "is_param_offload_enabled",
+          "line": 154,
+          "end_line": 155
+        },
+        {
+          "name": "is_optimizer_offload_enabled",
+          "line": 158,
+          "end_line": 159
+        },
+        {
+          "name": "is_mp_src_rank_with_outputs",
+          "line": 161,
+          "end_line": 166
+        },
+        {
+          "name": "initialize",
+          "line": 168,
+          "end_line": 194
+        },
+        {
+          "name": "_init_device_mesh",
+          "line": 196,
+          "end_line": 213
+        },
+        {
+          "name": "_is_composed_dflash_student_enabled",
+          "line": 215,
+          "end_line": 216
+        },
+        {
+          "name": "_is_composed_eagle3_student_enabled",
+          "line": 218,
+          "end_line": 219
+        },
+        {
+          "name": "_is_composed_opd_draft_student_enabled",
+          "line": 221,
+          "end_line": 226
+        },
+        {
+          "name": "_resolve_composed_dflash_paths",
+          "line": 228,
+          "end_line": 238
+        },
+        {
+          "name": "_resolve_composed_eagle3_paths",
+          "line": 240,
+          "end_line": 250
+        },
+        {
+          "name": "_build_module",
+          "line": 252,
+          "end_line": 349
+        },
+        {
+          "name": "_build_lora_module",
+          "line": 351,
+          "end_line": 382
+        },
+        {
+          "name": "_build_fsdp_module",
+          "line": 384,
+          "end_line": 491
+        },
+        {
+          "name": "_build_optimizer",
+          "line": 493,
+          "end_line": 510
+        },
+        {
+          "name": "_build_lr_scheduler",
+          "line": 512,
+          "end_line": 543
+        },
+        {
+          "name": "_apply_qat",
+          "line": 545,
+          "end_line": 564
+        },
+        {
+          "name": "_restore_w4a4_input_scales",
+          "line": 566,
+          "end_line": 595
+        },
+        {
+          "name": "_build_model_optimizer",
+          "line": 597,
+          "end_line": 636
+        },
+        {
+          "name": "train_mode",
+          "line": 638,
+          "end_line": 644
+        },
+        {
+          "name": "eval_mode",
+          "line": 646,
+          "end_line": 652
+        },
+        {
+          "name": "get_data_parallel_rank",
+          "line": 654,
+          "end_line": 658
+        },
+        {
+          "name": "get_data_parallel_size",
+          "line": 660,
+          "end_line": 661
+        },
+        {
+          "name": "get_data_parallel_group",
+          "line": 663,
+          "end_line": 667
+        },
+        {
+          "name": "get_model_parallel_group",
+          "line": 669,
+          "end_line": 670
+        },
+        {
+          "name": "get_context_parallel_group",
+          "line": 672,
+          "end_line": 673
+        },
+        {
+          "name": "_compute_extra_global_batch_info",
+          "line": 675,
+          "end_line": 676
+        },
+        {
+          "name": "forward_backward_batch",
+          "line": 678,
+          "end_line": 711
+        },
+        {
+          "name": "forward_step",
+          "line": 713,
+          "end_line": 714
+        },
+        {
+          "name": "optimizer_zero_grad",
+          "line": 716,
+          "end_line": 720
+        },
+        {
+          "name": "optimizer_step",
+          "line": 722,
+          "end_line": 755
+        },
+        {
+          "name": "lr_scheduler_step",
+          "line": 757,
+          "end_line": 763
+        },
+        {
+          "name": "to",
+          "line": 765,
+          "end_line": 791
+        },
+        {
+          "name": "save_checkpoint",
+          "line": 793,
+          "end_line": 814
+        },
+        {
+          "name": "load_checkpoint",
+          "line": 816,
+          "end_line": 836
+        },
+        {
+          "name": "get_per_tensor_param",
+          "line": 838,
+          "end_line": 930
+        },
+        {
+          "name": "disable_adapter",
+          "line": 932,
+          "end_line": 933
+        },
+        {
+          "name": "__init__",
+          "line": 937,
+          "end_line": 938
+        },
+        {
+          "name": "__enter__",
+          "line": 940,
+          "end_line": 945
+        },
+        {
+          "name": "__exit__",
+          "line": 947,
+          "end_line": 959
+        },
+        {
+          "name": "__init__",
+          "line": 963,
+          "end_line": 964
+        },
+        {
+          "name": "__enter__",
+          "line": 966,
+          "end_line": 971
+        },
+        {
+          "name": "__exit__",
+          "line": 973,
+          "end_line": 977
+        },
+        {
+          "name": "_is_composed_opd_draft_module",
+          "line": 982,
+          "end_line": 989
+        },
+        {
+          "name": "_is_composed_dflash_module",
+          "line": 991,
+          "end_line": 992
+        },
+        {
+          "name": "_is_exact_composed_dflash_module",
+          "line": 994,
+          "end_line": 998
+        },
+        {
+          "name": "_get_dflash_rejected_draft_max_tokens_per_sample",
+          "line": 1000,
+          "end_line": 1009
+        },
+        {
+          "name": "_count_dflash_rejected_draft_tokens",
+          "line": 1012,
+          "end_line": 1045
+        },
+        {
+          "name": "_sum_dflash_rejected_draft_position_weights",
+          "line": 1048,
+          "end_line": 1095
+        },
+        {
+          "name": "_count_dflash_tv_blocks",
+          "line": 1098,
+          "end_line": 1166
+        },
+        {
+          "name": "_compute_extra_global_batch_info",
+          "line": 1168,
+          "end_line": 1229
+        },
+        {
+          "name": "_normalize_dflash_reject_indices",
+          "line": 1232,
+          "end_line": 1251
+        },
+        {
+          "name": "_normalize_dflash_rejected_draft_values",
+          "line": 1254,
+          "end_line": 1286
+        },
+        {
+          "name": "_filter_dflash_rejected_draft_first_tokens",
+          "line": 1289,
+          "end_line": 1343
+        },
+        {
+          "name": "_build_dflash_rejected_draft_tensors",
+          "line": 1346,
+          "end_line": 1449
+        },
+        {
+          "name": "_build_dflash_replay_block_tensors",
+          "line": 1452,
+          "end_line": 1512
+        },
+        {
+          "name": "_nested_to_padded_tensor_no_kernel",
+          "line": 1515,
+          "end_line": 1540
+        },
+        {
+          "name": "_compute_composed_dflash_lengths",
+          "line": 1543,
+          "end_line": 1566
+        },
+        {
+          "name": "_compact_padded_composed_dflash_inputs",
+          "line": 1569,
+          "end_line": 1600
+        },
+        {
+          "name": "_prepare_composed_dflash_inputs",
+          "line": 1602,
+          "end_line": 1705
+        },
+        {
+          "name": "prepare_model_inputs",
+          "line": 1707,
+          "end_line": 1848
+        },
+        {
+          "name": "prepare_model_outputs",
+          "line": 1850,
+          "end_line": 2151
+        },
+        {
+          "name": "forward_step",
+          "line": 2153,
+          "end_line": 2201
+        },
+        {
+          "name": "prepare_model_outputs",
+          "line": 2210,
+          "end_line": 2256
+        },
+        {
+          "name": "flatten_item",
+          "line": 1255,
+          "end_line": 1266
+        },
+        {
+          "name": "_is_trainable_param_name",
+          "line": 872,
+          "end_line": 879
+        },
+        {
+          "name": "format_dflash_sequence_output",
+          "line": 1955,
+          "end_line": 1968
+        },
+        {
+          "name": "keep_postprocess_model_output",
+          "line": 2182,
+          "end_line": 2189
+        },
+        {
+          "name": "_format_tv_sequence_output",
+          "line": 1885,
+          "end_line": 1905
+        }
+      ]
+    },
+    {
+      "path": "verl/verl/workers/utils/padding.py",
+      "sha256": "f23d9c6438f335e41849f63a28798700ecfbdcbbbe682d260bd104a9d5af0921",
+      "matches_HEAD": true,
+      "functions": [
+        {
+          "name": "left_right_2_no_padding",
+          "line": 23,
+          "end_line": 96
+        },
+        {
+          "name": "no_padding_2_padding",
+          "line": 99,
+          "end_line": 143
+        },
+        {
+          "name": "embeds_padding_2_no_padding",
+          "line": 146,
+          "end_line": 183
+        },
+        {
+          "name": "response_from_nested",
+          "line": 186,
+          "end_line": 202
+        },
+        {
+          "name": "response_to_nested",
+          "line": 205,
+          "end_line": 221
+        },
+        {
+          "name": "_to_nested",
+          "line": 164,
+          "end_line": 174
+        }
+      ]
+    },
+    {
+      "path": "verl/verl/workers/utils/losses.py",
+      "sha256": "3de27f0f03fe2dba3909cb067633a7f3f0813ddd3c341dd5b701593448107b79",
+      "matches_HEAD": true,
+      "functions": [
+        {
+          "name": "sft_loss",
+          "line": 29,
+          "end_line": 55
+        },
+        {
+          "name": "ppo_loss",
+          "line": 58,
+          "end_line": 145
+        },
+        {
+          "name": "value_loss",
+          "line": 148,
+          "end_line": 187
+        },
+        {
+          "name": "diffusion_loss",
+          "line": 190,
+          "end_line": 239
+        }
+      ]
+    },
+    {
+      "path": "sglang-dflash/python/sglang/srt/managers/scheduler_output_processor_mixin.py",
+      "sha256": "c5d8c78a21ac3a5aca9c4c86ddaafc321cca18efc5ee7d1463cc2b15ba92a42b",
+      "matches_HEAD": true,
+      "functions": [
+        {
+          "name": "_get_storage_backend_type",
+          "line": 48,
+          "end_line": 56
+        },
+        {
+          "name": "_get_cached_tokens_details",
+          "line": 58,
+          "end_line": 85
+        },
+        {
+          "name": "process_batch_result_prebuilt",
+          "line": 87,
+          "end_line": 97
+        },
+        {
+          "name": "maybe_collect_routed_experts",
+          "line": 99,
+          "end_line": 105
+        },
+        {
+          "name": "maybe_collect_customized_info",
+          "line": 107,
+          "end_line": 123
+        },
+        {
+          "name": "process_batch_result_prefill",
+          "line": 125,
+          "end_line": 318
+        },
+        {
+          "name": "_resolve_spec_overlap_token_ids",
+          "line": 320,
+          "end_line": 363
+        },
+        {
+          "name": "process_batch_result_idle",
+          "line": 365,
+          "end_line": 375
+        },
+        {
+          "name": "process_batch_result_decode",
+          "line": 377,
+          "end_line": 514
+        },
+        {
+          "name": "_mamba_prefix_cache_update",
+          "line": 516,
+          "end_line": 548
+        },
+        {
+          "name": "_process_input_token_logprobs",
+          "line": 550,
+          "end_line": 581
+        },
+        {
+          "name": "_process_input_top_logprobs",
+          "line": 583,
+          "end_line": 610
+        },
+        {
+          "name": "_process_input_token_ids_logprobs",
+          "line": 612,
+          "end_line": 642
+        },
+        {
+          "name": "_calculate_relevant_tokens_len",
+          "line": 644,
+          "end_line": 662
+        },
+        {
+          "name": "_calculate_num_input_logprobs",
+          "line": 664,
+          "end_line": 686
+        },
+        {
+          "name": "_is_multi_item_scoring",
+          "line": 688,
+          "end_line": 695
+        },
+        {
+          "name": "add_input_logprob_return_values",
+          "line": 697,
+          "end_line": 780
+        },
+        {
+          "name": "add_logprob_return_values",
+          "line": 782,
+          "end_line": 823
+        },
+        {
+          "name": "_initialize_empty_logprob_containers",
+          "line": 825,
+          "end_line": 843
+        },
+        {
+          "name": "stream_output",
+          "line": 845,
+          "end_line": 860
+        },
+        {
+          "name": "_trigger_crash_for_tests",
+          "line": 862,
+          "end_line": 871
+        },
+        {
+          "name": "stream_output_generation",
+          "line": 873,
+          "end_line": 1156
+        },
+        {
+          "name": "stream_output_embedding",
+          "line": 1158,
+          "end_line": 1196
+        }
+      ]
+    }
+  ],
+  "global_response_count": "all unpadded response tokens from padding.loss_mask=response_mask -> fsdp.forward_backward_batch.batch_num_tokens; NOT only opd_loss_mask positions",
+  "all_selected_sources_diff_sha256": "022ac53da2cb569922cf2275ed320f545e63291d9d64a0fb6a5e37ef3c6dfdf2"
+}

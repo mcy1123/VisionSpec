@@ -1,0 +1,44 @@
+{
+  "id": "2602.06036",
+  "requested_title": "DFlash: Block Diffusion for Flash Speculative Decoding",
+  "source_url": "https://arxiv.org/abs/2602.06036",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2602.06036",
+  "citation_metadata": {
+    "citation_title": [
+      "DFlash: Block Diffusion for Flash Speculative Decoding"
+    ],
+    "citation_author": [
+      "Chen, Jian",
+      "Liang, Yesheng",
+      "Liu, Zhijian"
+    ],
+    "citation_date": [
+      "2026/02/05"
+    ],
+    "citation_online_date": [
+      "2026/05/28"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2602.06036"
+    ],
+    "citation_arxiv_id": [
+      "2602.06036"
+    ],
+    "citation_abstract": [
+      "Autoregressive large language models (LLMs) deliver strong performance but require inherently sequential decoding, leading to high inference latency and poor GPU utilization. Speculative decoding mitigates this bottleneck by using a fast draft model whose outputs are verified in parallel by the target LLM; however, existing methods still rely on autoregressive drafting, which remains sequential and limits practical speedups. Diffusion LLMs offer a promising alternative by enabling parallel generation, but current diffusion models typically underperform compared with autoregressive models. In this paper, we introduce DFlash, a speculative decoding framework that employs a lightweight block diffusion model for parallel drafting. By generating draft tokens in a single forward pass and conditioning the draft model on context features extracted from the target model, DFlash enables efficient drafting with high-quality outputs and higher acceptance rates. Experiments show that DFlash achieves over 6x lossless acceleration across a range of models and tasks, delivering up to 2.5x higher speedup than the state-of-the-art speculative decoding method EAGLE-3."
+    ]
+  },
+  "online_title": "DFlash: Block Diffusion for Flash Speculative Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2602.06036v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2602.06036v2",
+  "local_pdf": "pdfs/2602.06036.pdf",
+  "bytes": 499459,
+  "sha256": "ffa514e6ce180eb1f7a39c49372f3b8170b99f8bc142d4a4daa0f087bf2ceb91",
+  "text_status": "extracted",
+  "local_text": "texts/2602.06036.txt"
+}

@@ -1,0 +1,52 @@
+{
+  "id": "2512.23858",
+  "requested_title": "Yggdrasil: Bridging Dynamic Speculation and Static Runtime for Latency-Optimal Tree-Based LLM Decoding",
+  "source_url": "https://arxiv.org/abs/2512.23858",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2512.23858",
+  "citation_metadata": {
+    "citation_title": [
+      "Yggdrasil: Bridging Dynamic Speculation and Static Runtime for Latency-Optimal Tree-Based LLM Decoding"
+    ],
+    "citation_author": [
+      "Guan, Yue",
+      "Yu, Changming",
+      "Fang, Shihan",
+      "Hu, Weiming",
+      "Pan, Zaifeng",
+      "Wang, Zheng",
+      "Liu, Zihan",
+      "Zhou, Yangjie",
+      "Ding, Yufei",
+      "Guo, Minyi",
+      "Leng, Jingwen"
+    ],
+    "citation_date": [
+      "2025/12/29"
+    ],
+    "citation_online_date": [
+      "2025/12/29"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2512.23858"
+    ],
+    "citation_arxiv_id": [
+      "2512.23858"
+    ],
+    "citation_abstract": [
+      "Speculative decoding improves LLM inference by generating and verifying multiple tokens in parallel, but existing systems suffer from suboptimal performance due to a mismatch between dynamic speculation and static runtime assumptions. We present Yggdrasil, a co-designed system that enables latency-optimal speculative decoding through context-aware tree drafting and compiler-friendly execution. Yggdrasil introduces an equal-growth tree structure for static graph compatibility, a latency-aware optimization objective for draft selection, and stage-based scheduling to reduce overhead. Yggdrasil supports unmodified LLMs and achieves up to $3.98\\times$ speedup over state-of-the-art baselines across multiple hardware setups."
+    ]
+  },
+  "online_title": "Yggdrasil: Bridging Dynamic Speculation and Static Runtime for Latency-Optimal Tree-Based LLM Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2512.23858v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2512.23858v1",
+  "local_pdf": "pdfs/2512.23858.pdf",
+  "bytes": 867832,
+  "sha256": "34c9b365e9e191aa0c27c321501e89a20228ef2b5c7697426b930915b7de8bfc",
+  "text_status": "extracted",
+  "local_text": "texts/2512.23858.txt"
+}

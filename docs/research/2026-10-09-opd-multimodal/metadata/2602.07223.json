@@ -1,0 +1,44 @@
+{
+  "id": "2602.07223",
+  "requested_title": "Vegas: Self-Speculative Decoding with Verification-Guided Sparse Attention",
+  "source_url": "https://arxiv.org/abs/2602.07223",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2602.07223",
+  "citation_metadata": {
+    "citation_title": [
+      "Vegas: Self-Speculative Decoding with Verification-Guided Sparse Attention"
+    ],
+    "citation_author": [
+      "Yue, Yikang",
+      "Xue, Yuqi",
+      "Huang, Jian"
+    ],
+    "citation_date": [
+      "2026/02/06"
+    ],
+    "citation_online_date": [
+      "2026/05/29"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2602.07223"
+    ],
+    "citation_arxiv_id": [
+      "2602.07223"
+    ],
+    "citation_abstract": [
+      "Long-context large language model (LLM) inference has become the norm for today's AI applications. However, it is severely bottlenecked by the increasing memory demands of its KV cache. Previous works have shown that self-speculative decoding with sparse attention, where tokens are drafted using a subset of the KV cache and verified in parallel against the full KV cache, speeds up inference in a lossless manner. However, they rely on a standalone KV selection algorithm to select the KV entries used for drafting and overlook the fact that the criticality of each KV entry is inherently computed during verification. In this paper, we propose Vegas, a self-speculative decoding method with verification-guided sparse attention. Vegas identifies critical KV cache entries as a byproduct of verification and computes attention only over these entries when drafting subsequent tokens. This not only improves the draft token acceptance rate but also incurs low KV selection overhead, thereby improving decoding throughput. Vegas achieves a 1.25$\\times$-2.81$\\times$ speedup in decoding throughput over default vLLM and a 1.15$\\times$-1.29$\\times$ speedup over state-of-the-art sparse attention-based self-speculative decoding methods. Our code is available at https://github.com/platformxlab/vegas."
+    ]
+  },
+  "online_title": "Vegas: Self-Speculative Decoding with Verification-Guided Sparse Attention",
+  "title_similarity": 1.0,
+  "arxiv_version": "2602.07223v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2602.07223v2",
+  "local_pdf": "pdfs/2602.07223.pdf",
+  "bytes": 1538912,
+  "sha256": "a47ea0463b98f363a949ce9c8148f4d358ce8c62c9a5d44b23eb21638f72ecbe",
+  "text_status": "extracted",
+  "local_text": "texts/2602.07223.txt"
+}

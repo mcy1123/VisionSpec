@@ -1,0 +1,45 @@
+{
+  "id": "2306.08543",
+  "requested_title": "MiniLLM: On-Policy Distillation of Large Language Models",
+  "source_url": "https://arxiv.org/abs/2306.08543",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2306.08543",
+  "citation_metadata": {
+    "citation_title": [
+      "MiniLLM: On-Policy Distillation of Large Language Models"
+    ],
+    "citation_author": [
+      "Gu, Yuxian",
+      "Dong, Li",
+      "Wei, Furu",
+      "Huang, Minlie"
+    ],
+    "citation_date": [
+      "2023/06/14"
+    ],
+    "citation_online_date": [
+      "2026/01/31"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2306.08543"
+    ],
+    "citation_arxiv_id": [
+      "2306.08543"
+    ],
+    "citation_abstract": [
+      "Knowledge Distillation (KD) is a promising technique for reducing the high computational demand of large language models (LLMs). However, previous KD methods are primarily applied to white-box classification models or training small models to imitate black-box model APIs like ChatGPT. How to effectively distill the knowledge of white-box LLMs into small models is still under-explored, which becomes more important with the prosperity of open-source LLMs. In this work, we propose a KD approach that distills LLMs into smaller language models. We first replace the forward Kullback-Leibler divergence (KLD) objective in the standard KD approaches with reverse KLD, which is more suitable for KD on generative language models, to prevent the student model from overestimating the low-probability regions of the teacher distribution. Then, we derive an effective on-policy optimization approach to learn this objective. The student models are named MiniLLM. Extensive experiments in the instruction-following setting show that MiniLLM generates more precise responses with higher overall quality, lower exposure bias, better calibration, and higher long-text generation performance than the baselines. Our method is scalable for different model families with 120M to 13B parameters. Our code, data, and model checkpoints can be found in https://github.com/microsoft/LMOps/tree/main/minillm."
+    ]
+  },
+  "online_title": "MiniLLM: On-Policy Distillation of Large Language Models",
+  "title_similarity": 1.0,
+  "arxiv_version": "2306.08543v6",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2306.08543v6",
+  "local_pdf": "pdfs/2306.08543.pdf",
+  "bytes": 807024,
+  "sha256": "a96fbfb8fcb935aead8dd04d8e375bc12e149a48d5dd26c06e6f9e561c579fc6",
+  "text_status": "extracted",
+  "local_text": "texts/2306.08543.txt"
+}

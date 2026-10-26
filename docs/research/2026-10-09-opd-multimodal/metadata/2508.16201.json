@@ -1,0 +1,48 @@
+{
+  "id": "2508.16201",
+  "requested_title": "SpecVLM: Enhancing Speculative Decoding of Video LLMs via Verifier-Guided Token Pruning",
+  "source_url": "https://arxiv.org/abs/2508.16201",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2508.16201",
+  "citation_metadata": {
+    "citation_title": [
+      "SpecVLM: Enhancing Speculative Decoding of Video LLMs via Verifier-Guided Token Pruning"
+    ],
+    "citation_author": [
+      "Ji, Yicheng",
+      "Zhang, Jun",
+      "Xia, Heming",
+      "Chen, Jinpeng",
+      "Shou, Lidan",
+      "Chen, Gang",
+      "Li, Huan"
+    ],
+    "citation_date": [
+      "2025/08/22"
+    ],
+    "citation_online_date": [
+      "2025/08/28"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2508.16201"
+    ],
+    "citation_arxiv_id": [
+      "2508.16201"
+    ],
+    "citation_abstract": [
+      "Video large language models (Vid-LLMs) have shown strong capabilities in understanding video content. However, their reliance on dense video token representations introduces substantial memory and computational overhead in both prefilling and decoding. To mitigate the information loss of recent video token reduction methods and accelerate the decoding stage of Vid-LLMs losslessly, we introduce SpecVLM, a training-free speculative decoding (SD) framework tailored for Vid-LLMs that incorporates staged video token pruning. Building on our novel finding that the draft model's speculation exhibits low sensitivity to video token pruning, SpecVLM prunes up to 90% of video tokens to enable efficient speculation without sacrificing accuracy. To achieve this, we performs a two-stage pruning process: Stage I selects highly informative tokens guided by attention signals from the verifier (target model), while Stage II prunes remaining redundant ones in a spatially uniform manner. Extensive experiments on four video understanding benchmarks demonstrate the effectiveness and robustness of SpecVLM, which achieves up to 2.68$\\times$ decoding speedup for LLaVA-OneVision-72B and 2.11$\\times$ speedup for Qwen2.5-VL-32B. Code is available at https://github.com/zju-jiyicheng/SpecVLM."
+    ]
+  },
+  "online_title": "SpecVLM: Enhancing Speculative Decoding of Video LLMs via Verifier-Guided Token Pruning",
+  "title_similarity": 1.0,
+  "arxiv_version": "2508.16201v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2508.16201v2",
+  "local_pdf": "pdfs/2508.16201.pdf",
+  "bytes": 2612991,
+  "sha256": "4cb5dce91df8a09386e354d15f1078de7d26c6acb0c50d506b65fba80a10fc9e",
+  "text_status": "extracted",
+  "local_text": "texts/2508.16201.txt"
+}

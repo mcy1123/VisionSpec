@@ -1,0 +1,45 @@
+{
+  "id": "2402.03898",
+  "requested_title": "DistiLLM: Towards Streamlined Distillation for Large Language Models",
+  "source_url": "https://arxiv.org/abs/2402.03898",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2402.03898",
+  "citation_metadata": {
+    "citation_title": [
+      "DistiLLM: Towards Streamlined Distillation for Large Language Models"
+    ],
+    "citation_author": [
+      "Ko, Jongwoo",
+      "Kim, Sungnyun",
+      "Chen, Tianyi",
+      "Yun, Se-Young"
+    ],
+    "citation_date": [
+      "2024/02/06"
+    ],
+    "citation_online_date": [
+      "2024/07/03"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2402.03898"
+    ],
+    "citation_arxiv_id": [
+      "2402.03898"
+    ],
+    "citation_abstract": [
+      "Knowledge distillation (KD) is widely used for compressing a teacher model to a smaller student model, reducing its inference cost and memory footprint while preserving model capabilities. However, current KD methods for auto-regressive sequence models (e.g., large language models) suffer from missing a standardized objective function. Moreover, the recent use of student-generated outputs to address training-inference mismatches has significantly escalated computational costs. To tackle these issues, we introduce DistiLLM, a more effective and efficient KD framework for auto-regressive language models. DistiLLM comprises two components: (1) a novel skew Kullback-Leibler divergence loss, where we unveil and leverage its theoretical properties, and (2) an adaptive off-policy approach designed to enhance the efficiency in utilizing student-generated outputs. Extensive experiments, including instruction-following tasks, demonstrate the effectiveness of DistiLLM in building high-performing student models while achieving up to 4.3$\\times$ speedup compared to recent KD methods."
+    ]
+  },
+  "online_title": "DistiLLM: Towards Streamlined Distillation for Large Language Models",
+  "title_similarity": 1.0,
+  "arxiv_version": "2402.03898v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2402.03898v2",
+  "local_pdf": "pdfs/2402.03898.pdf",
+  "bytes": 1842238,
+  "sha256": "cbd139cc719bd9554e8dbacaa318084ce9643f4f73b0aa3d2a1930c8cd48e45d",
+  "text_status": "extracted",
+  "local_text": "texts/2402.03898.txt"
+}

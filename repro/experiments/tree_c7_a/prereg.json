@@ -1,0 +1,158 @@
+{
+  "task": "A",
+  "title": "Deployable fixed-depth-quota tree selection vs production best-first",
+  "task_file": "docs/tasks/parallel_20261012/01_task_A_tree_selection.md",
+  "rules_file": "docs/tasks/parallel_20261012/00_parallel_execution_rules.md",
+  "author_session": "parallel task A",
+  "frozen_at_local": "2026-10-12 (before any A1 quantity was computed)",
+  "status_before_results": "preregistered; no A1 node count, coverage, Phi or gate value had been inspected",
+
+  "audit_findings_recorded_before_prereg": {
+    "production_tree_builder": "GLANCE_repo/glance/tree.py::build_budget_tree (SHA256 5e02038da6ae3b0f14600c14c12fa1ab403c42ba325e257e034a0b126d60ab63)",
+    "production_call_site": "GLANCE_repo/glance/decode.py::generate line 258-260 (SHA256 0bcbdba6b96c54afdc505094fcc53d7e999acee302fbdd2aa61d7c41d603c2f5)",
+    "budget_semantics": "budget (63) counts tree nodes only; the committed root token is packed separately (packed_root_cost=1), so the packed verify pass carries 64 positions",
+    "depth_semantics": "depth = block offset, 1..block_size-1 = 1..15; depth 0 is the committed root and is never a node",
+    "candidate_source": "torch.topk(F.log_softmax(draft_logits.float()), branch_k=8) over the block head's per-offset marginals; top_ids/top_logp are moved to CPU and the tree is built on CPU",
+    "path_score": "cumulative sum of per-offset marginal log-probabilities along the root-to-node path; scores of different nodes at the same depth are never combined",
+    "best_first": "max-heap (negated score) seeded with the K depth-1 candidates; pop -> append node -> push its K children at depth+1. Ties broken by (depth, parent, rank, insertion order) through the heap tuple, i.e. insertion-order-stable.",
+    "verified_equivalence": "re-running the untouched production builder on the persisted C6 GPU top-8 ids/logp reproduces the stored 63-node tree byte-for-byte on 48/48 C0 anchors (checked before this preregistration was written)",
+    "is_best_first_optimal_for_its_proxy": "yes, for Phi(T) = sum over nodes of exp(cumulative path log-probability). Because log p <= 0, extending a path never increases its path probability; the best-first pop order is exactly the greedy order that maximises Phi over prefix-closed sets of the given size. Therefore A1 must NOT be described as solving the same objective better.",
+    "prefix_closure": "children are only ever pushed from a node already appended, so the packed list is topologically ordered (parent index < child index) and prefix closed by construction",
+    "verifier": "one ancestor-masked target pass over the packed tree (tree_mask gives each packed token the whole prefix KV plus its own ancestor chain); the commit walk follows the target's own greedy token and stops at the first missing child",
+    "commit_gap_identity": "L_actual = L_tree for a correctly executed greedy commit walk, so a nonzero commit_gap is a correctness failure of the verifier/commit path, not a modelling result",
+    "root_bonus": "root is the already-committed token; bonus is the target's token emitted after the accepted prefix and is excluded from L_raw/L_tree/L_actual"
+  },
+
+  "frozen_inputs": {
+    "trace": "/mnt/local/mcy/GLANCE/results/phaseC6/current_ar_closed_loop_20261012T221104_gpu_scores/trace_current_ar.jsonl",
+    "trace_sha256": "0ffabf0352f502305f88dff3ba1d913e54ee8463f50ba6fd082f9617bc20340c",
+    "trace_records": 144,
+    "arms_in_trace": ["C0", "C1", "C2"],
+    "used_arm": "C0",
+    "c0_anchors": 48,
+    "videos": 6,
+    "videos_list": [
+      "v_-D1gdv_gQyw", "v_1kwIYXB4b8s", "v_0X0u_3xUBPE",
+      "v_1KONAdZGdWU", "v_0DFz3sgfda0", "v_0x6ZV9Y8g_c"
+    ],
+    "c0_checkpoint": "/mnt/local/mcy/GLANCE/checkpoints/head_video439_aligned/step1000",
+    "c0_model_sha256": "e2526a249a8ef7e1db3a9990589b727541486093372011e1a0ff6a16e06d23d2",
+    "c0_config_sha256": "9834d608c9ca53d5548b415471ae9e8ebc9aab6cedfc2a7af95b6bd097373102",
+    "excluded": "the phaseC5 B-reference first-8-rounds sample is a different anchor set and is NOT used or pooled here",
+    "candidate_rule": "Stage 0 and Stage 1 use ONLY the persisted GPU top8_ids/top8_logp captured by C6. No CPU log_softmax rerun, no new head call, no top32-derived substitute.",
+    "budget": 63,
+    "branch_k": 8,
+    "max_draft_depth": 15,
+    "root_position": 0,
+    "eos_token_id": 151645
+  },
+
+  "arms": {
+    "A0": {
+      "builder": "glance.tree.build_budget_tree",
+      "description": "unmodified production best-first prefix-closed budget-63 tree; the baseline under test",
+      "reference_tree": "the 63 nodes persisted in the C6 trace (reconstruction must match exactly)"
+    },
+    "A1": {
+      "builder": "repro/experiments/tree_c7_a/fixed_quota_tree.py::build_fixed_quota_tree",
+      "description": "fixed depth quota, prefix closed, shallow-to-deep",
+      "quota_per_depth": {"1": 5, "2": 5, "3": 5, "4": 4, "5": 4, "6": 4, "7": 4, "8": 4, "9": 4, "10": 4, "11": 4, "12": 4, "13": 4, "14": 4, "15": 4},
+      "quota_total": 63,
+      "fill_order": "depth 1 to 15 in one sweep",
+      "parent_rule": "a depth-d candidate may only extend a node kept at depth d-1",
+      "ranking_within_depth": "ascending negated cumulative path log-probability, i.e. the same cumulative score A0 ranks by; the cumulative score is the sum of the per-offset marginal log-probabilities along the path, so it is exactly comparable between candidate nodes",
+      "tie_break": "(1) cumulative path log-probability, (2) the parent's slot in the previous depth's kept list (root = slot 0), (3) rank within the parent's per-offset candidate row",
+      "deficit_rule": "if a depth has fewer legal candidates than its quota, it keeps what exists; unused quota is NEVER back-filled from a deeper depth; leftover budget is recorded",
+      "forbidden_inputs": ["target logits", "correct AR tokens", "oracle paths", "sample-level gain", "future tokens", "additional head calls"],
+      "no_second_quota_search": true,
+      "no_post_hoc_threshold_change": true
+    }
+  },
+
+  "metric_definitions": {
+    "L_raw": "number of leading offsets (offset 1..cap) at which the correct AR reference token is inside the persisted top-8 candidate set; cap = min(15, remaining_after_root), additionally shortened by an EOS that appears inside the reference prefix, and 0 when the root token is EOS",
+    "L_candidate_oracle": "min(L_raw, 63)",
+    "L_tree_X": "length of the longest correct-AR reference prefix that exists as a root-to-node path in tree X (root excluded)",
+    "L_actual": "number of tokens the target's greedy commit walk accepted along the tree, excluding the bonus token",
+    "commit_gap": "L_tree - L_actual",
+    "tree_gap": "L_raw - L_tree",
+    "Delta_L_tree": "L_tree_A1 - L_tree_A0 for the same anchor",
+    "Phi_X": "sum over nodes in tree X of exp(cumulative path log-probability), using only the persisted per-offset GPU log-probabilities",
+    "first_missing_depth": "1-based offset of the first reference token not covered by the tree; null when the whole provided reference is covered",
+    "early_region": "depths 1..4 inclusive; the number of reference tokens at depths 1..4 that a tree covers is counted per anchor and summed per video",
+    "recovered_paths": "for the reference prefix: token offsets covered by A1 and not by A0",
+    "lost_paths": "for the reference prefix: token offsets covered by A0 and not by A1",
+    "actual_nodes": "len(nodes) actually built (may be < 63 when a depth or the parent pool runs out under A1)"
+  },
+
+  "statistical_units": {
+    "anchor": "one (video, saved C0 round index) pair; 48 in total, 44 with at least one predictive offset",
+    "aggregation_unit": "video; the 8 anchors inside one video are nested and are never treated as independent samples",
+    "anchor_level_table": "all 48 anchors reported individually",
+    "video_level": "per-video mean or sum, then equal-weight average over the 6 videos",
+    "bootstrap": "video-level resampling with replacement, seed 20261012, 2000 resamples, 2.5/97.5 percentiles",
+    "ci_interpretation": "exploratory only for n=6; a CI that contains 0 does not establish equivalence"
+  },
+
+  "stage_0_gates": {
+    "description": "CPU replay of the frozen GPU candidates; any failure stops the A1 benefit claim",
+    "checks": [
+      "A0 rebuild from persisted top8 ids/logp equals the stored 63-node tree on all 48 C0 anchors (token, depth, parent, rank)",
+      "per-anchor L_tree from an independent walk equals the recorded oracle.L_tree_oracle",
+      "recorded oracle.L_raw equals an independent recomputation of the top-8 reference coverage with the same cap/EOS rule",
+      "recorded oracle.L_actual equals an independent greedy commit walk over the stored tree using the recorded verification_argmax",
+      "sum over 48 anchors of (L_raw - L_tree) equals 40",
+      "mean over all 48 anchors of L_tree equals 2.8958333333333335",
+      "sum of commit_gap equals 0 and no anchor has a nonzero commit_gap",
+      "all 48 stored trees have exactly 63 nodes, parent < child index, depth = parent.depth + 1, and nodes drawn from their own offset candidate row",
+      "no record is substituted or dropped: the 48 anchors are exactly the C0 records of the frozen trace with the frozen (video, round_index) list"
+    ]
+  },
+
+  "stage_1_gate_rules": {
+    "note": "all three must pass to proceed to Stage 2; these are resource filters, not significance tests; they were fixed before any A1 result was seen",
+    "gate_1_net_gain": {
+      "statistic": "sum over the 48 anchors of Delta_L_tree = L_tree_A1 - L_tree_A0",
+      "pass_if": "> 0"
+    },
+    "gate_2_not_single_video": {
+      "statistic": "per-video mean Delta_L_tree over that video's 8 anchors",
+      "pass_if": "at least 2 of the 6 videos have a strictly positive per-video mean"
+    },
+    "gate_3_early_coverage": {
+      "statistic": "per video: sum over anchors of (early reference tokens covered by A0) - (early reference tokens covered by A1), over depths 1..4",
+      "threshold": "T_v = 2 * (number of predictive anchors in video v) / 8, where a predictive anchor is one whose reference prefix is non-empty",
+      "pass_if": "no video has (A0 early covered - A1 early covered) > T_v",
+      "reporting": "per video the net early gain/loss, gross early gain, gross early loss, threshold, and a boolean severe_early_loss flag; anchors with an empty reference contribute 0 to both sides and are counted in the denominator only"
+    },
+    "combined": "Stage 2 runs only if gate_1 and gate_2 and gate_3 all pass"
+  },
+
+  "stage_2_plan": {
+    "gate": "per anchor L_actual_A1 must equal L_tree_A1; A0 must reproduce the persisted C6 verification argmax on the correct path; every A1 submission must be a prefix of an independent AR continuation; tree mask, positions, visibility and M-RoPE are checked",
+    "budget": "at most 48 A1 tree verifications plus the A0 control verifications, serial under the shared flock lock",
+    "failure_handling": "locate and fix correctness or numerical issues first (bounded attempts); a failed pilot is kept in a separate failed/ directory and never merged into the formal table"
+  },
+
+  "stage_3_plan": {
+    "gate": "only after Stage 2 passes",
+    "scope": "the same 6 videos, full decode to EOS or the preset length cap, A0 and A1, 12 decodes total, every token AR-lossless (SPEC = AR)",
+    "timing": "same GPU, same precision, same warmup, alternating A/B order, at least 3 repeats if resources allow; instrumentation time is never reported as speed; if external contention makes runs incomparable the speed verdict is 'inconclusive'",
+    "no_extension": "no extension to 29 videos, no C1/C2, no new frozen test set"
+  },
+
+  "outcome_labels": [
+    "no_net_local_gain",
+    "local_gain_not_transferred_online",
+    "online_tau_gain_speed_unknown_or_absent",
+    "online_tau_and_reliable_speed_both_improved",
+    "correctness_or_resource_blocked"
+  ],
+
+  "stop_rules": {
+    "cpu_no_net_gain": "stop this fixed-quota scheme for the write-up; do not tune the quota and do not open a second quota search",
+    "local_gain_but_no_online_gain": "locate early path loss, trajectory change, overhead or implementation mismatch; do not retune the quota",
+    "online_tau_gain_without_comparable_speed": "report mechanism evidence only, not an acceleration claim",
+    "implementation_gate_failure": "fix the blocker first; do not extend to D4 or other hypotheses"
+  }
+}

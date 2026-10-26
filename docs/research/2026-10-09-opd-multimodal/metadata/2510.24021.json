@@ -1,0 +1,45 @@
+{
+  "id": "2510.24021",
+  "requested_title": "SelecTKD: Selective Token-Weighted Knowledge Distillation for LLMs",
+  "source_url": "https://arxiv.org/abs/2510.24021",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2510.24021",
+  "citation_metadata": {
+    "citation_title": [
+      "SelecTKD: Selective Token-Weighted Knowledge Distillation for LLMs"
+    ],
+    "citation_author": [
+      "Huang, Haiduo",
+      "Song, Jiangcheng",
+      "Zhang, Yadong",
+      "Ren, Pengju"
+    ],
+    "citation_date": [
+      "2025/10/28"
+    ],
+    "citation_online_date": [
+      "2025/11/16"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2510.24021"
+    ],
+    "citation_arxiv_id": [
+      "2510.24021"
+    ],
+    "citation_abstract": [
+      "Knowledge distillation (KD) is a standard route to compress Large Language Models (LLMs) into compact students, yet most pipelines uniformly apply token-wise loss regardless of teacher confidence. This indiscriminate supervision amplifies noisy, high-entropy signals and is especially harmful under large teacher-student capacity gaps. We introduce SelecTKD, a plug-and-play Selective Token-Weighted distillation framework that shifts the focus from \"how to measure divergence\" to \"where to apply learning\". At each step, the student proposes tokens that are verified by the teacher through a robust propose-and-verify procedure with two variants: greedy Top-k and non-greedy Spec-k. Accepted tokens receive full loss, while rejected tokens are masked or down-weighted. This objective-agnostic design works with on- and off-policy data, induces an implicit curriculum quantified by Token Acceptance Rate (TAR), and stabilizes optimization. Across instruction following, mathematical reasoning, code generation, and a VLM setting, SelecTKD consistently improves strong baselines and achieves state-of-the-art results for small models without architectural changes or extra reference models."
+    ]
+  },
+  "online_title": "SelecTKD: Selective Token-Weighted Knowledge Distillation for LLMs",
+  "title_similarity": 1.0,
+  "arxiv_version": "2510.24021v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2510.24021v2",
+  "local_pdf": "pdfs/2510.24021.pdf",
+  "bytes": 828432,
+  "sha256": "5c349bf8441d2a9ade7062f696c40d80bed19e3d63b1cb48e80c1530e3a2fd8c",
+  "text_status": "extracted",
+  "local_text": "texts/2510.24021.txt"
+}

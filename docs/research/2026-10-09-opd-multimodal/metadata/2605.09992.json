@@ -1,0 +1,47 @@
+{
+  "id": "2605.09992",
+  "requested_title": "Attention Drift: What Autoregressive Speculative Decoding Models Learn",
+  "source_url": "https://arxiv.org/abs/2605.09992",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2605.09992",
+  "citation_metadata": {
+    "citation_title": [
+      "Attention Drift: What Autoregressive Speculative Decoding Models Learn"
+    ],
+    "citation_author": [
+      "Eldenk, Doğaç",
+      "Mohapatra, Payal",
+      "Comlek, Yigitcan",
+      "Oktay, Kaan",
+      "Zhang, Hongyang",
+      "Xia, Stephen"
+    ],
+    "citation_date": [
+      "2026/05/11"
+    ],
+    "citation_online_date": [
+      "2026/05/11"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2605.09992"
+    ],
+    "citation_arxiv_id": [
+      "2605.09992"
+    ],
+    "citation_abstract": [
+      "Speculative decoding accelerates LLM inference by drafting future tokens with a small model, but drafter models degrade sharply under template perturbation and long-context inputs. We identify a previously-unreported phenomenon we call \\textbf{attention drift}: as the drafter generates successive tokens within a speculation chain, attention progressively moves from the prompt onto its own recently-generated tokens. We observe this across both \\emph{EAGLE3} drafters and \\emph{MTP heads}, suggesting drift is a property of drafter designs. We trace this to the un-normalized residual path between chain steps: the drafter's hidden state magnitude grows monotonically with chain depth, which exhibits dynamics consistent with additional pre-norm transformer layers stacked on the target rather than as a standalone autoregressive predictor. In order to limit the growth, we propose two architectural changes: Post-norm on the drafter hidden states and per-hidden-state RMSNorm after capturing target hidden states. Our interventions improve acceptance length over the current leading model, pre-norm EAGLE3, by up to $2\\times$ under template perturbation, $1.18\\times$ on long-context tasks, and $1.10\\times$ on seven standard benchmarks spanning multi-turn chat, math, and coding. Our changes also allow shorter train-time-test depths to generalize over longer drafting sequences."
+    ]
+  },
+  "online_title": "Attention Drift: What Autoregressive Speculative Decoding Models Learn",
+  "title_similarity": 1.0,
+  "arxiv_version": "2605.09992v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2605.09992v1",
+  "local_pdf": "pdfs/2605.09992.pdf",
+  "bytes": 666547,
+  "sha256": "84fc81e49efc565989b27c28355c6689ec44bae1d5dc052d5571480fdcd8a013",
+  "text_status": "extracted",
+  "local_text": "texts/2605.09992.txt"
+}

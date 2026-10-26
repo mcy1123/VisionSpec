@@ -1,0 +1,10 @@
+Lightweight GLANCE adaptations, modified 2026-10-16.
+Reference commit d6f0ec859321959785c65b59eb311fd25f042158; see SOURCE.json.
+VERL losses.py: Copyright 2025 Bytedance Ltd. and/or its affiliates.
+VERL core_algos.py: Copyright 2024 Bytedance Ltd. and/or its affiliates;
+Copyright 2022 The HuggingFace Team. All rights reserved.
+VERL dflash_student.py: Copyright 2026 Bytedance Ltd. and/or its affiliates.
+Apache License 2.0, included in LICENSE.upstream.
+Full unmodified source headers and files retained in the audit reference snapshot.
+This adaptation adds teacher detachment, a single-sample planner, serial GLANCE
+verification, and local/global additive pooling APIs; it is not upstream code.

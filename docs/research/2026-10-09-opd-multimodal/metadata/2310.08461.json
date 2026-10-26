@@ -1,0 +1,49 @@
+{
+  "id": "2310.08461",
+  "requested_title": "DistillSpec: Improving Speculative Decoding via Knowledge Distillation",
+  "source_url": "https://arxiv.org/abs/2310.08461",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2310.08461",
+  "citation_metadata": {
+    "citation_title": [
+      "DistillSpec: Improving Speculative Decoding via Knowledge Distillation"
+    ],
+    "citation_author": [
+      "Zhou, Yongchao",
+      "Lyu, Kaifeng",
+      "Rawat, Ankit Singh",
+      "Menon, Aditya Krishna",
+      "Rostamizadeh, Afshin",
+      "Kumar, Sanjiv",
+      "Kagy, Jean-François",
+      "Agarwal, Rishabh"
+    ],
+    "citation_date": [
+      "2023/10/12"
+    ],
+    "citation_online_date": [
+      "2024/03/31"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2310.08461"
+    ],
+    "citation_arxiv_id": [
+      "2310.08461"
+    ],
+    "citation_abstract": [
+      "Speculative decoding (SD) accelerates large language model inference by employing a faster draft model for generating multiple tokens, which are then verified in parallel by the larger target model, resulting in the text generated according to the target model distribution. However, identifying a compact draft model that is well-aligned with the target model is challenging. To tackle this issue, we propose DistillSpec that uses knowledge distillation to better align the draft model with the target model, before applying SD. DistillSpec makes two key design choices, which we demonstrate via systematic study to be crucial to improving the draft and target alignment: utilizing on-policy data generation from the draft model, and tailoring the divergence function to the task and decoding strategy. Notably, DistillSpec yields impressive 10 - 45% speedups over standard SD on a range of standard benchmarks, using both greedy and non-greedy sampling. Furthermore, we combine DistillSpec with lossy SD to achieve fine-grained control over the latency vs. task performance trade-off. Finally, in practical scenarios with models of varying sizes, first using distillation to boost the performance of the target model and then applying DistillSpec to train a well-aligned draft model can reduce decoding latency by 6-10x with minimal performance drop, compared to standard decoding without distillation."
+    ]
+  },
+  "online_title": "DistillSpec: Improving Speculative Decoding via Knowledge Distillation",
+  "title_similarity": 1.0,
+  "arxiv_version": "2310.08461v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2310.08461v2",
+  "local_pdf": "pdfs/2310.08461.pdf",
+  "bytes": 1886760,
+  "sha256": "c9a399bf8bf5bc0658bb7212990bb589227931e85c1b80cc28e7c89924d9566e",
+  "text_status": "extracted",
+  "local_text": "texts/2310.08461.txt"
+}

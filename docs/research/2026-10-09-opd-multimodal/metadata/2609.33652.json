@@ -1,0 +1,44 @@
+{
+  "id": "2609.33652",
+  "requested_title": "Tsubame: Tree Replay for Diffusion-Based Speculative Decoding",
+  "source_url": "https://arxiv.org/abs/2609.33652",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2609.33652",
+  "citation_metadata": {
+    "citation_title": [
+      "Tsubame: Tree Replay for Diffusion-Based Speculative Decoding"
+    ],
+    "citation_author": [
+      "Weng, Yepeng",
+      "Hu, Qiao",
+      "Yairi, Takehisa"
+    ],
+    "citation_date": [
+      "2026/09/27"
+    ],
+    "citation_online_date": [
+      "2026/09/27"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2609.33652"
+    ],
+    "citation_arxiv_id": [
+      "2609.33652"
+    ],
+    "citation_abstract": [
+      "Context-aware dynamic trees allocate the speculative decoding budget according to draft path probabilities, adapting their depth and branching to the current context. Under stochastic decoding, however, we find that this structural advantage does not always compensate for the acceptance gains of random sampling paired with advanced verification, and such dynamic trees can fall behind sampled chains in some settings. These trees grow their topology from the candidates themselves, so the tokens submitted for verification are typically the deterministic high-score tokens selected during construction. This coupling is not inherent: once the topology is fixed, its nodes can be repopulated by sampling, allowing dynamic trees to retain their structural advantage while also benefiting from random sampling and advanced verification. Diffusion-based drafters make this practical, as their parallel outputs or lightweight conditional corrections allow candidates to be regenerated cheaply after the complete topology is known. We introduce Tsubame, a two-pass tree speculative decoding framework for diffusion-based drafters. The first pass plans and freezes a context-aware topology using draft path scores; the second replays the fixed topology, sampling the tokens that populate its nodes to form the candidate tree for verification. We prove that Tsubame is lossless under compatible sampling and verification strategies. Experiments across three diffusion-based drafters, six datasets, and multiple candidate budgets show that Tsubame improves acceptance length and throughput over deterministic trees, including settings where it reverses their disadvantage against sampled chains."
+    ]
+  },
+  "online_title": "Tsubame: Tree Replay for Diffusion-Based Speculative Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2609.33652v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2609.33652v1",
+  "local_pdf": "pdfs/2609.33652.pdf",
+  "bytes": 310758,
+  "sha256": "058d1b9a6cc940c3f6efb4a1a37ba8d10ec9d0248e35ec0e94a63035fa2d3d51",
+  "text_status": "extracted",
+  "local_text": "texts/2609.33652.txt"
+}

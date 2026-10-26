@@ -1,0 +1,48 @@
+{
+  "id": "2509.11815",
+  "requested_title": "SpecVLM: Fast Speculative Decoding in Vision-Language Models",
+  "source_url": "https://arxiv.org/abs/2509.11815",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2509.11815",
+  "citation_metadata": {
+    "citation_title": [
+      "SpecVLM: Fast Speculative Decoding in Vision-Language Models"
+    ],
+    "citation_author": [
+      "Huang, Haiduo",
+      "Yang, Fuwei",
+      "Liu, Zhenhua",
+      "Yin, Xuanwu",
+      "Li, Dong",
+      "Ren, Pengju",
+      "Barsoum, Emad"
+    ],
+    "citation_date": [
+      "2025/09/15"
+    ],
+    "citation_online_date": [
+      "2025/09/21"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2509.11815"
+    ],
+    "citation_arxiv_id": [
+      "2509.11815"
+    ],
+    "citation_abstract": [
+      "Speculative decoding is a powerful way to accelerate autoregressive large language models (LLMs), but directly porting it to vision-language models (VLMs) faces unique systems constraints: the prefill stage is dominated by visual tokens whose count scales with image resolution and video length, inflating both compute and memory, especially the key-value (KV) cache. We study speculative decoding for VLMs and introduce SpecVLM, a practical system that (1) establishes a strong EAGLE-2-style baseline, EagleVLM, delivering 1.5--2.3x end-to-end speedups over full autoregressive inference, and (2) further accelerates VLM inference with an elastic visual compressor that adaptively selects among pruning, pooling, convolution, and resampler primitives to balance FLOPs/parameters and accuracy per input. To avoid costly offline distillation corpora, we propose an online-logit distillation protocol that trains the draft model with on-the-fly teacher logits and penultimate features using a combined cross-entropy and Smooth L1 objective, eliminating storage and preprocessing while remaining compute-efficient. This protocol reveals a training-time scaling effect: longer online training monotonically increases the draft model's average accepted length, improving speculative efficiency. Empirically, SpecVLM achieves additional acceleration, culminating in 2.5--2.9x end-to-end speedups within 5 epochs across LLaVA and MMMU, consistently over resolutions and task difficulties, while preserving the target model's output distribution (lossless decoding). Our code is available at https://github.com/haiduo/SpecVLM."
+    ]
+  },
+  "online_title": "SpecVLM: Fast Speculative Decoding in Vision-Language Models",
+  "title_similarity": 1.0,
+  "arxiv_version": "2509.11815v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2509.11815v2",
+  "local_pdf": "pdfs/2509.11815.pdf",
+  "bytes": 813136,
+  "sha256": "c7ec50cec06178ea3ea95520f85837fe0262889e760c3ed2d409914bf781f24f",
+  "text_status": "extracted",
+  "local_text": "texts/2509.11815.txt"
+}

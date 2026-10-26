@@ -1,0 +1,48 @@
+{
+  "id": "2609.00355",
+  "requested_title": "Vision Is Not Overhead: One-Pass Block Drafting for Lossless Speculative Decoding in Vision-Language Models",
+  "source_url": "https://arxiv.org/abs/2609.00355",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2609.00355",
+  "citation_metadata": {
+    "citation_title": [
+      "Vision Is Not Overhead: One-Pass Block Drafting for Lossless Speculative Decoding in Vision-Language Models"
+    ],
+    "citation_author": [
+      "Lee, Jungseob",
+      "Hong, Seongtae",
+      "Lee, Dongyub Jude",
+      "Park, Chanjun",
+      "Seo, Jaehyung",
+      "Eo, Sugyeong",
+      "Lim, Heuiseok"
+    ],
+    "citation_date": [
+      "2026/08/31"
+    ],
+    "citation_online_date": [
+      "2026/10/06"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2609.00355"
+    ],
+    "citation_arxiv_id": [
+      "2609.00355"
+    ],
+    "citation_abstract": [
+      "Speculative decoding accelerates generation without changing its output, but on vision-language models (VLMs) a self-reinforcing cycle holds it back. Because an autoregressive drafter pays a sequential pass for each drafted token, it must stay small and can ill afford to attend to the image at each pass. Prior work therefore compresses or hides the image, leaving the drafter weakest on the text the image determines. We present GLANCE, a one-pass block drafter that breaks this cycle on an unmodified VLM target. Its block-diffusion head drafts a whole block in one forward pass over the target's already fused vision-language states, reading the multimodal context once, however deep the draft. The target verifies a wide candidate tree in one pass and commits exactly its greedy output. In one production engine at a fixed round budget, GLANCE decodes up to 3.05 times faster than autoregressive decoding and outpaces the production EAGLE3-VL head on average and by about 11% on grounded tasks. An entropy law explains when drafting pays, predicting the longest accepted blocks on grounded tasks, where the target's next-token entropy is lowest. Our code is available at https://github.com/js-lee-AI/GLANCE."
+    ]
+  },
+  "online_title": "Vision Is Not Overhead: One-Pass Block Drafting for Lossless Speculative Decoding in Vision-Language Models",
+  "title_similarity": 1.0,
+  "arxiv_version": "2609.00355v3",
+  "metadata_status": "fetched",
+  "semantic_scholar_error": "HTTP Error 429: ",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2609.00355v3",
+  "local_pdf": "pdfs/2609.00355.pdf",
+  "bytes": 889753,
+  "sha256": "5743c44405ebded6380bf27bda9a1022d3ac2629bf18d39524eb850958b91afd",
+  "text_status": "extracted",
+  "local_text": "texts/2609.00355.txt"
+}

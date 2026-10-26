@@ -1,0 +1,48 @@
+{
+  "id": "2607.19223",
+  "requested_title": "AdaFlash: Adaptive Speculative Decoding via On-Policy Distilled Diffusion Drafters",
+  "source_url": "https://arxiv.org/abs/2607.19223",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2607.19223",
+  "citation_metadata": {
+    "citation_title": [
+      "AdaFlash: Adaptive Speculative Decoding via On-Policy Distilled Diffusion Drafters"
+    ],
+    "citation_author": [
+      "Qian, Yu-Yang",
+      "Wu, Hao-Cong",
+      "Chen, Chen",
+      "Sun, Jiacheng",
+      "Dong, Zhenhua",
+      "Zhao, Peng",
+      "Zhou, Zhi-Hua"
+    ],
+    "citation_date": [
+      "2026/07/21"
+    ],
+    "citation_online_date": [
+      "2026/09/26"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2607.19223"
+    ],
+    "citation_arxiv_id": [
+      "2607.19223"
+    ],
+    "citation_abstract": [
+      "Speculative decoding, in which a lightweight draft model first generates a draft sequence that is then verified by the target model, has become a prevalent paradigm for accelerating large language model inference. Recent work such as DFlash further boosts drafting efficiency by leveraging diffusion drafters, whose parallel denoising mechanism enables draft generation in a single forward pass. In this work, we uncover a central pitfall of diffusion drafters: the global dependency, arising from bidirectional attention and KV injection in diffusion drafters, is a double-edged sword. On one hand, it endows the model with parallel generation and global contextual modeling capabilities; on the other hand, this global dependency introduces high variance at both the domain-level and the token-level: acceptance rates fluctuate substantially across different domains, and the acceptance probability varies across draft positions. To tackle this issue, we propose the AdaFlash framework, comprising two components: (i) an on-policy distillation (OPD) algorithm with reverse-KL divergence tailored for diffusion drafters, which delivers stable convergence and continuously adapts the drafter to the deployment distribution; and (ii) an adaptive length head that dynamically adjusts the candidate length on the fly, substantially lowering the verification cost of the target model. Experiments demonstrate that AdaFlash consistently improves the speedup during deployment, with especially significant gains under high-concurrency, achieving up to 66% higher average throughput than previous state-of-the-art methods. Our code is available at https://github.com/ZinYY/AdaFlash."
+    ]
+  },
+  "online_title": "AdaFlash: Adaptive Speculative Decoding via On-Policy Distilled Diffusion Drafters",
+  "title_similarity": 1.0,
+  "arxiv_version": "2607.19223v3",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2607.19223v3",
+  "local_pdf": "pdfs/2607.19223.pdf",
+  "bytes": 920085,
+  "sha256": "cddfaf7cdcd8765fa1cdc9e0fba3b5ce6e2fe6de0efb4a876eb848f96d5bbd1c",
+  "text_status": "extracted",
+  "local_text": "texts/2607.19223.txt"
+}

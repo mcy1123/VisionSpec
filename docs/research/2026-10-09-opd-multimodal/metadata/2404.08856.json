@@ -1,0 +1,47 @@
+{
+  "id": "2404.08856",
+  "requested_title": "On Speculative Decoding for Multimodal Large Language Models",
+  "source_url": "https://arxiv.org/abs/2404.08856",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2404.08856",
+  "citation_metadata": {
+    "citation_title": [
+      "On Speculative Decoding for Multimodal Large Language Models"
+    ],
+    "citation_author": [
+      "Gagrani, Mukul",
+      "Goel, Raghavv",
+      "Jeon, Wonseok",
+      "Park, Junyoung",
+      "Lee, Mingu",
+      "Lott, Christopher"
+    ],
+    "citation_date": [
+      "2024/04/13"
+    ],
+    "citation_online_date": [
+      "2024/04/13"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2404.08856"
+    ],
+    "citation_arxiv_id": [
+      "2404.08856"
+    ],
+    "citation_abstract": [
+      "Inference with Multimodal Large Language Models (MLLMs) is slow due to their large-language-model backbone which suffers from memory bandwidth bottleneck and generates tokens auto-regressively. In this paper, we explore the application of speculative decoding to enhance the inference efficiency of MLLMs, specifically the LLaVA 7B model. We show that a language-only model can serve as a good draft model for speculative decoding with LLaVA 7B, bypassing the need for image tokens and their associated processing components from the draft model. Our experiments across three different tasks show that speculative decoding can achieve a memory-bound speedup of up to 2.37$\\times$ using a 115M parameter language model that we trained from scratch. Additionally, we introduce a compact LLaVA draft model incorporating an image adapter, which shows marginal performance gains in image captioning while maintaining comparable results in other tasks."
+    ]
+  },
+  "online_title": "On Speculative Decoding for Multimodal Large Language Models",
+  "title_similarity": 1.0,
+  "arxiv_version": "2404.08856v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2404.08856v1",
+  "local_pdf": "pdfs/2404.08856.pdf",
+  "bytes": 833929,
+  "sha256": "d9768fdba8c3bbee52c682acd318aa68016a097a039bad37953ea6a37622048c",
+  "text_status": "extracted",
+  "local_text": "texts/2404.08856.txt"
+}

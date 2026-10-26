@@ -1,0 +1,43 @@
+{
+  "id": "2607.01893",
+  "requested_title": "Spec-AUF: Accept-Until-Fail Training under Train-Inference Misalignment for Masked Block Drafters",
+  "source_url": "https://arxiv.org/abs/2607.01893",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2607.01893",
+  "citation_metadata": {
+    "citation_title": [
+      "Spec-AUF: Accept-Until-Fail Training under Train-Inference Misalignment for Masked Block Drafters"
+    ],
+    "citation_author": [
+      "Yang, Tianjian",
+      "Li, Meng"
+    ],
+    "citation_date": [
+      "2026/07/02"
+    ],
+    "citation_online_date": [
+      "2026/07/02"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2607.01893"
+    ],
+    "citation_arxiv_id": [
+      "2607.01893"
+    ],
+    "citation_abstract": [
+      "Speculative decoding accelerates autoregressive generation by drafting a block of tokens that the target model verifies left-to-right, committing only the longest accepted prefix. Block (DLM-style) drafters predict the whole block in parallel, which is fast but trained with a full-block cross-entropy that supervises every position against the gold continuation -- even though inference discards every token after the first rejection. Recent acceptance-aware objectives patch this by reweighting the full-block loss; we instead use teacher-forced learning as a motivation for how supervision should concentrate on the accepted prefix. A mask-only block drafter has no input-side channel for gold-prefix conditioning, so AUF approximates that prefix-sensitive supervision on the loss side by keeping the cross-entropy support only through the drafter's first predicted failure. AUF is a single, detached change to the CE support -- no auxiliary objective, no verifier rollouts, and no change to the inference pipeline or the exactness contract. Within fixed drafter backbones and serving settings on Qwen3-8B, AUF raises the DFlash drafter's average emitted length $\\tau$, averaged over six benchmarks, from 2.40 to 2.61, with a gain on every benchmark, and transfers to Domino's two-branch head (2.56 to 2.68). Two findings sharpen the picture: the decay-only baseline reaches higher token accuracy on the shared block mask yet decodes worse, and on DFlash, once AUF truncates the support, the standard exponential position-decay weighting becomes empirically inert."
+    ]
+  },
+  "online_title": "Spec-AUF: Accept-Until-Fail Training under Train-Inference Misalignment for Masked Block Drafters",
+  "title_similarity": 1.0,
+  "arxiv_version": "2607.01893v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2607.01893v1",
+  "local_pdf": "pdfs/2607.01893.pdf",
+  "bytes": 3287124,
+  "sha256": "07f5e2a3be5795da2e88e6b52f05bbec2292c615e15f90506b56e7ffc2068949",
+  "text_status": "extracted",
+  "local_text": "texts/2607.01893.txt"
+}

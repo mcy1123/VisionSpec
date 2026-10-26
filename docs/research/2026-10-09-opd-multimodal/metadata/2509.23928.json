@@ -1,0 +1,45 @@
+{
+  "id": "2509.23928",
+  "requested_title": "HiViS: Hiding Visual Tokens from the Drafter for Speculative Decoding in Vision-Language Models",
+  "source_url": "https://arxiv.org/abs/2509.23928",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2509.23928",
+  "citation_metadata": {
+    "citation_title": [
+      "HiViS: Hiding Visual Tokens from the Drafter for Speculative Decoding in Vision-Language Models"
+    ],
+    "citation_author": [
+      "Xie, Zhinan",
+      "Wang, Peisong",
+      "Qiu, Shuang",
+      "Cheng, Jian"
+    ],
+    "citation_date": [
+      "2025/09/28"
+    ],
+    "citation_online_date": [
+      "2026/08/23"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2509.23928"
+    ],
+    "citation_arxiv_id": [
+      "2509.23928"
+    ],
+    "citation_abstract": [
+      "Speculative decoding has proven effective for accelerating inference in Large Language Models (LLMs), yet its extension to Vision-Language Models (VLMs) remains limited by the computational burden and semantic inconsistency introduced by visual tokens. Recent studies reveal that visual tokens in large VLMs are highly redundant, and most of them can be removed without compromising generation quality. Motivated by this observation, we propose HiViS (Hiding Visual Tokens from the Drafter for Speculative Decoding in Vision-Language Models), a framework that utilizes the target VLM as a semantic fusion model, allowing the drafter to obtain visual information without explicitly processing visual tokens, ensuring that the drafter's prefill sequence length matches that of the textual tokens. Furthermore, HiViS employs a time-step-aware aligned training scheme that allows the drafter to autonomously propagate and refine instructive visual-textual semantics during independent drafting, guided by step-dependent bias-correction residuals. Extensive experiments across representative VLMs and benchmarks demonstrate that HiViS achieves significant improvements in average acceptance length and speedup ratio."
+    ]
+  },
+  "online_title": "HiViS: Hiding Visual Tokens from the Drafter for Speculative Decoding in Vision-Language Models",
+  "title_similarity": 1.0,
+  "arxiv_version": "2509.23928v3",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2509.23928v3",
+  "local_pdf": "pdfs/2509.23928.pdf",
+  "bytes": 1277484,
+  "sha256": "60bc1cfc278e8eea64141210c17f2c2cc2d0e5ab9999916a343e8018b92c863a",
+  "text_status": "extracted",
+  "local_text": "texts/2509.23928.txt"
+}

@@ -1,0 +1,45 @@
+{
+  "id": "2510.19779",
+  "requested_title": "AdaSPEC: Selective Knowledge Distillation for Efficient Speculative Decoders",
+  "source_url": "https://arxiv.org/abs/2510.19779",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2510.19779",
+  "citation_metadata": {
+    "citation_title": [
+      "AdaSPEC: Selective Knowledge Distillation for Efficient Speculative Decoders"
+    ],
+    "citation_author": [
+      "Hu, Yuezhou",
+      "Guo, Jiaxin",
+      "Feng, Xinyu",
+      "Zhao, Tuo"
+    ],
+    "citation_date": [
+      "2025/10/22"
+    ],
+    "citation_online_date": [
+      "2025/10/22"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2510.19779"
+    ],
+    "citation_arxiv_id": [
+      "2510.19779"
+    ],
+    "citation_abstract": [
+      "Speculative Decoding (SD) accelerates large language model inference by employing a small draft model to generate predictions, which are then verified by a larger target model. The effectiveness of SD hinges on the alignment between these models, which is typically enhanced by Knowledge Distillation (KD). However, conventional KD methods aim to minimize the KL divergence between the draft and target models across all tokens, a goal that is misaligned with the true objective of SD, which is to maximize token acceptance rate. Therefore, draft models often struggle to fully assimilate the target model's knowledge due to capacity constraints, leading to suboptimal performance. To address this challenge, we propose AdaSPEC, a novel method that incorporates selective token filtering into the KD process. AdaSPEC utilizes a reference model to identify and filter out difficult-to-fit tokens, enabling the distillation of a draft model that better aligns with the target model on simpler tokens. This approach improves the overall token acceptance rate without compromising generation quality. We evaluate AdaSPEC across diverse tasks, including arithmetic reasoning, instruction-following, coding, and summarization, using model configurations of 31M/1.4B and 350M/2.7B parameters. Our results demonstrate that AdaSPEC consistently outperforms the state-of-the-art DistillSpec method, achieving higher acceptance rates across all tasks (up to 15\\%). The code is publicly available at https://github.com/yuezhouhu/adaspec."
+    ]
+  },
+  "online_title": "AdaSPEC: Selective Knowledge Distillation for Efficient Speculative Decoders",
+  "title_similarity": 1.0,
+  "arxiv_version": "2510.19779v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2510.19779v1",
+  "local_pdf": "pdfs/2510.19779.pdf",
+  "bytes": 1468789,
+  "sha256": "542eb018ef4ff37b0d3dd08760985156e3877388f911120905f9fb3bcf52dda2",
+  "text_status": "extracted",
+  "local_text": "texts/2510.19779.txt"
+}

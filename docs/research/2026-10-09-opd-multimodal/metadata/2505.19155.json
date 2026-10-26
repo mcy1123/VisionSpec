@@ -1,0 +1,48 @@
+{
+  "id": "2505.19155",
+  "requested_title": "Sparse-to-Dense: A Free Lunch for Lossless Acceleration of Video Understanding in LLMs",
+  "source_url": "https://arxiv.org/abs/2505.19155",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2505.19155",
+  "citation_metadata": {
+    "citation_title": [
+      "Sparse-to-Dense: A Free Lunch for Lossless Acceleration of Video Understanding in LLMs"
+    ],
+    "citation_author": [
+      "Zhang, Xuan",
+      "Du, Cunxiao",
+      "Yu, Sicheng",
+      "Wu, Jiawei",
+      "Zhang, Fengzhuo",
+      "Gao, Wei",
+      "Liu, Qian"
+    ],
+    "citation_date": [
+      "2025/05/25"
+    ],
+    "citation_online_date": [
+      "2026/05/18"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2505.19155"
+    ],
+    "citation_arxiv_id": [
+      "2505.19155"
+    ],
+    "citation_abstract": [
+      "Due to the auto-regressive nature of current video large language models (Video-LLMs), the inference latency increases as the input sequence length grows, posing challenges for the efficient processing of video sequences that are usually very long. We observe that during decoding, the attention scores of most tokens in Video-LLMs tend to be sparse and concentrated, with only certain tokens requiring comprehensive full attention. Based on this insight, we introduce Sparse-to-Dense (StD), a novel decoding strategy that integrates two distinct modules: one leveraging sparse top-K attention and the other employing dense full attention. These modules collaborate to accelerate Video-LLMs without loss. The fast (sparse) model speculatively decodes multiple tokens, while the slow (dense) model verifies them in parallel. StD is a tuning-free, plug-and-play solution that achieves up to a 1.94$\\times$ walltime speedup in video processing. It maintains model performance while enabling a seamless transition from a standard Video-LLM to a sparse Video-LLM with minimal code modifications."
+    ]
+  },
+  "online_title": "Sparse-to-Dense: A Free Lunch for Lossless Acceleration of Video Understanding in LLMs",
+  "title_similarity": 1.0,
+  "arxiv_version": "2505.19155v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2505.19155v2",
+  "local_pdf": "pdfs/2505.19155.pdf",
+  "bytes": 295528,
+  "sha256": "12474459674edd028fa5f679d41ee3ea79b546187b75a23dd88ffaa8b905cd2f",
+  "text_status": "extracted",
+  "local_text": "texts/2505.19155.txt"
+}

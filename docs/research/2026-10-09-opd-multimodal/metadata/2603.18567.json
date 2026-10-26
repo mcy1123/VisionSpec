@@ -1,0 +1,58 @@
+{
+  "id": "2603.18567",
+  "requested_title": "SpecForge: A Flexible and Efficient Open-Source Training Framework for Speculative Decoding",
+  "source_url": "https://arxiv.org/abs/2603.18567",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2603.18567",
+  "citation_metadata": {
+    "citation_title": [
+      "SpecForge: A Flexible and Efficient Open-Source Training Framework for Speculative Decoding"
+    ],
+    "citation_author": [
+      "Li, Shenggui",
+      "Wang, Chao",
+      "Zhu, Yikai",
+      "Wang, Yubo",
+      "Yin, Fan",
+      "Shi, Shuai",
+      "Chen, Yefei",
+      "Dong, Xiaomin",
+      "Chen, Qiaoling",
+      "Pan, Jin",
+      "Li, Ji",
+      "Xie, Laixin",
+      "Zhang, Yineng",
+      "Yu, Lei",
+      "Wen, Yonggang",
+      "Tsang, Ivor",
+      "Zhang, Tianwei"
+    ],
+    "citation_date": [
+      "2026/03/19"
+    ],
+    "citation_online_date": [
+      "2026/03/19"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2603.18567"
+    ],
+    "citation_arxiv_id": [
+      "2603.18567"
+    ],
+    "citation_abstract": [
+      "Large language models incur high inference latency due to sequential autoregressive decoding. Speculative decoding alleviates this bottleneck by using a lightweight draft model to propose multiple tokens for batched verification. However, its adoption has been limited by the lack of high-quality draft models and scalable training infrastructure. We introduce SpecForge, an open-source, production-oriented framework for training speculative decoding models with full support for EAGLE-3. SpecForge incorporates target-draft decoupling, hybrid parallelism, optimized training kernels, and integration with production-grade inference engines, enabling up to 9.9x faster EAGLE-3 training for Qwen3-235B-A22B. In addition, we release SpecBundle, a suite of production-grade EAGLE-3 draft models trained with SpecForge for mainstream open-source LLMs. Through a systematic study of speculative decoding training recipes, SpecBundle addresses the scarcity of high-quality drafts in the community, and our draft models achieve up to 4.48x end-to-end inference speedup on SGLang, establishing SpecForge as a practical foundation for real-world speculative decoding deployment."
+    ]
+  },
+  "online_title": "SpecForge: A Flexible and Efficient Open-Source Training Framework for Speculative Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2603.18567v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2603.18567v1",
+  "local_pdf": "pdfs/2603.18567.pdf",
+  "bytes": 665710,
+  "sha256": "42f682f2efc204e753c92216f692d8b1828f9a987e29038f2b3db080edbd7d2d",
+  "text_status": "extracted",
+  "local_text": "texts/2603.18567.txt"
+}

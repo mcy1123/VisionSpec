@@ -1,0 +1,58 @@
+{
+  "id": "2602.06932",
+  "requested_title": "When RL Meets Adaptive Speculative Training: A Unified Training-Serving System",
+  "source_url": "https://arxiv.org/abs/2602.06932",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2602.06932",
+  "citation_metadata": {
+    "citation_title": [
+      "When RL Meets Adaptive Speculative Training: A Unified Training-Serving System"
+    ],
+    "citation_author": [
+      "Wang, Junxiong",
+      "Bie, Fengxiang",
+      "Li, Jisen",
+      "Zhou, Zhongzhu",
+      "Shao, Zelei",
+      "Wang, Yubo",
+      "Liu, Yinghui",
+      "Wu, Qingyang",
+      "May, Avner",
+      "Yanamandra, Sri",
+      "Zhang, Ce",
+      "Dao, Tri",
+      "Liang, Percy",
+      "Athiwaratkun, Ben",
+      "Song, Shuaiwen Leon",
+      "Xu, Chenfeng",
+      "Wu, Xiaoxia"
+    ],
+    "citation_date": [
+      "2026/02/06"
+    ],
+    "citation_online_date": [
+      "2026/08/04"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2602.06932"
+    ],
+    "citation_arxiv_id": [
+      "2602.06932"
+    ],
+    "citation_abstract": [
+      "Speculative decoding can significantly accelerate LLM serving, yet most deployments today disentangle speculator training from serving, treating speculator training as a standalone offline modeling problem. We show that this decoupled formulation introduces substantial deployment and adaptation lag: (1) high time-to-serve, since a speculator must be trained offline for a considerable period before deployment; (2) delayed utility feedback, since the true end-to-end decoding speedup is only known after training and cannot be inferred reliably from acceptance rate alone due to model-architecture and system-level overheads; and (3) domain-drift degradation, as the target model is repurposed to new domains and the speculator becomes stale and less effective. To address these issues, we present Aurora, a unified training-serving system that closes the loop by continuously learning a speculator directly from live inference traces. Aurora reframes online speculator learning as an asynchronous reinforcement-learning problem: accepted tokens provide positive feedback, while rejected speculator proposals provide implicit negative feedback that we exploit to improve sample efficiency. Our design integrates an SGLang-based inference server with an asynchronous training server, enabling hot-swapped speculator updates without service interruption. Crucially, Aurora supports day-0 deployment: a speculator can be served immediately and rapidly adapted to live traffic, improving system performance while providing immediate utility feedback. Across experiments, Aurora achieves a 1.5x day-0 speedup on recently released frontier models (e.g., MiniMax M2.1 229B and Qwen3-Coder-Next 80B). Aurora also adapts effectively to distribution shifts in user traffic, delivering an additional 1.25x speedup over a well-trained but static speculator on widely used models (e.g., Qwen3 and Llama3)."
+    ]
+  },
+  "online_title": "When RL Meets Adaptive Speculative Training: A Unified Training-Serving System",
+  "title_similarity": 1.0,
+  "arxiv_version": "2602.06932v5",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2602.06932v5",
+  "local_pdf": "pdfs/2602.06932.pdf",
+  "bytes": 7794968,
+  "sha256": "10a2020d3a61c53824443cc72a01acc867d79d550e4b94e938e4475cc3dd65d4",
+  "text_status": "extracted",
+  "local_text": "texts/2602.06932.txt"
+}

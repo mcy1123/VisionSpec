@@ -1,0 +1,47 @@
+{
+  "id": "2505.12728",
+  "requested_title": "SpecFLASH: A Latent-Guided Semi-autoregressive Speculative Decoding Framework for Efficient Multimodal Generation",
+  "source_url": "https://arxiv.org/abs/2505.12728",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2505.12728",
+  "citation_metadata": {
+    "citation_title": [
+      "SpecFLASH: A Latent-Guided Semi-autoregressive Speculative Decoding Framework for Efficient Multimodal Generation"
+    ],
+    "citation_author": [
+      "Wang, Zihua",
+      "Li, Ruibo",
+      "Du, Haozhe",
+      "Zhou, Joey Tianyi",
+      "Zhang, Yu",
+      "Yang, Xu"
+    ],
+    "citation_date": [
+      "2025/05/19"
+    ],
+    "citation_online_date": [
+      "2026/02/03"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2505.12728"
+    ],
+    "citation_arxiv_id": [
+      "2505.12728"
+    ],
+    "citation_abstract": [
+      "Large language models and large multimodal models (LLMs and LMMs) deliver strong generative performance but suffer from slow decoding, a problem that becomes more severe when handling visual inputs, whose sequences typically contain many more tokens with lower information density than text. Speculative decoding accelerates LLM inference by letting a compact draft model propose candidate tokens that are selectively accepted by a larger target model, achieving speed-up without degrading quality. However, existing multimodal speculative decoding approaches largely ignore the structural characteristics of visual representations and usually rely on text-only draft models. In this paper, we introduce SpecFLASH, a speculative decoding framework tailored to LMMs that explicitly exploits multimodal structure when designing the draft model. We first mitigate redundancy in visual token sequences with a lightweight, latent-guided token compression module that compacts visual features while preserving semantics, and then leverage the co-occurrence and local correlations of visual entities via a semi-autoregressive decoding scheme that predicts multiple tokens in a single forward pass. Extensive experiments demonstrate that SpecFLASH consistently surpasses prior speculative decoding baselines, achieving up to $2.68\\times$ speed-up on video captioning and $2.55\\times$ on visual instruction tuning, relative to the original LMM. Our code is available here: https://github.com/ZihuaEvan/FlashSD/."
+    ]
+  },
+  "online_title": "SpecFLASH: A Latent-Guided Semi-autoregressive Speculative Decoding Framework for Efficient Multimodal Generation",
+  "title_similarity": 1.0,
+  "arxiv_version": "2505.12728v3",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2505.12728v3",
+  "local_pdf": "pdfs/2505.12728.pdf",
+  "bytes": 677582,
+  "sha256": "262142fb4ea2be96e1cca4cb43d449bffcc168a95f3bdaef8b15fc5fd52487d7",
+  "text_status": "extracted",
+  "local_text": "texts/2505.12728.txt"
+}

@@ -1,0 +1,51 @@
+{
+  "id": "2410.11325",
+  "requested_title": "Speculative Knowledge Distillation: Bridging the Teacher-Student Gap Through Interleaved Sampling",
+  "source_url": "https://arxiv.org/abs/2410.11325",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2410.11325",
+  "citation_metadata": {
+    "citation_title": [
+      "Speculative Knowledge Distillation: Bridging the Teacher-Student Gap Through Interleaved Sampling"
+    ],
+    "citation_author": [
+      "Xu, Wenda",
+      "Han, Rujun",
+      "Wang, Zifeng",
+      "Le, Long T.",
+      "Madeka, Dhruv",
+      "Li, Lei",
+      "Wang, William Yang",
+      "Agarwal, Rishabh",
+      "Lee, Chen-Yu",
+      "Pfister, Tomas"
+    ],
+    "citation_date": [
+      "2024/10/15"
+    ],
+    "citation_online_date": [
+      "2025/04/27"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2410.11325"
+    ],
+    "citation_arxiv_id": [
+      "2410.11325"
+    ],
+    "citation_abstract": [
+      "Recent advances in knowledge distillation (KD) have enabled smaller student models to approach the performance of larger teacher models. However, popular methods such as supervised KD and on-policy KD, are adversely impacted by the knowledge gaps between teacher-student in practical scenarios. Supervised KD suffers from a distribution mismatch between training with a static dataset and inference over final student-generated outputs. Conversely, on-policy KD, which uses student-generated samples for training, can suffer from low-quality training examples with which teacher models are not familiar, resulting in inaccurate teacher feedback. To address these limitations, we introduce Speculative Knowledge Distillation (SKD), a novel approach that leverages cooperation between student and teacher models to generate high-quality training data on-the-fly while aligning with the student's inference-time distribution. In SKD, the student proposes tokens, and the teacher replaces poorly ranked ones based on its own distribution, transferring high-quality knowledge adaptively. We evaluate SKD on various text generation tasks, including translation, summarization, math, and instruction following, and show that SKD consistently outperforms existing KD methods across different domains, data sizes, and model initialization strategies."
+    ]
+  },
+  "online_title": "Speculative Knowledge Distillation: Bridging the Teacher-Student Gap Through Interleaved Sampling",
+  "title_similarity": 1.0,
+  "arxiv_version": "2410.11325v3",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2410.11325v3",
+  "local_pdf": "pdfs/2410.11325.pdf",
+  "bytes": 1245203,
+  "sha256": "670f8e2850a5818bcb4b85b36d4ba9d76135afaa33675eea5db62420547736b2",
+  "text_status": "extracted",
+  "local_text": "texts/2410.11325.txt"
+}

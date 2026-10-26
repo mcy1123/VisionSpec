@@ -1,0 +1,48 @@
+{
+  "id": "2503.07067",
+  "requested_title": "DistiLLM-2: A Contrastive Approach Boosts the Distillation of LLMs",
+  "source_url": "https://arxiv.org/abs/2503.07067",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2503.07067",
+  "citation_metadata": {
+    "citation_title": [
+      "DistiLLM-2: A Contrastive Approach Boosts the Distillation of LLMs"
+    ],
+    "citation_author": [
+      "Ko, Jongwoo",
+      "Chen, Tianyi",
+      "Kim, Sungnyun",
+      "Ding, Tianyu",
+      "Liang, Luming",
+      "Zharkov, Ilya",
+      "Yun, Se-Young"
+    ],
+    "citation_date": [
+      "2025/03/10"
+    ],
+    "citation_online_date": [
+      "2025/05/30"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2503.07067"
+    ],
+    "citation_arxiv_id": [
+      "2503.07067"
+    ],
+    "citation_abstract": [
+      "Despite the success of distillation in large language models (LLMs), most prior work applies identical loss functions to both teacher- and student-generated data. These strategies overlook the synergy between loss formulations and data types, leading to a suboptimal performance boost in student models. To address this, we propose DistiLLM-2, a contrastive approach that simultaneously increases the likelihood of teacher responses and decreases that of student responses by harnessing this synergy. Our extensive experiments show that DistiLLM-2 not only builds high-performing student models across a wide range of tasks, including instruction-following and code generation, but also supports diverse applications, such as preference alignment and vision-language extensions. These findings highlight the potential of a contrastive approach to enhance the efficacy of LLM distillation by effectively aligning teacher and student models across varied data types."
+    ]
+  },
+  "online_title": "DistiLLM-2: A Contrastive Approach Boosts the Distillation of LLMs",
+  "title_similarity": 1.0,
+  "arxiv_version": "2503.07067v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2503.07067v2",
+  "local_pdf": "pdfs/2503.07067.pdf",
+  "bytes": 655832,
+  "sha256": "c8ed8bdd190d1c0d3bee5b8506f6f50f4199a90d9f50d14d4d79c0b89d76517d",
+  "text_status": "extracted",
+  "local_text": "texts/2503.07067.txt"
+}

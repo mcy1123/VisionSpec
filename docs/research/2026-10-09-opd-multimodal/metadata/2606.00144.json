@@ -1,0 +1,48 @@
+{
+  "id": "2606.00144",
+  "requested_title": "BudgetDraft: Acceptance-Aware Multi-View Training for Sparse-KV Speculative Decoding",
+  "source_url": "https://arxiv.org/abs/2606.00144",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2606.00144",
+  "citation_metadata": {
+    "citation_title": [
+      "BudgetDraft: Acceptance-Aware Multi-View Training for Sparse-KV Speculative Decoding"
+    ],
+    "citation_author": [
+      "He, Liang",
+      "Wen, Jingbo",
+      "Zhan, Qishi",
+      "Chen, Yixiong",
+      "Cui, Kangning",
+      "Lan, Qizhen",
+      "Wang, Xilu"
+    ],
+    "citation_date": [
+      "2026/05/29"
+    ],
+    "citation_online_date": [
+      "2026/05/29"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2606.00144"
+    ],
+    "citation_arxiv_id": [
+      "2606.00144"
+    ],
+    "citation_abstract": [
+      "Speculative decoding speeds up autoregressive decoding by using a drafter to propose multiple tokens that a verifier validates in parallel. In resource-constrained deployments, the drafter uses a sparse KV cache to limit peak GPU memory and end-to-end latency under a fixed KV budget, while the verifier keeps a full KV cache. Mid-to-long context inference (4K--16K context length) is common in real applications. However, naive sparse/full speculative decoding suffers from the sparse/full mismatch as context length grows, causing the acceptance rate to drop quickly. We propose BudgetDraft, a multi-view sparse training method for sparse drafting in mid-to-long inference. The drafter is exposed to multiple sampled KV budgets during training and learns to align each sparse view with one shared full-cache teacher target. BudgetDraft combines an acceptance-aware loss on a full-cache branch with a multi-view loss on a sparse-cache branch, producing a single budget-robust drafter that recovers acceptance across sparsity levels without extra inference-time components. Experimental results on PG-19, LongBench, and LWM show that BudgetDraft achieves up to 6.55x, 4.46x, and 2.10x end-to-end speedup vs AR at 4K, 8K, and 16K context lengths, while keeping the inference pipeline memory-friendly."
+    ]
+  },
+  "online_title": "BudgetDraft: Acceptance-Aware Multi-View Training for Sparse-KV Speculative Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2606.00144v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2606.00144v1",
+  "local_pdf": "pdfs/2606.00144.pdf",
+  "bytes": 1753968,
+  "sha256": "af8488a7e0dedde2d33fd642a054c2bd98df58035a50f7331ba41b7a182e775f",
+  "text_status": "extracted",
+  "local_text": "texts/2606.00144.txt"
+}

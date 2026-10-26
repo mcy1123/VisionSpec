@@ -1,0 +1,46 @@
+{
+  "id": "2509.15235",
+  "requested_title": "ViSpec: Accelerating Vision-Language Models with Vision-Aware Speculative Decoding",
+  "source_url": "https://arxiv.org/abs/2509.15235",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2509.15235",
+  "citation_metadata": {
+    "citation_title": [
+      "ViSpec: Accelerating Vision-Language Models with Vision-Aware Speculative Decoding"
+    ],
+    "citation_author": [
+      "Kang, Jialiang",
+      "Shu, Han",
+      "Li, Wenshuo",
+      "Zhai, Yingjie",
+      "Chen, Xinghao"
+    ],
+    "citation_date": [
+      "2025/09/17"
+    ],
+    "citation_online_date": [
+      "2025/10/23"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2509.15235"
+    ],
+    "citation_arxiv_id": [
+      "2509.15235"
+    ],
+    "citation_abstract": [
+      "Speculative decoding is a widely adopted technique for accelerating inference in large language models (LLMs), yet its application to vision-language models (VLMs) remains underexplored, with existing methods achieving only modest speedups (<1.5x). This gap is increasingly significant as multimodal capabilities become central to large-scale models. We hypothesize that large VLMs can effectively filter redundant image information layer by layer without compromising textual comprehension, whereas smaller draft models struggle to do so. To address this, we introduce Vision-Aware Speculative Decoding (ViSpec), a novel framework tailored for VLMs. ViSpec employs a lightweight vision adaptor module to compress image tokens into a compact representation, which is seamlessly integrated into the draft model's attention mechanism while preserving original image positional information. Additionally, we extract a global feature vector for each input image and augment all subsequent text tokens with this feature to enhance multimodal coherence. To overcome the scarcity of multimodal datasets with long assistant responses, we curate a specialized training dataset by repurposing existing datasets and generating extended outputs using the target VLM with modified prompts. Our training strategy mitigates the risk of the draft model exploiting direct access to the target model's hidden states, which could otherwise lead to shortcut learning when training solely on target model outputs. Extensive experiments validate ViSpec, achieving, to our knowledge, the first substantial speedup in VLM speculative decoding. Code is available at https://github.com/KangJialiang/ViSpec."
+    ]
+  },
+  "online_title": "ViSpec: Accelerating Vision-Language Models with Vision-Aware Speculative Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2509.15235v5",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2509.15235v5",
+  "local_pdf": "pdfs/2509.15235.pdf",
+  "bytes": 2830348,
+  "sha256": "d42694f07c8c7a4882d93457c16725bf9408572f25a40a206d7fa10d0f99a191",
+  "text_status": "extracted",
+  "local_text": "texts/2509.15235.txt"
+}

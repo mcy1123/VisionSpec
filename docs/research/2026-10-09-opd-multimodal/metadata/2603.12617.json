@@ -1,0 +1,46 @@
+{
+  "id": "2603.12617",
+  "requested_title": "When Drafts Evolve: Speculative Decoding Meets Online Learning",
+  "source_url": "https://arxiv.org/abs/2603.12617",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2603.12617",
+  "citation_metadata": {
+    "citation_title": [
+      "When Drafts Evolve: Speculative Decoding Meets Online Learning"
+    ],
+    "citation_author": [
+      "Qian, Yu-Yang",
+      "Wu, Hao-Cong",
+      "Fu, Yichao",
+      "Zhang, Hao",
+      "Zhao, Peng"
+    ],
+    "citation_date": [
+      "2026/03/13"
+    ],
+    "citation_online_date": [
+      "2026/08/06"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2603.12617"
+    ],
+    "citation_arxiv_id": [
+      "2603.12617"
+    ],
+    "citation_abstract": [
+      "Speculative decoding has emerged as a widely adopted paradigm for accelerating large language model inference, where a lightweight draft model rapidly generates candidate tokens that are then verified in parallel by a larger target model. However, due to limited model capacity, drafts often struggle to approximate the target distribution, resulting in shorter acceptance lengths and diminished speedup. A key yet under-explored observation is that speculative decoding inherently provides verification feedback that quantifies the deviation between the draft and target models at no additional cost. This process naturally forms an iterative \"draft commits-feedback provides-draft adapts\" evolving loop, which precisely matches the online learning paradigm. Motivated by this connection, we propose OnlineSPEC, a unified framework that systematically leverages interactive feedback to continuously evolve draft models. Grounded in dynamic regret minimization, we establish a formal link between online learning performance and speculative system's acceleration rate, and develop novel algorithms via modern online learning techniques, including optimistic online learning that adaptively reuses historical gradients as predictive update hints, and online ensemble learning that dynamically maintains multiple draft models. Our algorithms are equipped with theoretical justifications and improved acceleration rates, achieving up to 24% speedup over seven benchmarks and five foundation models."
+    ]
+  },
+  "online_title": "When Drafts Evolve: Speculative Decoding Meets Online Learning",
+  "title_similarity": 1.0,
+  "arxiv_version": "2603.12617v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2603.12617v2",
+  "local_pdf": "pdfs/2603.12617.pdf",
+  "bytes": 1882805,
+  "sha256": "25f39d00a8afe3e1b1a51a6271617cb45610626b2cc0c42e0436e85e5bc91373",
+  "text_status": "extracted",
+  "local_text": "texts/2603.12617.txt"
+}

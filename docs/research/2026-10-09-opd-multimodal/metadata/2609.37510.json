@@ -1,0 +1,47 @@
+{
+  "id": "2609.37510",
+  "requested_title": "From Dissonance to Orchestration: Teacher Intervention in On-Policy Distillation",
+  "source_url": "https://arxiv.org/abs/2609.37510",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2609.37510",
+  "citation_metadata": {
+    "citation_title": [
+      "From Dissonance to Orchestration: Teacher Intervention in On-Policy Distillation"
+    ],
+    "citation_author": [
+      "Wang, Yuhao",
+      "Ren, Ruiyang",
+      "Zhang, Yinan",
+      "Zhang, Ruiqing",
+      "Liu, Jing",
+      "Miao, Chunyan"
+    ],
+    "citation_date": [
+      "2026/09/29"
+    ],
+    "citation_online_date": [
+      "2026/09/29"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2609.37510"
+    ],
+    "citation_arxiv_id": [
+      "2609.37510"
+    ],
+    "citation_abstract": [
+      "On-policy distillation (OPD) trains a student on its own reasoning trajectories using feedback from a stronger teacher. Teacher interventions can improve these trajectories, but also change the distribution on which the student learns. Our controlled studies show that rollout quality alone is an incomplete criterion for allocating teacher guidance. Deeper intervention yields diminishing gains in rollout accuracy while increasing off-policy load. In a training probe with a restricted rollout horizon, peak student accuracy and performance retention favor different intervention strengths. The preferred intervention depth and placement also vary across benchmarks. These findings motivate MAESTRO, which uses local policy disagreement to jointly adapt when the teacher takes over and how long it generates. Its {policy disagreement score} combines teacher-weighted candidate coverage with local distribution similarity and is aggregated within reasoning paragraphs. Across eight mathematical reasoning benchmarks, MAESTRO achieves the highest macro-average accuracy among the compared methods for both 0.6B and 1.7B Qwen3 students, with the 1.7B student leading on every benchmark. MAESTRO also reduces average training response length by 67.3\\% relative to standard OPD. The code is available at https://github.com/yhao-wang/MAESTRO."
+    ]
+  },
+  "online_title": "From Dissonance to Orchestration: Teacher Intervention in On-Policy Distillation",
+  "title_similarity": 1.0,
+  "arxiv_version": "2609.37510v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2609.37510v1",
+  "local_pdf": "pdfs/2609.37510.pdf",
+  "bytes": 439472,
+  "sha256": "51ffe6ebdc986e1533ea8dc1e455a536456cb1b112cfc89099ab81de6108aa4c",
+  "text_status": "extracted",
+  "local_text": "texts/2609.37510.txt"
+}

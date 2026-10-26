@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+*.log
+
+# Third-party papers and extracted full text (not redistributed)
+*.pdf
+/glance.txt
+docs/research/**/texts/
+
+# Local-only run markers
+.official_kl_audit_run
+.repro_reorganization_run
+.spec-workflow/
+
+# Local data / checkpoints / results (kept on /mnt)
+/data/
+/checkpoints/
+/results/
+/models/
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/

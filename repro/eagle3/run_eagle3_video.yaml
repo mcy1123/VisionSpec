@@ -1,0 +1,71 @@
+# EAGLE-3 draft for Qwen3-VL-8B on the GLANCE video rows (offline features).
+#
+# Paths are container paths: this run executes inside a container that mounts
+#   /workspace -> /home/mcy/Projects/SpecForge        (the patched checkout)
+#   /glance    -> /mnt/local/mcy/GLANCE               (target + data)
+#   /data3     -> /mnt/local3/mcy/specforge           (captured features)
+# See scripts/eagle3/20_train.sh, which creates that container if missing.
+#
+# Two fields are NOT SpecForge's defaults and are the traps this run depends on:
+#
+#   model.embedding_key: model.language_model.embed_tokens.weight
+#       Qwen3-VL nests the text tower, so the default "model.embed_tokens.weight"
+#       does not exist in its shard index. Verified against the target's own
+#       model.safetensors.index.json.
+#
+#   the draft config's rope_scaling carries mrope_interleaved: true
+#       Qwen3-VL is interleaved; SpecForge's stock code only knew the chunked
+#       Qwen2.5-VL layout. The patch adds the interleaved variant and this file
+#       is what selects it. The draft config also deliberately writes the legacy
+#       "type": "mrope" key (rather than the target's "rope_type": "default") so
+#       _init_rope dispatches to mRoPE; the patch additionally makes the real
+#       target-style spelling work instead of silently falling back to 1D RoPE.
+
+model:
+  target_model_path: /glance/models/Qwen3-VL-8B-Instruct
+  draft_model_config: /data3/eagle3_video/code/draft_qwen3vl_eagle3.json
+  target_backend: sglang
+  embedding_key: model.language_model.embed_tokens.weight
+  lm_head_key: lm_head.weight
+  torch_dtype: bfloat16
+  # The capture runtime, not the trainer, is what is gated on modality. We
+  # produce features ourselves, so "text" is correct here and it keeps
+  # training.compact_teacher legal.
+  input_modality: text
+  # EAGLE-3 standard: 3 aux layers at low/mid/high depth. SpecForge's default for
+  # a 36-layer target. Deliberately NOT GLANCE's 5 kept layers.
+  aux_hidden_state_layer_ids: [1, 17, 32]
+  load_target_embedding: true
+  # Empty => SpecForge derives t2d/d2t from the feature corpus and caches them.
+  vocab_mapping_path: ""
+
+data:
+  hidden_states_path: /data3/eagle3_video/train
+  max_length: 2048
+  chat_template: qwen
+  cache_dir: /data3/eagle3_video/cache
+
+training:
+  strategy: eagle3
+  num_epochs: 40
+  batch_size: 1
+  accumulation_steps: 8
+  learning_rate: 1.0e-4
+  max_grad_norm: 0.5
+  # draft-len / ttt-steps = 3 per the EAGLE-3 recipe for this comparison.
+  # Repair 1 in the plan raises this to 7 if the run does not converge.
+  ttt_length: 3
+  # sdpa is the conservative choice: it supports mRoPE and needs no flex kernel.
+  attention_backend: sdpa
+  save_interval: 250
+  log_interval: 25
+  seed: 0
+
+run_id: qwen3vl-8b-video-eagle3
+output_dir: /data3/eagle3_video/out
+
+deployment:
+  mode: local_colocated
+  trainer:
+    nnodes: 1
+    nproc_per_node: 1

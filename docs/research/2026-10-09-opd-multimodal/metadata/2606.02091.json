@@ -1,0 +1,53 @@
+{
+  "id": "2606.02091",
+  "requested_title": "DFlare: Scaling Up Draft Capacity for Block Diffusion Speculative Decoding",
+  "source_url": "https://arxiv.org/abs/2606.02091",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2606.02091",
+  "citation_metadata": {
+    "citation_title": [
+      "DFlare: Scaling Up Draft Capacity for Block Diffusion Speculative Decoding"
+    ],
+    "citation_author": [
+      "Zhang, Jiebin",
+      "Yu, Zhenghan",
+      "Liu, Song",
+      "Yu, Eugene J.",
+      "Li, Zheng",
+      "Zhu, Dawei",
+      "Duo, Jiangshan",
+      "Xiong, Weimin",
+      "Song, Yifan",
+      "Yu, Guanghua",
+      "Zhu, Jianchen",
+      "Li, Sujian"
+    ],
+    "citation_date": [
+      "2026/06/01"
+    ],
+    "citation_online_date": [
+      "2026/06/02"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2606.02091"
+    ],
+    "citation_arxiv_id": [
+      "2606.02091"
+    ],
+    "citation_abstract": [
+      "Block diffusion speculative decoding accelerates LLM inference by predicting all tokens within a block simultaneously for the target model to verify in parallel. Predicting an entire block at once requires a sufficiently capable draft model and effective utilization of the target model's internal knowledge. However, the state-of-the-art method DFlash constrains all draft layers to share a single fused representation derived from only a few target layers, limiting per-layer expressiveness and hindering further scaling of draft capacity. In this paper, we present \\modelname, which flares out the narrow conditioning bottleneck of DFlash through a lightweight layer-wise fusion mechanism: each draft layer attends to its own learnable combination of a broad set of target layers at negligible overhead, simultaneously injecting richer target knowledge and providing every draft layer with a distinct input. This enhanced per-layer expressiveness enables scaling the draft model to deeper architectures with consistent gains. We further scale training data from 800K to 2.4M samples to fully exploit the enlarged capacity. On six benchmarks spanning mathematical reasoning, code generation, and conversation, \\modelname attains average wall-clock speedups of 5.52x on Qwen3-4B, 5.46x on Qwen3-8B, and 3.91x on GPT-OSS-20B, improving over DFlash by roughly 11\\%, 8\\%, and 5\\% respectively. Our code is available at https://github.com/Tencent/AngelSlim."
+    ]
+  },
+  "online_title": "DFlare: Scaling Up Draft Capacity for Block Diffusion Speculative Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2606.02091v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2606.02091v2",
+  "local_pdf": "pdfs/2606.02091.pdf",
+  "bytes": 821793,
+  "sha256": "f6b301797ca5496de7bdedb15fd5ae47a04248b62074adfe283ab168a972161f",
+  "text_status": "extracted",
+  "local_text": "texts/2606.02091.txt"
+}

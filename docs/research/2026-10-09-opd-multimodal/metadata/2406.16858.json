@@ -1,0 +1,45 @@
+{
+  "id": "2406.16858",
+  "requested_title": "EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees",
+  "source_url": "https://arxiv.org/abs/2406.16858",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2406.16858",
+  "citation_metadata": {
+    "citation_title": [
+      "EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees"
+    ],
+    "citation_author": [
+      "Li, Yuhui",
+      "Wei, Fangyun",
+      "Zhang, Chao",
+      "Zhang, Hongyang"
+    ],
+    "citation_date": [
+      "2024/06/24"
+    ],
+    "citation_online_date": [
+      "2024/06/30"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2406.16858"
+    ],
+    "citation_arxiv_id": [
+      "2406.16858"
+    ],
+    "citation_abstract": [
+      "Inference with modern Large Language Models (LLMs) is expensive and time-consuming, and speculative sampling has proven to be an effective solution. Most speculative sampling methods such as EAGLE use a static draft tree, implicitly assuming that the acceptance rate of draft tokens depends only on their position. Interestingly, we found that the acceptance rate of draft tokens is also context-dependent. In this paper, building upon EAGLE, we propose EAGLE-2, which introduces a new technique of context-aware dynamic draft tree into drafting modeling. This improvement leverages the fact that the draft model of EAGLE is well-calibrated: the confidence scores from the draft model approximate acceptance rates with small errors. We conducted extensive evaluations on three series of LLMs and six tasks, with EAGLE-2 achieving speedup ratios 3.05x-4.26x, which is 20%-40% faster than EAGLE-1. EAGLE-2 also ensures that the distribution of the generated text remains unchanged, making it a lossless acceleration algorithm."
+    ]
+  },
+  "online_title": "EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees",
+  "title_similarity": 1.0,
+  "arxiv_version": "2406.16858v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2406.16858v2",
+  "local_pdf": "pdfs/2406.16858.pdf",
+  "bytes": 1781552,
+  "sha256": "712a5af2ca1936d60eaa22cbebaaed36029777661dd61b2fab56de06eb931f6b",
+  "text_status": "extracted",
+  "local_text": "texts/2406.16858.txt"
+}

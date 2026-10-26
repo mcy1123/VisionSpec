@@ -1,0 +1,48 @@
+{
+  "id": "2402.12374",
+  "requested_title": "Sequoia: Scalable, Robust, and Hardware-aware Speculative Decoding",
+  "source_url": "https://arxiv.org/abs/2402.12374",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2402.12374",
+  "citation_metadata": {
+    "citation_title": [
+      "Sequoia: Scalable, Robust, and Hardware-aware Speculative Decoding"
+    ],
+    "citation_author": [
+      "Chen, Zhuoming",
+      "May, Avner",
+      "Svirschevski, Ruslan",
+      "Huang, Yuhsun",
+      "Ryabinin, Max",
+      "Jia, Zhihao",
+      "Chen, Beidi"
+    ],
+    "citation_date": [
+      "2024/02/19"
+    ],
+    "citation_online_date": [
+      "2025/07/05"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2402.12374"
+    ],
+    "citation_arxiv_id": [
+      "2402.12374"
+    ],
+    "citation_abstract": [
+      "As the usage of large language models (LLMs) grows, performing efficient inference with these models becomes increasingly important. While speculative decoding has recently emerged as a promising direction for speeding up inference, existing methods are limited in their ability to scale to larger speculation budgets, and adapt to different hyperparameters and hardware. This paper introduces Sequoia, a scalable, robust, and hardware-aware algorithm for speculative decoding. To attain better scalability, Sequoia introduces a dynamic programming algorithm to find the optimal tree structure for the speculated tokens. To achieve robust speculative performance, Sequoia uses a novel sampling and verification method that outperforms prior work across different decoding temperatures. Finally, Sequoia introduces a hardware-aware tree optimizer that maximizes speculative performance by automatically selecting the token tree size and depth for a given hardware platform. Evaluation shows that Sequoia improves the decoding speed of Llama2-7B, Llama2-13B, and Vicuna-33B on an A100 by up to $4.04\\times$, $3.73\\times$, and $2.27\\times$. For offloading setting on L40, Sequoia achieves as low as 0.56 s/token for exact Llama2-70B inference latency, which is $9.96\\times$ on our optimized offloading system (5.6 s/token), $9.7\\times$ than DeepSpeed-Zero-Inference, $19.5\\times$ than Huggingface Accelerate."
+    ]
+  },
+  "online_title": "Sequoia: Scalable, Robust, and Hardware-aware Speculative Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2402.12374v3",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2402.12374v3",
+  "local_pdf": "pdfs/2402.12374.pdf",
+  "bytes": 945646,
+  "sha256": "4e93904ae0a2a8b1813767e8a67c6709833b8affd60aff927c30619c37e4e7f8",
+  "text_status": "extracted",
+  "local_text": "texts/2402.12374.txt"
+}

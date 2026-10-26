@@ -1,0 +1,55 @@
+{
+  "id": "2603.14989",
+  "requested_title": "MMSpec: Benchmarking Speculative Decoding for Vision-Language Models",
+  "source_url": "https://arxiv.org/abs/2603.14989",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2603.14989",
+  "citation_metadata": {
+    "citation_title": [
+      "MMSpec: Benchmarking Speculative Decoding for Vision-Language Models"
+    ],
+    "citation_author": [
+      "Shen, Hui",
+      "Wang, Xin",
+      "Zhang, Ping",
+      "Hsieh, Yunta",
+      "Han, Qi",
+      "Wan, Zhongwei",
+      "Zhang, Ziheng",
+      "Zhang, Jingxuan",
+      "Xiong, Jing",
+      "Liu, Ziyuan",
+      "Zhang, Yifan",
+      "Cao, Hangrui",
+      "Zhao, Chenyang",
+      "Zhang, Mi"
+    ],
+    "citation_date": [
+      "2026/03/16"
+    ],
+    "citation_online_date": [
+      "2026/03/16"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2603.14989"
+    ],
+    "citation_arxiv_id": [
+      "2603.14989"
+    ],
+    "citation_abstract": [
+      "Vision-language models (VLMs) achieve strong performance on multimodal tasks but suffer from high inference latency due to large model sizes and long multimodal contexts. Speculative decoding has recently emerged as an effective acceleration technique, yet its behavior in VLMs remains insufficiently understood. We introduce MMSpec, the first benchmark for evaluating speculative decoding in vision-language models. MMSpec contains 600 multimodal samples across six task categories and integrates ten representative speculative decoding algorithms under a unified evaluation framework. Our study reveals three key findings: (1) methods designed for text-only LLMs degrade in multimodal scenarios, (2) vision awareness becomes increasingly important at larger batch sizes, and (3) throughput speedup alone does not reliably reflect latency performance. Motivated by these findings, we propose ViSkip, a plug-and-play speculative decoding method that dynamically adapts speculation to vision tokens and achieves state-of-the-art performance."
+    ]
+  },
+  "online_title": "MMSpec: Benchmarking Speculative Decoding for Vision-Language Models",
+  "title_similarity": 1.0,
+  "arxiv_version": "2603.14989v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2603.14989v1",
+  "local_pdf": "pdfs/2603.14989.pdf",
+  "bytes": 4039020,
+  "sha256": "ac1ebb7c6a9eb0dabc25d12bae5fea568484b3d7237585061b19d87c69f5f01b",
+  "text_status": "extracted",
+  "local_text": "texts/2603.14989.txt"
+}

@@ -1,0 +1,44 @@
+{
+  "id": "2610.05774",
+  "requested_title": "AdaSpark: Adaptive DSpark with Online Learning for Tree Verification and N-gram Fill",
+  "source_url": "https://arxiv.org/abs/2610.05774",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2610.05774",
+  "citation_metadata": {
+    "citation_title": [
+      "AdaSpark: Adaptive DSpark with Online Learning for Tree Verification and N-gram Fill"
+    ],
+    "citation_author": [
+      "Liu, Liquan",
+      "Zhang, Yifan",
+      "Xu, Bowei"
+    ],
+    "citation_date": [
+      "2026/10/05"
+    ],
+    "citation_online_date": [
+      "2026/10/05"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2610.05774"
+    ],
+    "citation_arxiv_id": [
+      "2610.05774"
+    ],
+    "citation_abstract": [
+      "Block drafters such as DSpark propose ranked candidates for several positions in one forward pass, and a tree verifier checks them in one pass of the target. The number of rows to verify trades the tokens a wider tree is expected to accept against the time a wider verify takes. Most schedulers that choose this number take the verify time from a table or model measured before serving, corrected online by at most one scale factor, and take acceptance from the drafter's confidence estimates or from a map fitted offline. AdaSpark learns both quantities while it serves, with no profile, calibration or sweep in advance. It learns which verify widths are worth offering and fits each one's verify time as a function of context. It fits each candidate's acceptance probability to the target's verify outcomes, with the drafter's confidence head as one input, and orders and sizes the tree by that fit instead of by the head. The same model prices n-gram continuations of the request's own text, so drafted and text-derived candidates compete for rows in one best-first order. The width is chosen by pricing time at the long-run decode rate. On single- and multi-turn conversations from six public datasets, on three dense targets and one mixture-of-experts target, AdaSpark decodes 1.5-3.1x faster than llama.cpp's DSpark with the same drafters. Our imparo engine with AdaSpark is 1.17-1.52x faster than imparo running with a three-token chain (the default llama.cpp setting); this gain comes from the scheduler alone. Without a width sweep, AdaSpark is never more than 0.3% slower than the best pinned tree width on any dense target or context band. On the mixture-of-experts target it ties the best pinned width, and the other pinned widths from 4 to 16 rows are 5-14% slower."
+    ]
+  },
+  "online_title": "AdaSpark: Adaptive DSpark with Online Learning for Tree Verification and N-gram Fill",
+  "title_similarity": 1.0,
+  "arxiv_version": "2610.05774v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2610.05774v1",
+  "local_pdf": "pdfs/2610.05774.pdf",
+  "bytes": 553345,
+  "sha256": "f0cd80e0b0b9597b7ab3b45202480c79cb9bc438f93c20a66900c6daa44972b3",
+  "text_status": "extracted",
+  "local_text": "texts/2610.05774.txt"
+}

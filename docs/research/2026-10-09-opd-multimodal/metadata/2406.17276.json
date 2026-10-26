@@ -1,0 +1,49 @@
+{
+  "id": "2406.17276",
+  "requested_title": "OPT-Tree: Speculative Decoding with Adaptive Draft Tree Structure",
+  "source_url": "https://arxiv.org/abs/2406.17276",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2406.17276",
+  "citation_metadata": {
+    "citation_title": [
+      "OPT-Tree: Speculative Decoding with Adaptive Draft Tree Structure"
+    ],
+    "citation_author": [
+      "Wang, Jikai",
+      "Su, Yi",
+      "Li, Juntao",
+      "Xia, Qingrong",
+      "Ye, Zi",
+      "Duan, Xinyu",
+      "Wang, Zhefeng",
+      "Zhang, Min"
+    ],
+    "citation_date": [
+      "2024/06/25"
+    ],
+    "citation_online_date": [
+      "2025/04/24"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2406.17276"
+    ],
+    "citation_arxiv_id": [
+      "2406.17276"
+    ],
+    "citation_abstract": [
+      "Autoregressive language models demonstrate excellent performance in various scenarios. However, the inference efficiency is limited by its one-step-one-word generation mode, which has become a pressing problem recently as the models become increasingly larger. Speculative decoding employs a \"draft and then verify\" mechanism to allow multiple tokens to be generated in one step, realizing lossless acceleration. Existing methods mainly adopt fixed heuristic draft structures, which fail to adapt to different situations to maximize the acceptance length during verification. To alleviate this dilemma, we proposed OPT-Tree, an algorithm to construct adaptive and scalable draft trees. It searches the optimal tree structure that maximizes the mathematical expectation of the acceptance length in each decoding step. Experimental results reveal that OPT-Tree outperforms the existing draft structures and achieves a speed-up ratio of up to 3.2 compared with autoregressive decoding. If the draft model is powerful enough and the node budget is sufficient, it can generate more than ten tokens in a single step. Our code is available at https://github.com/Jikai0Wang/OPT-Tree."
+    ]
+  },
+  "online_title": "OPT-Tree: Speculative Decoding with Adaptive Draft Tree Structure",
+  "title_similarity": 1.0,
+  "arxiv_version": "2406.17276v4",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2406.17276v4",
+  "local_pdf": "pdfs/2406.17276.pdf",
+  "bytes": 1741171,
+  "sha256": "9d6b828028aa94536b742f6059da6b7b711479b81f2fde6d99c0deb2150e351b",
+  "text_status": "extracted",
+  "local_text": "texts/2406.17276.txt"
+}

@@ -1,0 +1,420 @@
+--- repro/qa_opd_fair/train_qa_sft.py
++++ repro/scienceqa_image/train_sqa_sft.py
+@@ -1,5 +1,14 @@
+ #!/usr/bin/env python3
+-"""QA-SFT: the fair control arm on the frozen QA schedule.
++"""SQA-SFT: the continue-SFT control arm on the frozen ScienceQA schedule.
++
++GENERATED FROM `repro/qa_opd_fair/train_qa_sft.py` by
++`repro/scienceqa_image/make_image_trainers.py`. The only edited lines are the
++image-input adaptation (documented in that generator and in `imageencode.py`);
++the objective, the anchor rule, the reveal schedule, the EOS guard, the
++optimizer and the checkpoint contract are byte-for-byte the frozen ones. The
++original file's docstring follows.
++
++QA-SFT: the fair control arm on the frozen QA schedule.
+ 
+ WHAT IT IS. The project's existing continue-SFT objective (`train_head.py`'s
+ variable-reveal block loss) applied to the frozen MSVD-QA schedule: for each of
+@@ -42,14 +51,15 @@
+ HERE = pathlib.Path(__file__).resolve().parent
+ REPRO = HERE.parent
+ ROOT = REPRO.parent
+-sys.path[:0] = [str(HERE), str(REPRO), str(ROOT / "GLANCE_repo"),
++sys.path[:0] = [str(HERE), str(REPRO), str(REPRO / "qa_opd_fair"),
++                str(ROOT / "GLANCE_repo"),
+                 str(ROOT / "scripts" / "dflash_pkg" / "dflash-0.1.0")]
+ 
+ import common  # noqa: E402
+ import qa_anchors  # noqa: E402
+ import train_head as th  # noqa: E402
+ from master_optim import MasterWeightAdamW  # noqa: E402
+-from videoencode import build_video_text, encode_inputs  # noqa: E402
++from imageencode import encode_image_inputs  # noqa: E402
+ 
+ 
+ class LmHeadShim:
+@@ -129,15 +139,43 @@
+         root_token=int(root_token), block_size=block_size)
+ 
+ 
++def rng_state():
++    """torch/numpy/python RNG state, so a checkpoint can resume exactly."""
++    import random
++    import numpy as _np
++    return {
++        "torch": torch.get_rng_state(),
++        "torch_cuda": (torch.cuda.get_rng_state_all()
++                       if torch.cuda.is_available() else []),
++        "numpy": _np.random.get_state(),
++        "python": random.getstate(),
++    }
++
++
++def restore_rng(state):
++    """Counterpart of `rng_state`; used by the resume gate."""
++    import random
++    import numpy as _np
++    if not state:
++        return
++    torch.set_rng_state(state["torch"])
++    if state.get("torch_cuda") and torch.cuda.is_available():
++        torch.cuda.set_rng_state_all(state["torch_cuda"])
++    _np.random.set_state(state["numpy"])
++    random.setstate(state["python"])
++
+ def main():
+     ap = argparse.ArgumentParser()
+     ap.add_argument("--run", required=True)
+     ap.add_argument("--seed", type=int, required=True)
+     ap.add_argument("--gpu", type=int, required=True)
+-    ap.add_argument("--pool", required=True, help="qa_pool_df<seed>.parquet")
+-    ap.add_argument("--records", required=True, help="target_ar_df<seed>.pt")
++    ap.add_argument("--pool", required=True, help="sqa_pool_df<seed>.parquet")
++    ap.add_argument("--records", required=True, help="sqa_target_ar_df<seed>.pt")
+     ap.add_argument("--init-from", required=True)
+     ap.add_argument("--out", required=True)
++    ap.add_argument("--schedule", default=None,
++                    help="override the frozen schedule path; default reads "
++                         "train_schedule_seed_<seed>.jsonl from --run")
+     ap.add_argument("--updates", type=int, default=120)
+     ap.add_argument("--qa-per-update", type=int, default=4)
+     ap.add_argument("--anchors-per-qa", type=int, default=6)
+@@ -150,7 +188,17 @@
+                          "bfloat16 exists only so a small mechanics pilot can fit "
+                          "on a busier card, and any pilot run with it is marked "
+                          "pilot_only in its config")
+-    ap.add_argument("--time-mode", default="legacy", choices=["legacy", "real"])
++    ap.add_argument("--time-mode", default="legacy", choices=["legacy", "real"],
++                    help="IGNORED for still images; kept so this CLI matches the "
++                         "frozen video script. An image has no timeline.")
++    ap.add_argument("--max-pixels", type=int, default=768,
++                    help="longest-side cap; 768 is common.IMAGE_LONG_SIDE, the "
++                         "value the historical image trainer used, and it is used "
++                         "for TRAINING AND EVALUATION here so the head sees the "
++                         "same pixels in both")
++    ap.add_argument("--save-at", default=None,
++                    help="comma list of update numbers to checkpoint, replacing "
++                         "the every-N rule; the final update is always saved")
+     ap.add_argument("--save-every", type=int, default=30)
+     ap.add_argument("--log-every", type=int, default=1)
+     ap.add_argument("--max-seq-len", type=int, default=common.MAX_SEQ_LEN)
+@@ -202,13 +250,18 @@
+     if start_update == 0 and not a.resume_from:
+         head.save_pretrained(os.path.join(a.out, "step0"))
+         torch.save({"head": head.state_dict(), "master_optimizer": opt.state_dict(),
+-                    "update": 0, "seed": a.seed, "arm": "QA-SFT"},
++                    "update": 0, "seed": a.seed, "arm": "SQA-SFT",
++                    "rng": rng_state(), "data_cursor": 0,
++                    "schedule": (a.schedule or str(
++                        pathlib.Path(a.run) / "dataset" /
++                        f"train_schedule_seed_{a.seed}.jsonl"))},
+                    os.path.join(a.out, "step0", "training_state.pt"))
+         print("[ckpt] step0 saved (the unmodified shared init-from weights)", flush=True)
+ 
+-    order = [json.loads(l) for l in
+-             (pathlib.Path(a.run) / "dataset" /
+-              f"train_schedule_seed_{a.seed}.jsonl").read_text().splitlines()
++    sched_path = (pathlib.Path(a.schedule) if a.schedule else
++                  pathlib.Path(a.run) / "dataset" /
++                  f"train_schedule_seed_{a.seed}.jsonl")
++    order = [json.loads(l) for l in sched_path.read_text().splitlines()
+              if l.strip()]
+     order.sort(key=lambda r: r["order"])
+     slots = {int(r["update"]): [] for r in order}
+@@ -221,7 +274,7 @@
+                              f"{a.qa_per_update}")
+ 
+     config = {
+-        "arm": "QA-SFT", "entry_point": "train_qa_sft.py",
++        "arm": "SQA-SFT", "entry_point": "train_qa_sft.py",
+         "run": a.run, "seed": a.seed, "pool": a.pool, "records": a.records,
+         "init_from": a.init_from, "out": a.out, "updates": a.updates,
+         "qa_per_update": a.qa_per_update, "anchors_per_qa": a.anchors_per_qa,
+@@ -231,7 +284,8 @@
+                      "label past the first EOS",
+         "head_dtype": str(head_dtype), "target_dtype": a.target_dtype,
+         "pilot_only": a.target_dtype != "float32",
+-        "time_mode": a.time_mode, "eos_stop": "immediate",
++        "time_mode": "n/a-still-image", "eos_stop": "immediate",
++        "max_pixels": a.max_pixels, "modality": "image",
+         "betas": list(common.BETAS), "weight_decay": common.WEIGHT_DECAY,
+         "clip": a.clip, "torch": torch.__version__,
+     }
+@@ -247,7 +301,7 @@
+         opt.zero_grad(set_to_none=True)
+         n_total_anchors = 0
+         for slot in slots[upd]:
+-            task = f"{slot['video_id']}|{slot['question_id']}"
++            task = slot.get("task") or f"{slot['video_id']}|{slot['question_id']}"
+             if task not in recs:
+                 raise KeyError(f"{task} has no frozen target record")
+             rec = recs[task]
+@@ -259,8 +313,7 @@
+             if int(full.shape[0]) > a.max_seq_len:
+                 raise SystemExit(f"{task}: trajectory {int(full.shape[0])} exceeds "
+                                  f"--max-seq-len {a.max_seq_len}")
+-            text = build_video_text(proc, row["prompt"])
+-            x = encode_inputs(proc, row.to_dict(), a.time_mode, text=text)
++            x = encode_image_inputs(proc, row.to_dict(), max_pixels=a.max_pixels)
+             if x["input_ids"][0].tolist() != full[:prompt_len].tolist():
+                 raise RuntimeError(f"{task}: encoded prompt differs from frozen record")
+             captured = []
+@@ -268,8 +321,8 @@
+                 lambda module, inputs, output: captured.append(output.last_hidden_state.detach()))
+             try:
+                 ctx = common.target_context_cached(
+-                    target, full[None], pixel_values_videos=x["pixel_values_videos"].to(dev),
+-                    video_grid_thw=x["video_grid_thw"].to(dev))
++                    target, full[None], pixel_values=x["pixel_values"].to(dev),
++                    image_grid_thw=x["image_grid_thw"].to(dev))
+             finally:
+                 hook.remove()
+             with torch.no_grad():
+@@ -363,7 +416,7 @@
+             "anchors": n_total_anchors,
+             "supervision_weight_sum": total_w,
+             "context_forwards": len(slots[upd]),
+-            "context_tokens": sum(int(recs[f"{z['video_id']}|{z['question_id']}"]["input_ids"].numel()) for z in slots[upd]),
++            "context_tokens": sum(int(recs[z.get("task") or f"{z['video_id']}|{z['question_id']}"]["input_ids"].numel()) for z in slots[upd]),
+             "teacher_forwards": 0,
+             "qa": qa_stats,
+             "video_ids": [s["video_id"] for s in qa_stats],
+@@ -378,12 +431,23 @@
+                   f"pos {total_positions} anchors {n_total_anchors} "
+                   f"gnorm {grad_norm:.3f} peak {peak:.1f}GiB "
+                   f"{rec_log['seconds']:.1f}s", flush=True)
+-        if a.save_every and (upd + 1) % a.save_every == 0:
++        # `--save-at` names the frozen checkpoint grid exactly. The plain
++        # every-N rule would write step 90 as well, which is 16 GiB of disk the
++        # amended grid does not budget for and does not need: 30/60/120 is the
++        # registered grid, and the final update is always written.
++        _save_at = ({int(x) for x in str(a.save_at).split(",") if x.strip()}
++                    if a.save_at else None)
++        _save_now = ((upd + 1) in _save_at if _save_at is not None
++                     else bool(a.save_every and (upd + 1) % a.save_every == 0))
++        _save_now = _save_now or (upd + 1) == a.updates
++        if _save_now:
+             ck = pathlib.Path(a.out) / f"step{upd + 1}"
+             head.save_pretrained(ck)
+             torch.save({"head": head.state_dict(),
+                         "master_optimizer": opt.state_dict(),
+-                        "update": upd + 1, "seed": a.seed, "arm": "QA-SFT"},
++                        "update": upd + 1, "seed": a.seed, "arm": "SQA-SFT",
++                        "rng": rng_state(), "data_cursor": upd + 1,
++                        "schedule": str(sched_path)},
+                        ck / "training_state.pt")
+             print(f"[ckpt] {ck}", flush=True)
+         if a.stop_after and (upd + 1 - start_update) >= a.stop_after:
+--- repro/qa_opd_fair/train_qa_opd.py
++++ repro/scienceqa_image/train_sqa_opd.py
+@@ -1,5 +1,14 @@
+ #!/usr/bin/env python3
+-"""QA fixed-anchor OPD with explicit position contracts.
++"""SQA fixed-anchor OPD with explicit position contracts.
++
++GENERATED FROM `repro/qa_opd_fair/train_qa_opd.py` by
++`repro/scienceqa_image/make_image_trainers.py`. The only edited lines are the
++image-input adaptation; the accepted one-hot CE, the rejected full-vocabulary
++reverse KL with 0.8**(k-1), the update-global two-stream denominators, the
++anchor rule, the `n_acc`/teacher-shift/suffix-mask contract and the optimizer are
++byte-for-byte the frozen ones. The original file's docstring follows.
++
++QA fixed-anchor OPD with explicit position contracts.
+ 
+ Current proposals are scored at shared fixed anchors on a verified target AR
+ trajectory; this is not a policy-visited online rollout. Accepted loss remains
+@@ -25,15 +34,16 @@
+ HERE = pathlib.Path(__file__).resolve().parent
+ REPRO = HERE.parent
+ ROOT = REPRO.parent
+-sys.path[:0] = [str(HERE), str(REPRO), str(ROOT / "GLANCE_repo"),
++sys.path[:0] = [str(HERE), str(REPRO), str(REPRO / "qa_opd_fair"),
++                str(ROOT / "GLANCE_repo"),
+                 str(ROOT / "scripts" / "dflash_pkg" / "dflash-0.1.0")]
+ 
+ import common  # noqa: E402
+ import opd_fullkl  # noqa: E402
+ import qa_anchors  # noqa: E402
+ from master_optim import MasterWeightAdamW  # noqa: E402
+-from train_qa_sft import LmHeadShim, draft_block_logits_mixed  # noqa: E402
+-from videoencode import build_video_text, encode_inputs  # noqa: E402
++from train_sqa_sft import LmHeadShim, draft_block_logits_mixed  # noqa: E402
++from imageencode import encode_image_inputs, prefix_image_vision_positions  # noqa: E402
+ 
+ K = common.BLOCK_SIZE - 1
+ 
+@@ -44,6 +54,31 @@
+                   idx.double() - 1.0)
+     return w.float()
+ 
++
++def rng_state():
++    """torch/numpy/python RNG state, so a checkpoint can resume exactly."""
++    import random
++    import numpy as _np
++    return {
++        "torch": torch.get_rng_state(),
++        "torch_cuda": (torch.cuda.get_rng_state_all()
++                       if torch.cuda.is_available() else []),
++        "numpy": _np.random.get_state(),
++        "python": random.getstate(),
++    }
++
++
++def restore_rng(state):
++    """Counterpart of `rng_state`; used by the resume gate."""
++    import random
++    import numpy as _np
++    if not state:
++        return
++    torch.set_rng_state(state["torch"])
++    if state.get("torch_cuda") and torch.cuda.is_available():
++        torch.cuda.set_rng_state_all(state["torch_cuda"])
++    _np.random.set_state(state["numpy"])
++    random.setstate(state["python"])
+ 
+ def main():
+     ap = argparse.ArgumentParser()
+@@ -54,6 +89,9 @@
+     ap.add_argument("--records", required=True)
+     ap.add_argument("--init-from", required=True)
+     ap.add_argument("--out", required=True)
++    ap.add_argument("--schedule", default=None,
++                    help="override the frozen schedule path; default reads "
++                         "train_schedule_seed_<seed>.jsonl from --run")
+     ap.add_argument("--updates", type=int, default=120)
+     ap.add_argument("--qa-per-update", type=int, default=4)
+     ap.add_argument("--anchors-per-qa", type=int, default=6)
+@@ -65,7 +103,16 @@
+                     choices=["float32", "bfloat16"],
+                     help="the FROZEN target's dtype; the formal runs use float32, "
+                          "bfloat16 exists only for a mechanics pilot on a busy card")
+-    ap.add_argument("--time-mode", default="legacy", choices=["legacy", "real"])
++    ap.add_argument("--time-mode", default="legacy", choices=["legacy", "real"],
++                    help="IGNORED for still images; kept so this CLI matches the "
++                         "frozen video script. An image has no timeline.")
++    ap.add_argument("--max-pixels", type=int, default=768,
++                    help="longest-side cap; 768 is common.IMAGE_LONG_SIDE, used "
++                         "for TRAINING AND EVALUATION here so the head sees the "
++                         "same pixels in both")
++    ap.add_argument("--save-at", default=None,
++                    help="comma list of update numbers to checkpoint, replacing "
++                         "the every-N rule; the final update is always saved")
+     ap.add_argument("--save-every", type=int, default=30)
+     ap.add_argument("--log-every", type=int, default=1)
+     ap.add_argument("--max-seq-len", type=int, default=common.MAX_SEQ_LEN)
+@@ -113,13 +160,18 @@
+     if not a.resume_from:
+         head.save_pretrained(os.path.join(a.out, "step0"))
+         torch.save({"head": head.state_dict(), "master_optimizer": opt.state_dict(),
+-                    "update": 0, "seed": a.seed, "arm": "QA-OPD"},
++                    "update": 0, "seed": a.seed, "arm": "SQA-OPD",
++                    "rng": rng_state(), "data_cursor": 0,
++                    "schedule": (a.schedule or str(
++                        pathlib.Path(a.run) / "dataset" /
++                        f"train_schedule_seed_{a.seed}.jsonl"))},
+                    os.path.join(a.out, "step0", "training_state.pt"))
+         print("[ckpt] step0 saved (the unmodified shared init-from weights)", flush=True)
+ 
+-    order = [json.loads(l) for l in
+-             (pathlib.Path(a.run) / "dataset" /
+-              f"train_schedule_seed_{a.seed}.jsonl").read_text().splitlines()
++    sched_path = (pathlib.Path(a.schedule) if a.schedule else
++                  pathlib.Path(a.run) / "dataset" /
++                  f"train_schedule_seed_{a.seed}.jsonl")
++    order = [json.loads(l) for l in sched_path.read_text().splitlines()
+              if l.strip()]
+     order.sort(key=lambda r: r["order"])
+     slots = {int(r["update"]): [] for r in order}
+@@ -129,7 +181,7 @@
+         slots[k].sort(key=lambda r: r["slot"])
+ 
+     config = {
+-        "arm": "QA-OPD", "entry_point": "train_qa_opd.py",
++        "arm": "SQA-OPD", "entry_point": "train_qa_opd.py",
+         "run": a.run, "seed": a.seed, "pool": a.pool, "records": a.records,
+         "init_from": a.init_from, "out": a.out, "updates": a.updates,
+         "qa_per_update": a.qa_per_update, "anchors_per_qa": a.anchors_per_qa,
+@@ -143,7 +195,8 @@
+                             "argmax match, recomputed, never read from a flag",
+         "head_dtype": str(head_dtype), "target_dtype": a.target_dtype,
+         "pilot_only": a.target_dtype != "float32",
+-        "time_mode": a.time_mode, "eos_stop": "immediate",
++        "time_mode": "n/a-still-image", "eos_stop": "immediate",
++        "max_pixels": a.max_pixels, "modality": "image",
+         "betas": list(common.BETAS), "weight_decay": common.WEIGHT_DECAY,
+         "clip": a.clip, "torch": torch.__version__,
+     }
+@@ -160,7 +213,7 @@
+         n_teacher_forwards = 0
+         with torch.no_grad():
+             for slot in slots[upd]:
+-                task = f"{slot['video_id']}|{slot['question_id']}"
++                task = slot.get("task") or f"{slot['video_id']}|{slot['question_id']}"
+                 rec = recs[task]
+                 row = pool.loc[task]
+                 full = rec["input_ids"].to(dev).long()
+@@ -170,22 +223,18 @@
+                 if int(full.shape[0]) > a.max_seq_len:
+                     raise SystemExit(f"{task}: trajectory too long")
+                 root = int(full[prompt_len])
+-                text = build_video_text(proc, row["prompt"])
+-                x = encode_inputs(proc, row.to_dict(), a.time_mode, text=text)
++                x = encode_image_inputs(proc, row.to_dict(), max_pixels=a.max_pixels)
+                 if x["input_ids"][0].tolist() != full[:prompt_len].tolist():
+                     raise RuntimeError(f"{task}: encoded prompt differs from frozen record")
+-                vispos = opd_fullkl.prefix_vision_positions(
++                vispos = prefix_image_vision_positions(
+                     target, full[None],
+-                    pixel_values_videos=x["pixel_values_videos"].to(dev),
+-                    video_grid_thw=x["video_grid_thw"].to(dev))
++                    x["pixel_values"].to(dev), x["image_grid_thw"].to(dev))
+                 captured = []
+                 hook = target.model.register_forward_hook(
+                     lambda module, inputs, output: captured.append(output.last_hidden_state.detach()))
+                 try:
+                     fused_all, prefix_kv = opd_fullkl.target_prefill_shared(
+                         target, full[None],
+-                        pixel_values_videos=x["pixel_values_videos"].to(dev),
+-                        video_grid_thw=x["video_grid_thw"].to(dev),
+                         max_seq_len=a.max_seq_len, vispos=vispos)
+                 finally:
+                     hook.remove()
+@@ -237,8 +286,8 @@
+                                  "prompt_len": prompt_len, "n_ans": n_ans,
+                                  "eos_pos": eos_pos, "vispos": vispos,
+                                  "fused": fused_all, "prefix_kv": prefix_kv,
+-                                 "slot": slot, "pixel": x["pixel_values_videos"],
+-                                 "grid": x["video_grid_thw"]})
++                                 "slot": slot, "pixel": x["pixel_values"],
++                                 "grid": x["image_grid_thw"]})
+                 del x
+         if not plans:
+             raise SystemExit(f"update {upd + 1}: no usable anchors")
+@@ -303,12 +352,23 @@
+               f"anchors {len(plans)} Nacc {n_acc_total} Z {z_total:.2f} "
+               f"tfwd {n_teacher_forwards} gnorm {grad_norm:.3f} "
+               f"peak {peak:.1f}GiB {rec_log['seconds']:.1f}s", flush=True)
+-        if a.save_every and (upd + 1) % a.save_every == 0:
++        # `--save-at` names the frozen checkpoint grid exactly. The plain
++        # every-N rule would write step 90 as well, which is 16 GiB of disk the
++        # amended grid does not budget for and does not need: 30/60/120 is the
++        # registered grid, and the final update is always written.
++        _save_at = ({int(x) for x in str(a.save_at).split(",") if x.strip()}
++                    if a.save_at else None)
++        _save_now = ((upd + 1) in _save_at if _save_at is not None
++                     else bool(a.save_every and (upd + 1) % a.save_every == 0))
++        _save_now = _save_now or (upd + 1) == a.updates
++        if _save_now:
+             ck = pathlib.Path(a.out) / f"step{upd + 1}"
+             head.save_pretrained(ck)
+             torch.save({"head": head.state_dict(),
+                         "master_optimizer": opt.state_dict(),
+-                        "update": upd + 1, "seed": a.seed, "arm": "QA-OPD"},
++                        "update": upd + 1, "seed": a.seed, "arm": "SQA-OPD",
++                        "rng": rng_state(), "data_cursor": upd + 1,
++                        "schedule": str(sched_path)},
+                        ck / "training_state.pt")
+             print(f"[ckpt] {ck}", flush=True)
+         del prepared, by_task, plans

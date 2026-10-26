@@ -1,0 +1,46 @@
+{
+  "id": "2603.19610",
+  "requested_title": "ParallelVLM: Lossless Video-LLM Acceleration with Visual Alignment Aware Parallel Speculative Decoding",
+  "source_url": "https://arxiv.org/abs/2603.19610",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2603.19610",
+  "citation_metadata": {
+    "citation_title": [
+      "ParallelVLM: Lossless Video-LLM Acceleration with Visual Alignment Aware Parallel Speculative Decoding"
+    ],
+    "citation_author": [
+      "Kong, Quan",
+      "Shen, Yuhao",
+      "Ji, Yicheng",
+      "Li, Huan",
+      "Wang, Cong"
+    ],
+    "citation_date": [
+      "2026/03/20"
+    ],
+    "citation_online_date": [
+      "2026/03/23"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2603.19610"
+    ],
+    "citation_arxiv_id": [
+      "2603.19610"
+    ],
+    "citation_abstract": [
+      "Although current Video-LLMs achieve impressive performance in video understanding tasks, their autoregressive decoding efficiency remains constrained by the massive number of video tokens. Visual token pruning can partially ease this bottleneck, yet existing approaches still suffer from information loss and yield only modest acceleration in decoding. In this paper, we propose ParallelVLM, a training-free draft-then-verify speculative decoding framework that overcomes both mutual waiting and limited speedup-ratio problems between draft and target models in long-video settings. ParallelVLM features two parallelized stages that maximize hardware utilization and incorporate an Unbiased Verifier-Guided Pruning strategy to better align the draft and target models by eliminating the positional bias in attention-guided pruning. Extensive experiments demonstrate that ParallelVLM effectively expands the draft window by $1.6\\sim1.8\\times$ with high accepted lengths, and accelerates various video understanding benchmarks by 3.36$\\times$ on LLaVA-Onevision-72B and 2.42$\\times$ on Qwen2.5-VL-32B compared with vanilla autoregressive decoding."
+    ]
+  },
+  "online_title": "ParallelVLM: Lossless Video-LLM Acceleration with Visual Alignment Aware Parallel Speculative Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2603.19610v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2603.19610v2",
+  "local_pdf": "pdfs/2603.19610.pdf",
+  "bytes": 5674049,
+  "sha256": "046c25b478d0ce2982c7469c1070b6e1ab4d2b756a1f68185f832b9d11eeac8b",
+  "text_status": "extracted",
+  "local_text": "texts/2603.19610.txt"
+}

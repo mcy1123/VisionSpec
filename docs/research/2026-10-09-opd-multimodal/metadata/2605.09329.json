@@ -1,0 +1,44 @@
+{
+  "id": "2605.09329",
+  "requested_title": "Test-Time Speculation",
+  "source_url": "https://arxiv.org/abs/2605.09329",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2605.09329",
+  "citation_metadata": {
+    "citation_title": [
+      "Test-Time Speculation"
+    ],
+    "citation_author": [
+      "Kumar, Avinash",
+      "Sanghavi, Sujay",
+      "Das, Poulami"
+    ],
+    "citation_date": [
+      "2026/05/10"
+    ],
+    "citation_online_date": [
+      "2026/05/19"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2605.09329"
+    ],
+    "citation_arxiv_id": [
+      "2605.09329"
+    ],
+    "citation_abstract": [
+      "Speculative decoding accelerates LLM inference by using a fast draft model to generate tokens and a more accurate target model to verify them. Its performance depends on the $\\textit{acceptance length}$, or number of draft tokens accepted by the target. Our studies show that the acceptance length of even state-of-the-art speculators, like DFlash, EAGLE-3 and PARD degrade with generation length, reaching values close to 1 (i.e. no speedup) within just a few thousand output tokens, making speculators ineffective for long-response tasks. Acceptance lengths decline because most speculators are trained offline on short sequences, but are forced to match the target model on much longer outputs at inference, well beyond their training distribution. To address this issue, we propose $\\textit{Test-Time Speculation (TTS)}$, an online distillation approach that continuously adapts the speculator at test-time. TTS leverages the key insight that the token verification step already invokes the target model for each draft token, providing the training signal needed to adapt the draft at no additional cost. Treating the draft as the student and the target as a teacher, TTS adjusts the draft over several speculation rounds, with each update improving the draft's accuracy as generation proceeds. Our results across multiple models from the Qwen-3, Qwen-3.5, and Llama3.1 families show that TTS improves acceptance lengths over state-of-the-art speculators by up to $72\\%$ and $41\\%$ on average, with the benefits scaling with increased generation lengths."
+    ]
+  },
+  "online_title": "Test-Time Speculation",
+  "title_similarity": 1.0,
+  "arxiv_version": "2605.09329v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2605.09329v2",
+  "local_pdf": "pdfs/2605.09329.pdf",
+  "bytes": 3407562,
+  "sha256": "7688b05bab7696f4a47a5987f2fcad13d46f1d84cec9f90caf661fb397f3ee20",
+  "text_status": "extracted",
+  "local_text": "texts/2605.09329.txt"
+}

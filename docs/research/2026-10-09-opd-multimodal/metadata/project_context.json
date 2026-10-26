@@ -1,0 +1,6 @@
+{
+  "checked_on": "2026-10-09",
+  "project_context_file": "../../../AGENTS.md",
+  "sha256": "f2a7d2f8f48558cd9f6da0686c591fd8c3602366b3df1d0bb07396353be42e13",
+  "context": "aligned step1000; B0.5/B1 complete validation pending per AGENTS; no experiments run in this literature task"
+}

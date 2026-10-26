@@ -1,0 +1,52 @@
+{
+  "id": "2610.06011",
+  "requested_title": "D-Loop: Looped Diffusion Drafting for Speculative Decoding",
+  "source_url": "https://arxiv.org/abs/2610.06011",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2610.06011",
+  "citation_metadata": {
+    "citation_title": [
+      "D-Loop: Looped Diffusion Drafting for Speculative Decoding"
+    ],
+    "citation_author": [
+      "Chen, Kecheng",
+      "He, Yuyang",
+      "Gong, Cheng",
+      "Liu, Hui",
+      "Long, Guoping",
+      "Li, Jiajun",
+      "Wu, Shi",
+      "Zhang, Suiyun",
+      "Li, Haoliang",
+      "Liu, Ziru",
+      "Liu, Rui"
+    ],
+    "citation_date": [
+      "2026/10/05"
+    ],
+    "citation_online_date": [
+      "2026/10/05"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2610.06011"
+    ],
+    "citation_arxiv_id": [
+      "2610.06011"
+    ],
+    "citation_abstract": [
+      "Block diffusion accelerates speculative decoding by drafting multiple tokens in one forward pass. However, each position predicts a marginal distribution without observing earlier proposed tokens, limiting draft quality and acceptance length. We identify a concrete failure, the \\emph{repetition trap}, in which neighboring positions produce redundant copies of the same token. We explain this tendency theoretically and empirically examine its association with shorter accepted drafts. Recent methods refine marginal predictions with an additional causal head or a separately trained drafter, increasing parameter storage and introducing separate training objectives. We instead propose D-Loop, which introduces \\emph{intra-block causal conditioning} within the original diffusion drafter without additional model components. Inspired by semi-autoregressive generation and parameter sharing, D-Loop reuses the same backbone across looped passes. The first pass proposes a block, and the second conditions on a selected prefix to regenerate the suffix in parallel. A complementary prefix--suffix objective trains the shared drafter for both anchor-only prefix prediction and prefix-conditioned suffix prediction. Across eight math, code, and chat benchmarks, D-Loop can beat DFlash and DSpark on Qwen3-4B and Qwen3-8B with obvious gains."
+    ]
+  },
+  "online_title": "D-Loop: Looped Diffusion Drafting for Speculative Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2610.06011v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2610.06011v1",
+  "local_pdf": "pdfs/2610.06011.pdf",
+  "bytes": 506655,
+  "sha256": "f9c6235ce3e991ad778c5c09520b4abf814d1366671a209e0a751c1585abd660",
+  "text_status": "extracted",
+  "local_text": "texts/2610.06011.txt"
+}

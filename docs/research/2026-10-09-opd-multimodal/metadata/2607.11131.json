@@ -1,0 +1,46 @@
+{
+  "id": "2607.11131",
+  "requested_title": "TIGER: Text-Conditioned Visual Gated Routing with Acceptance Alignment for Multimodal Speculative Decoding",
+  "source_url": "https://arxiv.org/abs/2607.11131",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2607.11131",
+  "citation_metadata": {
+    "citation_title": [
+      "TIGER: Text-Conditioned Visual Gated Routing with Acceptance Alignment for Multimodal Speculative Decoding"
+    ],
+    "citation_author": [
+      "Vo, Quynh",
+      "Nguyen, Cong-Duy",
+      "Srey, Ponhvoan",
+      "Tuan, Luu Anh",
+      "Nguyen, Thong"
+    ],
+    "citation_date": [
+      "2026/07/13"
+    ],
+    "citation_online_date": [
+      "2026/07/13"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2607.11131"
+    ],
+    "citation_arxiv_id": [
+      "2607.11131"
+    ],
+    "citation_abstract": [
+      "Speculative decoding accelerates autoregressive generation by letting a lightweight drafter propose multiple tokens that are verified by a larger target model. Although effective for text-only LLMs, speculative decoding yields limited gains in VLMs because drafters often diverge on vision-critical content, while existing multimodal acceleration methods do not directly address irrelevant visual evidence or optimize the verifier-accepted prefix length that governs speedup. We propose TIGER, a Text-conditioned vIsual GatEd Routing framework for multimodal speculative decoding. TIGER dynamically selects a sparse set of context-relevant visual tokens based on the drafter's current textual state, rather than expose the full visual token set or a fixed compressed interface. To better align training with inference-time efficiency, we optimize the drafter with acceptance-aligned group-based policy training using verifier-derived rewards based on accepted prefix length, built on top of distillation warm start with KL anchoring. This encourages the drafter not only to imitate the target model, but also to produce speculative continuations that survive verification for longer prefixes. Experiments show that TIGER yields consistent gains in accepted prefix length and speculative speedup under exact verifier-side speculative decoding, while achieving favorable quality-latency trade-offs with comparable downstream accuracy in visual-routing analyses."
+    ]
+  },
+  "online_title": "TIGER: Text-Conditioned Visual Gated Routing with Acceptance Alignment for Multimodal Speculative Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2607.11131v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_error": "HTTP Error 429: ",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2607.11131v1",
+  "local_pdf": "pdfs/2607.11131.pdf",
+  "bytes": 8696457,
+  "sha256": "5e835a2d321eb62eeb77a210bb25544d6ade7c3d3c16d6615fba3e5eb65915ce",
+  "text_status": "extracted",
+  "local_text": "texts/2607.11131.txt"
+}

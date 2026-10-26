@@ -1,0 +1,50 @@
+{
+  "id": "2605.10889",
+  "requested_title": "Unmasking On-Policy Distillation: Where It Helps, Where It Hurts, and Why",
+  "source_url": "https://arxiv.org/abs/2605.10889",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2605.10889",
+  "citation_metadata": {
+    "citation_title": [
+      "Unmasking On-Policy Distillation: Where It Helps, Where It Hurts, and Why"
+    ],
+    "citation_author": [
+      "Armandpour, Mohammadreza",
+      "Ilhan, Fatih",
+      "Harrison, David",
+      "Jaiswal, Ajay",
+      "Hoang, Duc N. M",
+      "Faghri, Fartash",
+      "Zhang, Yizhe",
+      "Cho, Minsik",
+      "Farajtabar, Mehrdad"
+    ],
+    "citation_date": [
+      "2026/05/11"
+    ],
+    "citation_online_date": [
+      "2026/09/08"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2605.10889"
+    ],
+    "citation_arxiv_id": [
+      "2605.10889"
+    ],
+    "citation_abstract": [
+      "On-policy distillation offers dense, per-token supervision for training reasoning models; however, it remains unclear under which conditions this signal is beneficial and under which it is detrimental. Which teacher model should be used, and in the case of self-distillation, which specific context should serve as the supervisory signal? Does the optimal choice vary from one token to the next? At present, addressing these questions typically requires costly training runs whose aggregate performance metrics obscure the dynamics at the level of individual tokens. We introduce a training-free diagnostic framework that operates at the highest resolution: per token, per question, and per teacher. We derive an ideal per-node gradient defined as the parameter update that maximally increases the student's probability of success. We then develop a scalable targeted-rollout algorithm to estimate this gradient efficiently, even for long chains of intermediate thoughts. The gradient alignment score, defined as the cosine similarity between this ideal gradient and any given distillation gradient, quantifies the extent to which a particular configuration approximates the ideal signal. Across a range of self-distillation settings and external teacher models, we observe that distillation guidance exhibits substantially higher alignment with the ideal on incorrect rollouts than on correct ones, where the student already performs well and the teacher's signal tends to become noisy. Furthermore, we find that the optimal distillation context depends jointly on the student model's capacity and the target task, and that no single universally effective configuration emerges. These findings motivate the use of per-task, per-token diagnostic analyses for distillation."
+    ]
+  },
+  "online_title": "Unmasking On-Policy Distillation: Where It Helps, Where It Hurts, and Why",
+  "title_similarity": 1.0,
+  "arxiv_version": "2605.10889v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2605.10889v2",
+  "local_pdf": "pdfs/2605.10889.pdf",
+  "bytes": 877336,
+  "sha256": "97a9eea371c08b0891f81a524b74d811808618fac522e73fb5f01c98c580f319",
+  "text_status": "extracted",
+  "local_text": "texts/2605.10889.txt"
+}

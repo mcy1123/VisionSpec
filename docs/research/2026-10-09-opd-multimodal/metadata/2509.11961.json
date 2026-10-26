@@ -1,0 +1,48 @@
+{
+  "id": "2509.11961",
+  "requested_title": "Spec-LLaVA: Accelerating Vision-Language Models with Dynamic Tree-Based Speculative Decoding",
+  "source_url": "https://arxiv.org/abs/2509.11961",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2509.11961",
+  "citation_metadata": {
+    "citation_title": [
+      "Spec-LLaVA: Accelerating Vision-Language Models with Dynamic Tree-Based Speculative Decoding"
+    ],
+    "citation_author": [
+      "Huo, Mingxiao",
+      "Zhang, Jiayi",
+      "Wang, Hewei",
+      "Xu, Jinfeng",
+      "Chen, Zheyu",
+      "Tai, Huilin",
+      "Chen, Yijun"
+    ],
+    "citation_date": [
+      "2025/09/15"
+    ],
+    "citation_online_date": [
+      "2025/09/15"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2509.11961"
+    ],
+    "citation_arxiv_id": [
+      "2509.11961"
+    ],
+    "citation_abstract": [
+      "Vision-Language Models (VLMs) enable powerful multimodal reasoning but suffer from slow autoregressive inference, limiting their deployment in real-time applications. We introduce Spec-LLaVA, a system that applies speculative decoding to accelerate VLMs without sacrificing output quality. Spec-LLaVA pairs a lightweight draft VLM with a large target model: the draft speculates future tokens, which the target verifies in parallel, allowing multiple tokens to be generated per step. To maximize efficiency, we design a dynamic tree-based verification algorithm that adaptively expands and prunes speculative branches using draft model confidence. On MS COCO out-of-domain images, Spec-LLaVA achieves up to 3.28$\\times$ faster decoding on LLaVA-1.5 (7B, 13B) with no loss in generation quality. This work presents a lossless acceleration framework for VLMs using dynamic tree-structured speculative decoding, opening a path toward practical real-time multimodal assistants. Importantly, the lightweight draft model design makes the framework amenable to resource-constrained or on-device deployment settings."
+    ]
+  },
+  "online_title": "Spec-LLaVA: Accelerating Vision-Language Models with Dynamic Tree-Based Speculative Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2509.11961v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2509.11961v1",
+  "local_pdf": "pdfs/2509.11961.pdf",
+  "bytes": 545571,
+  "sha256": "3ab8cd9e80a759db1aceb91d17e3766b143c7e6c5a3bf1424c37be15c7e2b84d",
+  "text_status": "extracted",
+  "local_text": "texts/2509.11961.txt"
+}

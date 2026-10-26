@@ -1,0 +1,46 @@
+{
+  "id": "2602.15318",
+  "requested_title": "Sparrow: Text-Anchored Window Attention with Visual-Semantic Glimpsing for Speculative Decoding in Video LLMs",
+  "source_url": "https://arxiv.org/abs/2602.15318",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2602.15318",
+  "citation_metadata": {
+    "citation_title": [
+      "Sparrow: Text-Anchored Window Attention with Visual-Semantic Glimpsing for Speculative Decoding in Video LLMs"
+    ],
+    "citation_author": [
+      "Zhang, Libo",
+      "Zhang, Zhaoning",
+      "Hong, Wangyang",
+      "Qiao, Peng",
+      "Li, Dongsheng"
+    ],
+    "citation_date": [
+      "2026/02/17"
+    ],
+    "citation_online_date": [
+      "2026/02/17"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2602.15318"
+    ],
+    "citation_arxiv_id": [
+      "2602.15318"
+    ],
+    "citation_abstract": [
+      "Although speculative decoding is widely used to accelerate Vision-Language Models (VLMs) inference, it faces severe performance collapse when applied to Video Large Language Models (Vid-LLMs). The draft model typically falls into the trap of attention dilution and negative visual gain due to key-value cache explosion and context window mismatches. We observe a visual semantic internalization phenomenon in Vid-LLMs, indicating that critical visual semantics are implicitly encoded into text hidden states during deep-layer interactions, which renders raw visual inputs structurally redundant during deep inference. To address this, we propose the Sparrow framework, which first utilizes visually-aware text-anchored window attention via hidden state reuse to fully offload visual computation to the target model, and leverages intermediate-layer visual state bridging to train the draft model with semantic-rich intermediate states, thereby filtering out low-level visual noise. Additionally, a multi-token prediction strategy is introduced to bridge the training-inference distribution shift. Experiments show that Sparrow achieves an average speedup of 2.82x even with 25k visual tokens, effectively resolving the performance degradation in long sequences and offering a practical solution for real-time long video tasks."
+    ]
+  },
+  "online_title": "Sparrow: Text-Anchored Window Attention with Visual-Semantic Glimpsing for Speculative Decoding in Video LLMs",
+  "title_similarity": 1.0,
+  "arxiv_version": "2602.15318v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2602.15318v1",
+  "local_pdf": "pdfs/2602.15318.pdf",
+  "bytes": 4419016,
+  "sha256": "ae55b27b1d03864e4de30a4e3475adf40a359b7cdb2e8d67c40b3edaeb80a01c",
+  "text_status": "extracted",
+  "local_text": "texts/2602.15318.txt"
+}

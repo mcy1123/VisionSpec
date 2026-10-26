@@ -1,0 +1,45 @@
+{
+  "id": "2609.38795",
+  "requested_title": "Recovering Off-Policy Supervision for Speculative Decoding",
+  "source_url": "https://arxiv.org/abs/2609.38795",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2609.38795",
+  "citation_metadata": {
+    "citation_title": [
+      "Recovering Off-Policy Supervision for Speculative Decoding"
+    ],
+    "citation_author": [
+      "Lee, Jungseob",
+      "Park, Chanjun",
+      "Eo, Sugyeong",
+      "Moon, Hyeonseok"
+    ],
+    "citation_date": [
+      "2026/09/30"
+    ],
+    "citation_online_date": [
+      "2026/10/04"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2609.38795"
+    ],
+    "citation_arxiv_id": [
+      "2609.38795"
+    ],
+    "citation_abstract": [
+      "Block drafters for speculative decoding are commonly trained on corpora written by external models, where a single off-policy token invalidates supervision for all subsequent slots in a block. Existing approaches discard these divergent slots, resulting in severe supervision loss. To resolve this problem while preserving the training corpus, we propose a rollout-based training framework that recovers full supervision through two complementary components. The first component, Anchor-Label Relabelling (ALR), replaces corpus labels with distributions from greedy target rollouts, restoring valid supervision across all predicted slots. The second component, In-Rollout Anchors (IRA), places draft blocks directly inside these rollouts to expose the drafter to target-generated context, reusing precomputed rollout features at no additional target cost. Across fixed vision-language and text corpora, our framework increases greedy accepted length by up to 36.5% over DFlash and consistently outperforms erasing baselines. Notably, a single epoch of our method surpasses the best erase schedules. After three epochs, it matches the acceptance length of training on target-regenerated responses. These results show that our framework provides an effective and compute-efficient approach for training speculative drafters on fixed corpora without modifying the original text. Code is available at https://github.com/js-lee-AI/ALR-IRA."
+    ]
+  },
+  "online_title": "Recovering Off-Policy Supervision for Speculative Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2609.38795v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2609.38795v2",
+  "local_pdf": "pdfs/2609.38795.pdf",
+  "bytes": 501638,
+  "sha256": "fbf6e82ce833c6b24acaac795ca6a38575df086ea15bebbad625efebc04bc983",
+  "text_status": "extracted",
+  "local_text": "texts/2609.38795.txt"
+}

@@ -1,0 +1,48 @@
+{
+  "id": "2601.08273",
+  "requested_title": "HIPPO: Accelerating Video Large Language Models Inference via Holistic-aware Parallel Speculative Decoding",
+  "source_url": "https://arxiv.org/abs/2601.08273",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2601.08273",
+  "citation_metadata": {
+    "citation_title": [
+      "HIPPO: Accelerating Video Large Language Models Inference via Holistic-aware Parallel Speculative Decoding"
+    ],
+    "citation_author": [
+      "Lv, Qitan",
+      "Liu, Tianyu",
+      "Wu, Wen",
+      "Xu, Xuenan",
+      "Zhou, Bowen",
+      "Wu, Feng",
+      "Zhang, Chao"
+    ],
+    "citation_date": [
+      "2026/01/13"
+    ],
+    "citation_online_date": [
+      "2026/01/13"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2601.08273"
+    ],
+    "citation_arxiv_id": [
+      "2601.08273"
+    ],
+    "citation_abstract": [
+      "Speculative decoding (SD) has emerged as a promising approach to accelerate LLM inference without sacrificing output quality. Existing SD methods tailored for video-LLMs primarily focus on pruning redundant visual tokens to mitigate the computational burden of massive visual inputs. However, existing methods do not achieve inference acceleration comparable to text-only LLMs. We observe from extensive experiments that this phenomenon mainly stems from two limitations: (i) their pruning strategies inadequately preserve visual semantic tokens, degrading draft quality and acceptance rates; (ii) even with aggressive pruning (e.g., 90% visual tokens removed), the draft model's remaining inference cost limits overall speedup. To address these limitations, we propose HIPPO, a general holistic-aware parallel speculative decoding framework. Specifically, HIPPO proposes (i) a semantic-aware token preservation method, which fuses global attention scores with local visual semantics to retain semantic information at high pruning ratios; (ii) a video parallel SD algorithm that decouples and overlaps draft generation and target verification phases. Experiments on four video-LLMs across six benchmarks demonstrate HIPPO's effectiveness, yielding up to 3.51x speedup compared to vanilla auto-regressive decoding."
+    ]
+  },
+  "online_title": "HIPPO: Accelerating Video Large Language Models Inference via Holistic-aware Parallel Speculative Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2601.08273v1",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2601.08273v1",
+  "local_pdf": "pdfs/2601.08273.pdf",
+  "bytes": 5000609,
+  "sha256": "c1059e49eea74a62aff710cbe413b55b4fde09b4d602ad28eea806093f039ada",
+  "text_status": "extracted",
+  "local_text": "texts/2601.08273.txt"
+}

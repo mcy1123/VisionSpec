@@ -1,0 +1,64 @@
+{
+  "id": "2608.20743",
+  "requested_title": "Is Multimodal Speculative Decoding Ready for Diffusion-Based Parallel Drafting? A Survey and Empirical Diagnosis",
+  "source_url": "https://arxiv.org/abs/2608.20743",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2608.20743",
+  "citation_metadata": {
+    "citation_title": [
+      "Is Multimodal Speculative Decoding Ready for Diffusion-Based Parallel Drafting? A Survey and Empirical Diagnosis"
+    ],
+    "citation_author": [
+      "Li, Yantao",
+      "Gao, Huanlin",
+      "Zhao, Fang",
+      "Tan, Chao",
+      "Hui, Qiang",
+      "Liu, Shuting",
+      "Shi, Fuyuan",
+      "Lu, Ting",
+      "Zhao, Shaoan",
+      "Guo, Xueqiang",
+      "Su, Xinpei",
+      "Zhang, Jianbing",
+      "Dai, Xinyu",
+      "Wang, Kai",
+      "Lian, Shiguo"
+    ],
+    "citation_date": [
+      "2026/08/21"
+    ],
+    "citation_online_date": [
+      "2026/08/29"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2608.20743"
+    ],
+    "citation_arxiv_id": [
+      "2608.20743"
+    ],
+    "citation_abstract": [
+      "Speculative decoding accelerates autoregressive generation by allowing a lightweight drafter to propose future tokens while a target model verifies them in parallel. Its lossless guarantee has motivated a line of work that pushes the drafter itself toward parallel generation. The most recent paradigm is block-parallel generative drafting, including diffusion-based methods such as DFlash and DSpark, achieving up to 3.6x speedup on common daily chatting tasks. While this transition is well studied in text-only LLMs, its applicability to multimodal models remains an open question. Existing multimodal speculative decoding efforts focus on input compression, adapter alignment, candidate coverage, or modality-specific verification; however, block-parallel generative drafting remains largely unexplored. To bridge this gap, this paper combines a modality-centered survey with a cross-architecture empirical study to ask: Is multimodal speculative decoding ready for diffusion-based parallel drafting? In this survey, we systematically analyze a wide spectrum of multimodal models, spanning Vision-Language, Video-Language, Audio, and Vision-Language-Action (VLA) architectures, from the dual perspectives of drafting parallelism and cross-modal information interaction. We introduce a unified taxonomy that isolates drafter-side parallelism from orthogonal design choices such as tree construction and verification strategies. Furthermore, we provide a comprehensive empirical comparison of existing methods under varying degrees of parallelism across standardized multimodal benchmarks, including OCR, VQA, visual reasoning, and image captioning. Finally, we summarize the limitations of current approaches, discuss open challenges, and outline promising future directions for this rapidly evolving field."
+    ]
+  },
+  "online_title": "Is Multimodal Speculative Decoding Ready for Diffusion-Based Parallel Drafting? A Survey and Empirical Diagnosis",
+  "title_similarity": 1.0,
+  "arxiv_version": "2608.20743v2",
+  "metadata_status": "fetched",
+  "semantic_scholar": {
+    "paperId": "637330835761fd4f83eaf926ad722e9106d71d3d",
+    "externalIds": {
+      "ArXiv": "2608.20743",
+      "CorpusId": 291317142
+    },
+    "title": "Is Multimodal Speculative Decoding Ready for Diffusion-Based Parallel Drafting? A Survey and Empirical Diagnosis",
+    "year": 2026
+  },
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2608.20743v2",
+  "local_pdf": "pdfs/2608.20743.pdf",
+  "bytes": 877832,
+  "sha256": "5729241eaa138340768969811f737c49ce9d35785ef78800de513acdcc2926c2",
+  "text_status": "extracted",
+  "local_text": "texts/2608.20743.txt"
+}

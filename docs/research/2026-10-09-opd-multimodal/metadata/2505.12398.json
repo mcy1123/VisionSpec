@@ -1,0 +1,49 @@
+{
+  "id": "2505.12398",
+  "requested_title": "Traversal Verification for Speculative Tree Decoding",
+  "source_url": "https://arxiv.org/abs/2505.12398",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2505.12398",
+  "citation_metadata": {
+    "citation_title": [
+      "Traversal Verification for Speculative Tree Decoding"
+    ],
+    "citation_author": [
+      "Weng, Yepeng",
+      "Hu, Qiao",
+      "Chen, Xujie",
+      "Liu, Li",
+      "Mei, Dianwen",
+      "Qiu, Huishi",
+      "Tian, Jiang",
+      "Shi, Zhongchao"
+    ],
+    "citation_date": [
+      "2025/05/18"
+    ],
+    "citation_online_date": [
+      "2025/11/05"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2505.12398"
+    ],
+    "citation_arxiv_id": [
+      "2505.12398"
+    ],
+    "citation_abstract": [
+      "Speculative decoding is a promising approach for accelerating large language models. The primary idea is to use a lightweight draft model to speculate the output of the target model for multiple subsequent timesteps, and then verify them in parallel to determine whether the drafted tokens should be accepted or rejected. To enhance acceptance rates, existing frameworks typically construct token trees containing multiple candidates in each timestep. However, their reliance on token-level verification mechanisms introduces two critical limitations: First, the probability distribution of a sequence differs from that of individual tokens, leading to suboptimal acceptance length. Second, current verification schemes begin from the root node and proceed layer by layer in a top-down manner. Once a parent node is rejected, all its child nodes should be discarded, resulting in inefficient utilization of speculative candidates. This paper introduces Traversal Verification, a novel speculative decoding algorithm that fundamentally rethinks the verification paradigm through leaf-to-root traversal. Our approach considers the acceptance of the entire token sequence from the current node to the root, and preserves potentially valid subsequences that would be prematurely discarded by existing methods. We theoretically prove that the probability distribution obtained through Traversal Verification is identical to that of the target model, guaranteeing lossless inference while achieving substantial acceleration gains. Experimental results across different large language models and multiple tasks show that our method consistently improves acceptance length and throughput over existing methods."
+    ]
+  },
+  "online_title": "Traversal Verification for Speculative Tree Decoding",
+  "title_similarity": 1.0,
+  "arxiv_version": "2505.12398v2",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2505.12398v2",
+  "local_pdf": "pdfs/2505.12398.pdf",
+  "bytes": 1027346,
+  "sha256": "56a8e5556b665c87377277728ed5fa4833d5271988f6ad3b4adc87b530cb0b56",
+  "text_status": "extracted",
+  "local_text": "texts/2505.12398.txt"
+}

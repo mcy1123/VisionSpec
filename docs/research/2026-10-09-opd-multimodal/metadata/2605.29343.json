@@ -1,0 +1,52 @@
+{
+  "id": "2605.29343",
+  "requested_title": "Draft-OPD: On-Policy Distillation for Speculative Draft Models",
+  "source_url": "https://arxiv.org/abs/2605.29343",
+  "checked_on": "2026-10-09",
+  "landing_url": "https://arxiv.org/abs/2605.29343",
+  "citation_metadata": {
+    "citation_title": [
+      "Draft-OPD: On-Policy Distillation for Speculative Draft Models"
+    ],
+    "citation_author": [
+      "Lei, Haodi",
+      "Li, Yafu",
+      "Zhang, Haoran",
+      "Zhang, Shunkai",
+      "Cheng, Qianjia",
+      "Qu, Xiaoye",
+      "Cui, Ganqu",
+      "Zhou, Bowen",
+      "Ding, Ning",
+      "Luo, Yun",
+      "Cheng, Yu"
+    ],
+    "citation_date": [
+      "2026/05/28"
+    ],
+    "citation_online_date": [
+      "2026/09/18"
+    ],
+    "citation_pdf_url": [
+      "https://arxiv.org/pdf/2605.29343"
+    ],
+    "citation_arxiv_id": [
+      "2605.29343"
+    ],
+    "citation_abstract": [
+      "Speculative decoding accelerates large language model inference by pairing a target model with a lightweight draft model whose proposed tokens are verified in parallel. A common way to build draft models, like EAGLE3 or DFlash is supervised fine-tuning (SFT) on target-generated trajectories. However, we observe that SFT quickly plateaus: the draft model's acceptance length on test data stops improving. The reason is an offline-to-inference mismatch: In SFT, the drafter learns from fixed target-generated trajectories, whereas during speculative decoding it is evaluated on blocks proposed under its own policy. This motivates on-policy distillation (OPD), where the target model supervises the drafter on draft-induced states. Yet OPD remains difficult for draft models, as they cannot reliably roll out complete sequences independently, whereas target-assisted generation makes the collected sequences follow the target distribution and thus eliminates the on-policy signal. We therefore propose Draft-OPD, which uses target-assisted rollout for stable continuations and replays drafting from the verification-exposed error positions. This allows the drafter to learn from target feedback on both accepted and rejected proposals, focusing training on the draft-induced errors that limit speculative acceptance. Experiments show that Draft-OPD achieves over $5\\times$ lossless acceleration for thinking models across diverse tasks, improving over EAGLE-3 and DFlash by 23\\% and 13\\%."
+    ]
+  },
+  "online_title": "Draft-OPD: On-Policy Distillation for Speculative Draft Models",
+  "title_similarity": 1.0,
+  "arxiv_version": "2605.29343v3",
+  "metadata_status": "fetched",
+  "semantic_scholar_status": "skipped: rate-limited earlier or no arxiv ID",
+  "pdf_status": "downloaded",
+  "pdf_url": "https://arxiv.org/pdf/2605.29343v3",
+  "local_pdf": "pdfs/2605.29343.pdf",
+  "bytes": 1632890,
+  "sha256": "fd0060f298a406f62e2cb564a3698bae953ab455c67f21caf0c94c03b5306e58",
+  "text_status": "extracted",
+  "local_text": "texts/2605.29343.txt"
+}

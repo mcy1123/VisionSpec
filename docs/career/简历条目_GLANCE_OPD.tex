@@ -1,0 +1,16 @@
+% 需要 \usepackage{enumitem}、\usepackage{hyperref}、\usepackage{fontawesome5}
+% 以及自定义命令 \datedline{左}{右}、\dateRange{起}{止}
+
+\datedline{\textbf{多模态投机解码草稿头训练引擎（GLANCE 架构 + OPD 在线蒸馏）} \href{https://github.com/mcy1123/ms-agent}{\faGithub\ mcy1123/ms-agent}}{\dateRange{2026.08}{2026.09}}
+
+\begin{itemize}[parsep=0.5ex]
+    \item 面向 VLM 推理加速，设计并实现\textbf{块扩散草稿头 + 宽候选树投机解码}系统：草稿头单次前向一次填满 \textbf{16 token} 整块并输出各 offset 边缘分布，零额外开销展开为 \textbf{63 候选前缀树}，再由 target 一次 ancestor-masked 前向验证整棵树，提交最长正确前缀。在 Qwen3-VL-8B（冻结）上实现\textbf{端到端 \textbf{3.36$\times$} 解码加速}，接受长度 \textbf{5.20 token/轮}，且输出与贪心解码\textbf{逐 token 完全一致（无损）}。
+
+    \item 训练侧引入 \textbf{OPD 在线蒸馏}方法替代离线监督：将训练锚点从 target 贪心轨迹改为\textbf{草稿头自身在真实解码器中树 rollout 实际走到的位置}（含被拒绝位置），块内填充改为草稿头自己的提议 token，监督目标由对 argmax 的 CE 改为\textbf{对 target 完整分布的 KL}（接受段 forward KL + 首个被拒位置 reverse KL，位置权重按 offset 衰减）。据此建立「草稿自诱导状态」训练通路。
+
+    \item 训练管线工程优化：自研\textbf{批量锚点前向}替代逐锚点前向，共享前缀只投影一次上下文，数值与官方实现等价（fp32 max$|\Delta|$=\textbf{3.5e-6}）；实现\textbf{每行 target context 一次缓存}（2000 行约 25\,GB）将 8B 前向移出训练步；定位并修复视觉塔卷积在特定 torch/cuDNN build 上的性能灾难（9381\,ms $\rightarrow$ 0.03\,ms），\textbf{单次 8 图前向 84\,s 降至 1.36\,s（62$\times$）}。
+
+    \item 方法验证与实验编排：搭建对齐论文口径的评测管线（batch 1、greedy、decode-only 计时、$\tau$ 跨 round 池化、budget sweep 共享 AR baseline）；构建 2000 行池（\textbf{72k 锚点} + target top-64 分布）；跑通 \textbf{6 个训练臂}并完成 \textbf{3 seed 配对 t 检验}。以\textbf{逐位约定单元测试}（无 GPU，哨兵数据钉住 slot/anchor 行号约定）与干净 A/B 单开关实验定位损失函数配置问题，将原始配置的负收益修正至 $+0.026$（3/3 seed 同为正），并给出\textbf{效应量上界}。
+
+    \item 通路迁移与数据工程：将系统从图像扩展至视频（VideoDetailCaption，\textbf{499 行}），实现视频预解码缓存与 6 分片并行解码；训练后视频零样本接受长度 \textbf{2.70 $\rightarrow$ 3.45}，独立留出集 \textbf{$+0.285$（$t$=+5.68，27/30）}；定位出 bf16 近平局导致的解码分叉问题（top-2 logit 仅差一个 ulp），统一评测配置并作废一批不可比指标。
+\end{itemize}
