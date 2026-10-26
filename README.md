@@ -1,4 +1,4 @@
-# GLANCE-ScienceQA
+# VisionSpec
 
 冻结 Qwen3-VL-8B-Instruct 的多模态无损投机解码：1.05B / 5 层的 block-diffusion draft head 一次前向覆盖 16 个位置（1 root + 15 预测），target 一次 ancestor-masked 前向验证 63 节点前缀树，输出与贪心 AR 逐 token 相同。
 
