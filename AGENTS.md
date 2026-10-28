@@ -2,6 +2,14 @@
 
 本文件只记录当前有效状态与工作规则。整理前全文见[本次归档](docs/archive/AGENTS-before-cleanup-20261019_135449.md)，切换前交接见[历史 AGENTS](docs/archive/AGENTS-before-pure-default-20261019.md)。历史文档中的“默认 serial”“尚未启动”“正在运行”和旧授权均是当时状态，不是当前指令；完整结果从[报告索引](docs/reports/README.md)查阅。
 
+## 2026-10-26/27 视频长生成 OPD 测试（用户授权）
+
+用户明确要求“直接开训”，并要求所占用卡（物理 3/6/7）不空到 2026-10-27 08:00；2/4/5 与 0/1 未占用。新增显式视频入口 `repro/video_caption/train_video_opd.py`（`--modality video`、三卡 `allow_fresh_start`；ScienceQA 续训入口的冻结保护未动）与数据适配 `repro/video_caption/build_pool.py`。
+
+结果（VideoDetailCaption 439 train、独立 fresh30、平均生成 **270.9 token/条**、fp32/b63k8/AR 逐 token 门禁、n=30）：warm 3.7266 → 1e 3.7180（+0.009，CI 跨零）→ **3e 3.7841（+0.0575，CI [+0.014,+0.102]）** → 4e 3.7104（回落 0.0737）；低 lr（1e-6）从 3e 续训不变，说明 4e 回落是步长而非数据耗尽。SFT 对照崩溃（lr 1e-5：1e 3.3336、3e 1.9168；lr 3e-5：1e 1.9164），两个 SFT 臂都在约 2.5% 权重漂移处落到 τ≈1.917 平台，而 OPD 漂移 ≤0.3%；同 lr/步数 OPD−SFT=+0.3844（30/30 胜）。`video_heldout_30` 30/30 在 train 内，不能当独立集。单 seed、n=30、stage 间 Adam 重置，不外推为“视频领域 OPD 有效”。同卡测速（12 行 ×2、fp32、顺序交替、48 次全无损）：OPD 3e 相对 warm 端到端 1.012×（CI [0.994,1.030]）、decode-only 1.013×（CI [0.992,1.034]）——τ 增益显著但墙钟只有约 1%。 2026-10-27 清理：删本 run 的 15 个中间/诊断 checkpoint 释放 164.1 GiB，保留 `run/step110`、`run_stage2/{step165,step220}`、`run_stage3/step110`、`run_stage5/step110`、`sft_fp32_lr1e5_seed0/{step110,step330}`；清单 `CLEANUP_20261027.json`，eval/曲线 JSON 未动。
+
+绑卡注意：本机数字 `CUDA_VISIBLE_DEVICES` 会被 CUDA 枚举重映射（`3,6,7` 的 rank0 实际落到物理卡 1，导致与别人任务共享并 OOM），必须用 GPU UUID + `CUDA_DEVICE_ORDER=PCI_BUS_ID`。产物：`/mnt/local3/mcy/GLANCE/results/video_caption_opd_20261026/`（`REPORT.md`/`PROTOCOL.json`/`STATUS.md`），报告见[视频长生成 OPD](docs/reports/2026-10-26-video-caption-opd.md)。
+
 ## 2026-10-20 新增授权：三卡续训两个 epoch
 
 用户已明确授权从 ScienceQA 全量首轮 SFT/OPD 各自 step1182 继续两个 epoch，每臂新增2364次更新（9452 QA），最终累计step3546。固定预算，不因开发集平台早停；启动后后台独立运行，不持续监控。此授权覆盖下文历史“没有剩余训练授权”，只适用于本次续训，不能自动追加。
