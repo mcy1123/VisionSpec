@@ -36,7 +36,8 @@ STATUS = dict(ORIGINAL_STATUS, implementation="pure block-native; three ranks, f
 
 def identity(args):
     ignored = {'out','gpu','resume_from','resume_update','stop_after','dry_run',
-               'no_update','stop_file','save_every','deadline_epoch','experiment_budget','experiment_case'}
+               'no_update','stop_file','save_every','deadline_epoch','experiment_budget','experiment_case',
+               'experiment_entry'}
     config = {k:v for k,v in vars(args).items() if k not in ignored}
     if not config.get('allow_partial_final'):
         config.pop('allow_partial_final', None)
@@ -229,7 +230,7 @@ class ParallelRollout:
         self.barrier(optimizer_step, cursor)
 
 
-def run(args):
+def run(args, allow_fresh_start=False):
     import pandas as pd
     if (int(os.environ.get('WORLD_SIZE', 1)) != WORLD or torch.cuda.device_count() < WORLD
         or args.parallel_rollout != WORLD or args.opd_mode != OPD_MODE
@@ -289,7 +290,11 @@ def run(args):
             if optimizer and {float(v['step']) for v in optimizer._opt.state.values()} != {float(optimizer_step)}:
                 raise ValueError('Adam step differs from checkpoint Head version')
         else:
-            raise ValueError('three-card continuation requires an explicitly migrated checkpoint')
+            if not allow_fresh_start:
+                raise ValueError('three-card continuation requires an explicitly migrated checkpoint')
+            # Explicit fresh start (video pilot only): every logical slot gets its
+            # own local RNG stream, and the topology is still 3 ranks x 4 slots.
+            executor.slot_rng = {slot: local_rng(device) for slot in SLOT_MAPPING[str(rank)]}
         executor.versions = parameter_versions(head)
         executor.head_sha = head_digest(head)
         executor.barrier(optimizer_step, start)
@@ -336,7 +341,7 @@ def run(args):
             if not args.no_update:
                 if rank == 0:
                     budget_event(args.experiment_budget, args.experiment_case, 'reserve', cursor,
-                        dict(entry='scienceqa_pure_block', seed=args.seed,
+                        dict(entry=getattr(args, 'experiment_entry', 'scienceqa_pure_block'), seed=args.seed,
                              config_sha256=metadata['config_sha256']))
                     optimizer.step()
                     budget_event(args.experiment_budget, args.experiment_case, 'complete', cursor)

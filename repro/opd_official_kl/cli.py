@@ -35,7 +35,8 @@ STATUS = dict(
 def parser():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--dry-run', action='store_true', help='print defaults without loading models or using a GPU')
-    ap.add_argument('--modality', choices=['image'], default='image')
+    ap.add_argument('--modality', choices=['image','video'], default='image',
+                    help='image = ScienceQA default; video is explicit only (see video_caption/)')
     for name in ['pool','schedule','init-from','out']:
         ap.add_argument('--'+name)
     ap.add_argument('--opd-mode', choices=['pure_block'], default='pure_block')
