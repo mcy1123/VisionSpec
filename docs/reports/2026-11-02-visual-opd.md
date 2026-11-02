@@ -1,6 +1,6 @@
 # 图像 OPD 的视觉依赖诊断与加权实验（2026-11-02）
 
-状态：视觉依赖诊断完成；视觉加权 60-update 对照训练与 test200 评测进行中。本文件先记录诊断协议与结果，训练/评测完成后补最终数字。
+状态：视觉依赖诊断完成；视觉加权 60-update 对照训练与 test200 评测完成，结果为阴性。
 
 ## 1. 问题
 
@@ -43,8 +43,25 @@ g_i=\max\left(0,\ \log p_{\text{real}}(y_i)-\log p_{\text{blank}}(y_i)\right)
 - 两臂：同一 OPD `step3546` 初始化、同一 60-update schedule、seed 20261102、lr 1e-5 constant、4 QA/update、4 卡；只差 `--visual-weights`。
 - 训练产物：`results/visual_opd_20261102/{base,weighted}`；评测在 test200 上做，按 `g_mean` 中位数/四分位比较 grounded 与 ungrounded τ。
 - 权重构建：`repro/diagnostics/build_visual_weights.py`；训练改动：`loss.py`、`runtime.py`、`parallel_trainer.py` 增加可选 `--visual-weights`，不影响无权重路径。
-- 结果：待补。
+- 评测：test200，两臂均 **200/200 逐 token 无损**，准确数均 **162/200**。
+
+| 分组 | n | base τ | weighted τ | weighted−base | 95% CI |
+|---|---:|---:|---:|---:|---:|
+| overall | 200 | 6.2305 | 6.2421 | +0.0117 | [−0.0083, +0.0321] |
+| 高 g（≥中位数） | 100 | 6.1422 | 6.1431 | +0.0009 | [−0.0239, +0.0251] |
+| 低 g（<中位数） | 100 | 6.3187 | 6.3411 | +0.0224 | [−0.0085, +0.0565] |
+| 最高四分位 | 50 | 5.4706 | 5.4931 | +0.0225 | [−0.0065, +0.0620] |
+| 最低四分位 | 50 | 5.6253 | 5.6235 | −0.0018 | [−0.0138, +0.0083] |
+
+- 60-update 继续训练本身相对原 OPD `step3546`（6.2206）约 +0.01；weighted−base 的整体 CI 跨零。
+- 高 g 组几乎完全不变（+0.0009，CI 跨零）；低 g/最高四分位略正，但 CI 也跨零或接近零。**简单的 token 位置视觉加权没有把 OPD 增益移到 grounded token 上，结果阴性。**
+- 训练日志的 rollout 轮数也没有实质差异（base/weighted 平均 38.4/38.4；最后 10 次 39.6/39.8）。
 
 ## 5. 后续
 
-如果加权臂在 test200 上提高高 g 组 τ 且不损总 τ，再延长预算或加入 clue 反事实/attention 蒸馏；如果只提高低 g 或整体下降，说明当前 token 级加权不够，下一杠杆应转向 grounded copy 候选（OCR/表格/视频字幕）或视觉 attention 蒸馏。
+这次阴性结果说明：**只在文本 token 的 loss 上乘一个视觉依赖权重，不足以让 head 更依赖视觉**；输入里已经有 fused vision-language hidden，瓶颈不在“给视觉位置更高权重”。下一杠杆按优先级：
+
+1. **Clue 反事实 / 视觉 attention 蒸馏**：用 target 的视觉 attention 或归因选 clue patch/frame，去掉 clue 后要求 student 跟随 target 的 clue-removed 分布，或直接对齐 target 的 visual attention；这比位置权重更强。
+2. **Grounded copy 候选**：OCR/表格/chart 文字、视频字幕作为候选前缀注入树，由 target 正常验证；这不改 OPD loss，但对 DocVQA/ChartQA/VideoDetailCaption 可能比 loss 调参更直接。
+3. **更强/更细的权重**：当前 blank-image g 是粗代理；可换成 shuffled-image 或 clue-removal 的 g，或按 token 类型（OCR copy vs 推理）分层，而不是全位置统一加权。
+4. **更长预算**：60 updates 只改变了约 +0.01 τ；如果前三条有信号再延长，不先用更长的同配方硬跑。
