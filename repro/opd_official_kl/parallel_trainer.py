@@ -113,7 +113,7 @@ class ParallelRollout:
         record = None
         try:
             if self.rank < len(items):
-                trace, record = self.collect_slot(target, processor, rows, items, args, identities, policy)
+                trace, record = self.collect_slot(target, processor, rows, items, args, identities, policy, cursor)
         except Exception as exc:
             error = repr(exc)
         self.phase_check(error)
@@ -143,9 +143,27 @@ class ParallelRollout:
         self.barrier(optimizer_step, cursor)
         return traces, denominator, policy, records, wire_bytes
 
-    def collect_slot(self, target, processor, rows, items, args, identities, policy):
-        inputs = adapters.encode(processor, rows.loc[items[self.rank]['task']].to_dict(),
-            args.modality, max_pixels=args.max_pixels, time_mode=args.time_mode)
+    def collect_slot(self, target, processor, rows, items, args, identities, policy, cursor):
+        task = items[self.rank]['task']
+        corrupt = None
+        corrupt_seed = 0
+        corrupt_image_path = None
+        mode = getattr(args, 'visual_corrupt', 'none')
+        if mode != 'none':
+            digest = hashlib.sha256(
+                f"{args.seed}:{cursor}:{self.rank}:{task}".encode()).hexdigest()
+            draw = int(digest[:8], 16) / float(1 << 32)
+            if draw < float(getattr(args, 'visual_corrupt_prob', 0.0)):
+                corrupt = mode
+                corrupt_seed = int(digest[8:16], 16)
+                if mode == 'mismatch':
+                    other = int(digest[16:24], 16) % len(rows)
+                    if rows.index[other] == task:
+                        other = (other + 1) % len(rows)
+                    corrupt_image_path = rows.iloc[other]['image_path']
+        inputs = adapters.encode(processor, rows.loc[task].to_dict(),
+            args.modality, max_pixels=args.max_pixels, time_mode=args.time_mode,
+            corrupt=corrupt, seed=corrupt_seed, corrupt_image_path=corrupt_image_path)
         trace = adapters.collect(target, self.head, inputs,
             max_new_tokens=args.max_new_tokens, max_seq_len=args.max_seq_len,
             teacher_verify_impl=args.teacher_verify_impl, batch_teacher_ids=False,

@@ -47,7 +47,7 @@ def build_image_text(proc, question_prompt):
                                     tokenize=False)
 
 
-def encode_image_inputs(proc, row, *, max_pixels=None):
+def encode_image_inputs(proc, row, *, max_pixels=None, corrupt=None, seed=0, corrupt_image_path=None):
     """Encode one (image, prompt) row into the tensors the target consumes.
 
     `row` needs `image_path` and `prompt` (both present in the frozen
@@ -64,6 +64,10 @@ def encode_image_inputs(proc, row, *, max_pixels=None):
     from shared import common
 
     path = str(row["image_path"])
+    if corrupt == "mismatch":
+        if not corrupt_image_path:
+            raise ValueError("mismatch corruption requires corrupt_image_path")
+        path = str(corrupt_image_path)
     if not os.path.exists(path):
         raise FileNotFoundError(f"image for {row.get('pid', '?')} is missing: {path}")
     with Image.open(path) as im:
@@ -73,6 +77,19 @@ def encode_image_inputs(proc, row, *, max_pixels=None):
         s = int(max_pixels) / max(w, h)
         image = image.resize((max(1, int(round(w * s))), max(1, int(round(h * s)))),
                              Image.BICUBIC)
+    if corrupt == "cutout":
+        import random
+        from PIL import ImageDraw
+        rng = random.Random(int(seed))
+        w, h = image.size
+        cw = max(1, int(w * rng.uniform(0.28, 0.42)))
+        ch = max(1, int(h * rng.uniform(0.28, 0.42)))
+        x = rng.randint(0, max(0, w - cw))
+        y = rng.randint(0, max(0, h - ch))
+        ImageDraw.Draw(image).rectangle(
+            [x, y, x + cw - 1, y + ch - 1], fill=(128, 128, 128))
+    elif corrupt not in (None, "mismatch"):
+        raise ValueError(f"unknown image corruption {corrupt!r}")
     # Delegate to `common.encode`: it is the exact call the repo's image
     # generation path (`eval_chartqa.py`) uses, so training and evaluation cannot
     # drift apart in binding, template or tensor layout.

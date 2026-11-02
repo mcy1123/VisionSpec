@@ -1,6 +1,6 @@
 # 图像 OPD 的视觉依赖诊断与加权实验（2026-11-02）
 
-状态：视觉依赖诊断完成；视觉加权 60-update 对照训练与 test200 评测完成，结果为阴性。
+状态：视觉依赖诊断完成；位置加权与 cutout 反事实两臂均为阴性；mismatch 反事实臂运行中。
 
 ## 1. 问题
 
@@ -57,11 +57,29 @@ g_i=\max\left(0,\ \log p_{\text{real}}(y_i)-\log p_{\text{blank}}(y_i)\right)
 - 高 g 组几乎完全不变（+0.0009，CI 跨零）；低 g/最高四分位略正，但 CI 也跨零或接近零。**简单的 token 位置视觉加权没有把 OPD 增益移到 grounded token 上，结果阴性。**
 - 训练日志的 rollout 轮数也没有实质差异（base/weighted 平均 38.4/38.4；最后 10 次 39.6/39.8）。
 
-## 5. 后续
+## 5. 视觉反事实 cutout
 
-这次阴性结果说明：**只在文本 token 的 loss 上乘一个视觉依赖权重，不足以让 head 更依赖视觉**；输入里已经有 fused vision-language hidden，瓶颈不在“给视觉位置更高权重”。下一杠杆按优先级：
+- 训练：同一 `step3546`、同一 60-update 日程/seed；每个 `(update, slot, task)` 以 0.5 概率做 28–42% 灰色矩形 cutout；实际覆盖 **129/240** 个 QA。无 visual weights，loss 不变。
+- test200：两臂均 **200/200 逐 token 无损**，准确数 **162/200**。
+
+| 分组 | n | base τ | cutout τ | cutout−base | 95% CI |
+|---|---:|---:|---:|---:|---:|
+| overall | 200 | 6.2305 | 6.2430 | +0.0126 | [−0.0139, +0.0390] |
+| 高 g | 100 | 6.1422 | 6.1339 | −0.0083 | [−0.0488, +0.0308] |
+| 低 g | 100 | 6.3187 | 6.3521 | +0.0334 | [+0.0013, +0.0698] |
+| 最高四分位 | 50 | 5.4706 | 5.4734 | +0.0029 | [−0.0251, +0.0368] |
+| 最低四分位 | 50 | 5.6253 | 5.6548 | +0.0295 | [−0.0125, +0.0789] |
+
+- 高 g 组为负（−0.0083），最高四分位几乎为零；唯一 CI 不跨零的是低 g 组（+0.0334）。**cutout 没有把收益移到视觉依赖位置，反而更像低 g 组的正则化；对“视觉 grounding”假设是阴性。**
+- 结论：随机遮挡视觉输入训练不能解决“OPD 增益不集中在视觉问题”的问题；需要更 targeted 的 clue/attention 或解码侧 copy，而不是继续加视觉噪声。
+
+## 6. 后续
+
+这轮结果说明：**只在文本 token 的 loss 上乘一个视觉依赖权重，不足以让 head 更依赖视觉**；输入里已经有 fused vision-language hidden，瓶颈不在“给视觉位置更高权重”。下一杠杆按优先级：
 
 1. **Clue 反事实 / 视觉 attention 蒸馏**：用 target 的视觉 attention 或归因选 clue patch/frame，去掉 clue 后要求 student 跟随 target 的 clue-removed 分布，或直接对齐 target 的 visual attention；这比位置权重更强。
 2. **Grounded copy 候选**：OCR/表格/chart 文字、视频字幕作为候选前缀注入树，由 target 正常验证；这不改 OPD loss，但对 DocVQA/ChartQA/VideoDetailCaption 可能比 loss 调参更直接。
 3. **更强/更细的权重**：当前 blank-image g 是粗代理；可换成 shuffled-image 或 clue-removal 的 g，或按 token 类型（OCR copy vs 推理）分层，而不是全位置统一加权。
 4. **更长预算**：60 updates 只改变了约 +0.01 τ；如果前三条有信号再延长，不先用更长的同配方硬跑。
+
+- mismatch 反事实臂（错图替换，0.5 概率）正在同一协议下运行；结果完成后更新本报告。
