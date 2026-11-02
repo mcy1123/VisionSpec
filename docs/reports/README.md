@@ -70,3 +70,5 @@
 - 2026-10-20：[ScienceQA 三卡续训两个 epoch](2026-10-20-scienceqa-three-card-continuation.md)（从两臂 step1182 完整状态续训；每臂新增2364 updates；独立三卡/四slot入口，固定两轮）。
 
 - 2026-10-26/27：[视频长生成 OPD：3 epoch 小幅提升、4 epoch 回落、SFT 崩溃](2026-10-26-video-caption-opd.md)（用户授权夜间测试；VideoDetailCaption 439 train，fresh30 n=30，平均生成 270.9 token；OPD 3e τ +0.0575，SFT 崩溃到 1.92）。
+
+- 2026-11-02：[图像 OPD 的视觉依赖诊断与加权实验](2026-11-02-visual-opd.md)（test200 blank-image 反事实：OPD−SFT 在高/低 g 组均约 +0.85，增益不集中在视觉依赖问题；视觉加权 60-update 对照训练/评测进行中）。
