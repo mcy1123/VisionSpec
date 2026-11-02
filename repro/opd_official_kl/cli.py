@@ -51,6 +51,7 @@ def parser():
     ap.add_argument('--lr', type=float, default=1e-5)
     ap.add_argument('--lr-schedule', choices=['cosine','constant'], default='cosine')
     ap.add_argument('--clip', type=float, default=1.)
+    ap.add_argument('--visual-weights', help='optional .pt mapping task -> per-answer visual weights')
     ap.add_argument('--target-dtype', choices=['float32'], default='float32')
     ap.add_argument('--master-weights', choices=['cpu'], default='cpu')
     ap.add_argument('--time-mode', choices=['real','legacy'], default='real')

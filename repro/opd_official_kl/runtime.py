@@ -190,7 +190,20 @@ def rollout(
     return trace
 
 
-def score(target, head, trace, *, draft_fn, deferred_checks=False):
+def _position_weights(visual_weights, prompt_len, positions):
+    """Map answer-position indices to visual-dependence weights (1.0 outside)."""
+    if visual_weights is None:
+        return None
+    w = torch.as_tensor(visual_weights, dtype=torch.float32).to(positions.device)
+    idx = positions - int(prompt_len)
+    out = torch.ones(positions.numel(), dtype=torch.float32, device=positions.device)
+    valid = (idx >= 0) & (idx < w.numel())
+    if bool(valid.any()):
+        out[valid] = w[idx[valid]]
+    return out
+
+
+def score(target, head, trace, *, draft_fn, deferred_checks=False, visual_weights=None):
     """Score recorded proposal tokens with current logits, then yield pool stats.
 
     Replay argmax need not match the collected proposal: its recorded tokens are
@@ -212,11 +225,17 @@ def score(target, head, trace, *, draft_fn, deferred_checks=False):
         student_logp = logits.float().log_softmax(-1)
         empty = student_logp.reshape(-1)[:0]
         round_data = by_pos.get(pos)
+        response_weights = None
+        rejected_weights = None
         if count:
             tokens = trace["ids"][pos + 1 : pos + count + 1]
             response_student_logp = (
                 student_logp[:count].gather(1, tokens[:, None]).squeeze(1)
             )
+            positions = torch.arange(pos + 1, pos + count + 1,
+                                     device=student_logp.device)
+            response_weights = _position_weights(
+                visual_weights, trace["prompt_len"], positions)
             with torch.no_grad():
                 teacher_logp = (
                     target.lm_head(trace["hidden"][0, pos : pos + count])
@@ -238,6 +257,9 @@ def score(target, head, trace, *, draft_fn, deferred_checks=False):
                 student_logp[offsets - 1].gather(1, token[:, None]).squeeze(1)
             )
             rejected_teacher_logp = round_data["teacher_logp"][offsets - 1]
+            positions = pos + offsets
+            rejected_weights = _position_weights(
+                visual_weights, trace["prompt_len"], positions)
         else:
             rejected_student_logp = rejected_teacher_logp = empty
         yield pool(
@@ -247,6 +269,8 @@ def score(target, head, trace, *, draft_fn, deferred_checks=False):
             rejected_teacher_logp,
             offsets,
             response_count=count + (uncovered if index == 0 else 0),
+            response_weights=response_weights,
+            rejected_weights=rejected_weights,
         )
 
 
@@ -260,3 +284,21 @@ def denominator(trace):
             for offset in round_data["rejected_offsets"]
         )
     )
+
+
+def weighted_denominator(trace, visual_weights=None):
+    """Visual-weighted version of denominator(); missing weights count as 1."""
+    if visual_weights is None:
+        return denominator(trace)
+    prompt_len = int(trace["prompt_len"])
+    response_len = int(trace["ids"].numel() - prompt_len)
+    w = torch.as_tensor(visual_weights, dtype=torch.float32)
+    response = float(w[:response_len].sum()) + max(0, response_len - int(w.numel()))
+    total = response
+    for round_data in trace["rounds"]:
+        pos = int(round_data["pos"])
+        for offset in round_data["rejected_offsets"]:
+            index = pos + int(offset) - prompt_len
+            weight = float(w[index]) if 0 <= index < int(w.numel()) else 1.0
+            total += 2.0 * weight * 0.9 ** (int(offset) - 1)
+    return total

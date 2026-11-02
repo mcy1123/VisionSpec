@@ -43,6 +43,8 @@ def identity(args):
         config.pop('allow_partial_final', None)
     initial = dict(checkpoint_model_sha256=training_resume.file_hash(
         Path(args.init_from)/'model.safetensors'), optimizer_step=0)
+    if getattr(args, 'visual_weights', None):
+        config['visual_weights_sha256'] = training_resume.file_hash(args.visual_weights)
     config.update(recipe=STATUS, opd_mode=OPD_MODE, world_size=WORLD,
                   slot_map=SLOT_MAPPING, initial_head_version=initial)
     return dict(opd_mode=OPD_MODE, world_size=WORLD, slot_map=SLOT_MAPPING,

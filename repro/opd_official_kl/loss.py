@@ -47,18 +47,38 @@ class Pool:
         )
 
 
-def pool(response_q, response_p, rejected_q, rejected_p, offsets, response_count=None):
+def pool(response_q, response_p, rejected_q, rejected_p, offsets, response_count=None,
+         response_weights=None, rejected_weights=None):
     if response_q.shape != response_p.shape or rejected_q.shape != rejected_p.shape:
         raise ValueError("teacher/student selected-token rows differ")
     if offsets.shape != rejected_q.shape or (offsets <= 0).any():
         raise ValueError("rejected offsets must be one-based and aligned")
     weights = 0.9 ** (offsets.to(dtype=torch.float32) - 1)
-    return Pool(
-        bernoulli_forward(response_q, response_p).sum()
-        + 2 * (k3(rejected_q, rejected_p) * weights).sum(),
-        response_q.new_tensor(
+    response_term = bernoulli_forward(response_q, response_p)
+    rejected_term = k3(rejected_q, rejected_p) * weights
+    if response_weights is not None:
+        if response_weights.shape != response_q.shape:
+            raise ValueError("response visual weights must align with response tokens")
+        response_term = response_term * response_weights.to(response_term.dtype)
+    if rejected_weights is not None:
+        if rejected_weights.shape != rejected_q.shape:
+            raise ValueError("rejected visual weights must align with rejected tokens")
+        rejected_term = rejected_term * rejected_weights.to(rejected_term.dtype)
+
+    if response_weights is None:
+        response_denom = response_q.new_tensor(
             response_q.numel() if response_count is None else response_count,
             dtype=torch.float32,
         )
-        + 2 * weights.sum(),
+    else:
+        # response_count may include response positions outside the plan (uncovered);
+        # count them with neutral weight 1 so the official denominator is preserved.
+        uncovered = (0 if response_count is None
+                     else max(0, int(response_count) - int(response_weights.numel())))
+        response_denom = response_weights.to(torch.float32).sum() + uncovered
+    rejected_denom = (weights * (1.0 if rejected_weights is None
+                                 else rejected_weights.to(weights.dtype))).sum()
+    return Pool(
+        response_term.sum() + 2 * rejected_term.sum(),
+        response_denom + 2 * rejected_denom,
     )

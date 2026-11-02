@@ -187,6 +187,13 @@ def run(args):
             out.mkdir(parents=True, exist_ok=True)
         dist.barrier()
         metadata = identity(args)
+        visual_weights = None
+        if getattr(args, 'visual_weights', None):
+            blob = torch.load(args.visual_weights, map_location='cpu', weights_only=False)
+            visual_weights = {k: torch.as_tensor(v, dtype=torch.float32)
+                              for k, v in blob['weights'].items()}
+            if rank == 0:
+                print(f"[opd] visual weights: {len(visual_weights)} tasks", flush=True)
         rows = pd.read_parquet(args.pool).set_index('task', verify_integrity=True)
         schedule = {}
         for line in Path(args.schedule).read_text().splitlines():
@@ -248,14 +255,29 @@ def run(args):
                 target, processor, rows, schedule[cursor], args, optimizer_step, cursor)
             numerator, norm, order = 0., None, []
             error = None
+            loss_denominator = denominator
             if rank == 0:
                 try:
+                    if visual_weights is not None:
+                        loss_denominator = 0.0
+                        for slot in range(len(schedule[cursor])):
+                            task = schedule[cursor][slot]['task']
+                            if task not in visual_weights:
+                                raise KeyError(f'visual weights missing task {task}')
+                            loss_denominator += runtime.weighted_denominator(
+                                traces[slot], visual_weights[task])
+                        if not math.isfinite(loss_denominator) or loss_denominator <= 0:
+                            raise RuntimeError('invalid visual-weighted denominator')
                     for slot in range(len(schedule[cursor])):
                         trace = move_trace(traces[slot], device)
-                        for anchor, stat in enumerate(runtime.score(target, head, trace, draft_fn=adapters.draft)):
+                        weights = (visual_weights[schedule[cursor][slot]['task']]
+                                   if visual_weights is not None else None)
+                        for anchor, stat in enumerate(runtime.score(
+                                target, head, trace, draft_fn=adapters.draft,
+                                visual_weights=weights)):
                             if not stat.numerator.requires_grad or stat.numerator.grad_fn is None:
                                 raise RuntimeError('student replay graph missing')
-                            (stat.numerator / denominator).backward()
+                            (stat.numerator / loss_denominator).backward()
                             numerator += float(stat.numerator.detach())
                             order.append([slot, anchor, *traces[slot]['plan'][anchor]])
                         del trace
@@ -287,8 +309,9 @@ def run(args):
             if rank == 0:
                 try:
                     record = dict(update=cursor+1, optimizer_step=optimizer_step, optimizer_steps=optimizer_step,
-                        tasks=[i['task'] for i in schedule[cursor]], loss=numerator/denominator,
+                        tasks=[i['task'] for i in schedule[cursor]], loss=numerator/loss_denominator,
                         denominator=denominator, denominator_hex=denominator.hex(),
+                        loss_denominator=loss_denominator, visual_weights=bool(visual_weights),
                         slot_denominators=records, gradient_norm=norm, canonical_order=order,
                         trace_wire_payload_bytes=wire, head_sha256=executor.head_sha,
                         diagnostic_only=args.smoke, smoke=args.smoke, opd_mode=OPD_MODE,
