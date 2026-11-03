@@ -47,7 +47,7 @@ def build_image_text(proc, question_prompt):
                                     tokenize=False)
 
 
-def encode_image_inputs(proc, row, *, max_pixels=None, corrupt=None, seed=0, corrupt_image_path=None):
+def encode_image_inputs(proc, row, *, max_pixels=None, corrupt=None, seed=0, corrupt_image_path=None, clue_patch=None):
     """Encode one (image, prompt) row into the tensors the target consumes.
 
     `row` needs `image_path` and `prompt` (both present in the frozen
@@ -88,6 +88,15 @@ def encode_image_inputs(proc, row, *, max_pixels=None, corrupt=None, seed=0, cor
         y = rng.randint(0, max(0, h - ch))
         ImageDraw.Draw(image).rectangle(
             [x, y, x + cw - 1, y + ch - 1], fill=(128, 128, 128))
+    elif corrupt == "clue":
+        if clue_patch is None:
+            raise ValueError("clue corruption requires clue_patch")
+        from PIL import ImageDraw
+        x0, y0, x1, y1 = [float(v) for v in clue_patch]
+        w, h = image.size
+        box = [max(0, int(x0 * w)), max(0, int(y0 * h)),
+               min(w - 1, int(x1 * w)), min(h - 1, int(y1 * h))]
+        ImageDraw.Draw(image).rectangle(box, fill=(128, 128, 128))
     elif corrupt not in (None, "mismatch"):
         raise ValueError(f"unknown image corruption {corrupt!r}")
     # Delegate to `common.encode`: it is the exact call the repo's image

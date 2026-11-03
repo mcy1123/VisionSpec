@@ -52,10 +52,11 @@ def parser():
     ap.add_argument('--lr-schedule', choices=['cosine','constant'], default='cosine')
     ap.add_argument('--clip', type=float, default=1.)
     ap.add_argument('--visual-weights', help='optional .pt mapping task -> per-answer visual weights')
-    ap.add_argument('--visual-corrupt', choices=['none','cutout','mismatch'], default='none',
+    ap.add_argument('--visual-corrupt', choices=['none','cutout','mismatch','clue'], default='none',
                     help='deterministic visual counterfactual applied to selected rollouts')
     ap.add_argument('--visual-corrupt-prob', type=float, default=0.5,
                     help='per (update, slot, task) probability of applying the corruption')
+    ap.add_argument('--clue-patches', help='optional .pt mapping task -> normalized clue box')
     ap.add_argument('--target-dtype', choices=['float32'], default='float32')
     ap.add_argument('--master-weights', choices=['cpu'], default='cpu')
     ap.add_argument('--time-mode', choices=['real','legacy'], default='real')

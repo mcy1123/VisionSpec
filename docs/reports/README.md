@@ -71,4 +71,4 @@
 
 - 2026-10-26/27：[视频长生成 OPD：3 epoch 小幅提升、4 epoch 回落、SFT 崩溃](2026-10-26-video-caption-opd.md)（用户授权夜间测试；VideoDetailCaption 439 train，fresh30 n=30，平均生成 270.9 token；OPD 3e τ +0.0575，SFT 崩溃到 1.92）。
 
-- 2026-11-02：[图像 OPD 的视觉依赖诊断与视觉侧干预](2026-11-02-visual-opd.md)（test200 blank-image 反事实：OPD−SFT 在高/低 g 组均约 +0.85，增益不集中在视觉依赖问题；位置加权/cutout/mismatch 三种 60-update 对照均阴性，高 g 组 +0.0009/−0.0083/−0.0205）。
+- 2026-11-02：[图像 OPD 的视觉依赖诊断与四种视觉侧干预](2026-11-02-visual-opd.md)（test200 blank-image 反事实：OPD−SFT 在高/低 g 组均约 +0.85，增益不集中在视觉依赖问题；位置加权/cutout/mismatch/clue-targeted cutout 四种 60-update 对照中，clue 高 g +0.0155 但 CI 跨零，只有低 g 底部四分位 +0.0404 显著）。

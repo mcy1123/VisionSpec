@@ -148,6 +148,7 @@ class ParallelRollout:
         corrupt = None
         corrupt_seed = 0
         corrupt_image_path = None
+        clue_patch = None
         mode = getattr(args, 'visual_corrupt', 'none')
         if mode != 'none':
             digest = hashlib.sha256(
@@ -161,9 +162,15 @@ class ParallelRollout:
                     if rows.index[other] == task:
                         other = (other + 1) % len(rows)
                     corrupt_image_path = rows.iloc[other]['image_path']
+                elif mode == 'clue':
+                    patches = getattr(self, 'clue_patches', None)
+                    if not patches or task not in patches:
+                        raise KeyError(f'clue patch missing task {task}')
+                    clue_patch = patches[task]
         inputs = adapters.encode(processor, rows.loc[task].to_dict(),
             args.modality, max_pixels=args.max_pixels, time_mode=args.time_mode,
-            corrupt=corrupt, seed=corrupt_seed, corrupt_image_path=corrupt_image_path)
+            corrupt=corrupt, seed=corrupt_seed, corrupt_image_path=corrupt_image_path,
+            clue_patch=clue_patch)
         trace = adapters.collect(target, self.head, inputs,
             max_new_tokens=args.max_new_tokens, max_seq_len=args.max_seq_len,
             teacher_verify_impl=args.teacher_verify_impl, batch_teacher_ids=False,
@@ -212,6 +219,12 @@ def run(args):
                               for k, v in blob['weights'].items()}
             if rank == 0:
                 print(f"[opd] visual weights: {len(visual_weights)} tasks", flush=True)
+        clue_patches = None
+        if getattr(args, 'clue_patches', None):
+            blob = torch.load(args.clue_patches, map_location='cpu', weights_only=False)
+            clue_patches = blob['patches']
+            if rank == 0:
+                print(f"[opd] clue patches: {len(clue_patches)} tasks", flush=True)
         rows = pd.read_parquet(args.pool).set_index('task', verify_integrity=True)
         schedule = {}
         for line in Path(args.schedule).read_text().splitlines():
@@ -234,6 +247,7 @@ def run(args):
         optimizer = (MasterWeightAdamW(head, lr=args.lr, betas=common.BETAS,
             weight_decay=common.WEIGHT_DECAY, where='cpu', clip=args.clip) if rank == 0 else None)
         executor = ParallelRollout(head, metadata, device)
+        executor.clue_patches = clue_patches
         start, optimizer_step = 0, 0
         if args.resume_from:
             state = torch.load(Path(args.resume_from)/'training_state.pt', map_location='cpu', weights_only=False)

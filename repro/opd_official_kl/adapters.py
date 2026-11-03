@@ -3,11 +3,11 @@
 from functools import partial
 
 
-def encode(processor, row, modality, *, max_pixels=768, time_mode="real", corrupt=None, seed=0, corrupt_image_path=None):
+def encode(processor, row, modality, *, max_pixels=768, time_mode="real", corrupt=None, seed=0, corrupt_image_path=None, clue_patch=None):
     if modality == "image":
         from scienceqa_image.imageencode import encode_image_inputs
 
-        return encode_image_inputs(processor, row, max_pixels=max_pixels, corrupt=corrupt, seed=seed, corrupt_image_path=corrupt_image_path)
+        return encode_image_inputs(processor, row, max_pixels=max_pixels, corrupt=corrupt, seed=seed, corrupt_image_path=corrupt_image_path, clue_patch=clue_patch)
     if modality == "video":
         from qa_opd_fair.videoencode import encode_inputs
 

@@ -45,6 +45,8 @@ def identity(args):
         Path(args.init_from)/'model.safetensors'), optimizer_step=0)
     if getattr(args, 'visual_weights', None):
         config['visual_weights_sha256'] = training_resume.file_hash(args.visual_weights)
+    if getattr(args, 'clue_patches', None):
+        config['clue_patches_sha256'] = training_resume.file_hash(args.clue_patches)
     config.update(recipe=STATUS, opd_mode=OPD_MODE, world_size=WORLD,
                   slot_map=SLOT_MAPPING, initial_head_version=initial)
     return dict(opd_mode=OPD_MODE, world_size=WORLD, slot_map=SLOT_MAPPING,

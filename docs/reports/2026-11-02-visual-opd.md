@@ -1,6 +1,6 @@
 # 图像 OPD 的视觉依赖诊断与加权实验（2026-11-02）
 
-状态：视觉依赖诊断完成；位置加权、cutout、mismatch 三种视觉侧干预均完成，均为阴性；报告完成。
+状态：视觉依赖诊断完成；位置加权、cutout、mismatch、clue-targeted cutout 四种视觉侧干预均完成。clue 的高 g 点估计首次为正（+0.0155）但 CI 跨零；只有低 g 底部四分位显著为正。报告完成。
 
 ## 1. 问题
 
@@ -94,12 +94,38 @@ g_i=\max\left(0,\ \log p_{\text{real}}(y_i)-\log p_{\text{blank}}(y_i)\right)
 | weighted | +0.0117 | +0.0009 | +0.0224 |
 | cutout | +0.0126 | −0.0083 | +0.0334 |
 | mismatch | −0.0028 | −0.0205 | +0.0150 |
+| clue (2×2 occlusion) | +0.0141 | +0.0155 | +0.0127 |
 
-高 g 组没有一臂为正；低 g 组两臂略正。**“在现有 token-level OPD 上加视觉权重/视觉扰动”这条路线到此为止，不能把 OPD 的 +0.85 解释成多模态增益。**
+高 g 组只有 clue 臂为正（+0.0155，CI 跨零），其余为负或零；低 g 组多臂略正。**视觉侧干预仍没有产生统计上站得住的 visual-specific 增益；不能把 OPD 的 +0.85 解释成多模态增益。**
 
-## 7. 后续
+## 7. Clue-targeted cutout
 
-这轮结果说明：**位置权重、cutout、mismatch 三种最便宜的视觉侧干预都没有把 head 推得更依赖视觉**；输入里已经有 fused vision-language hidden，瓶颈不在“给视觉位置更高权重”或“加视觉噪声”。下一杠杆按优先级：
+### 7.1 Clue 定位
+
+- 先试了 target fused hidden 的 answer-vs-visual cosine，以及 last-layer attention 的 image-token 权重；两者 top token 都落在图像左上角/attention sink，debug 图上明显不覆盖 Wisconsin 等答案区域，不能用作 clue。
+- 改用 **target occlusion sensitivity**：对每道训练题把图分成 2×2，分别灰掉一个象限，teacher-force 原 greedy answer，取 answer mean log-prob 下降最大的象限作为 clue。240 题全部计算；drop 均值 0.235（中位 0.211，最大 0.817），129 题 drop>0.2，31 题 <0.05。选中的 cell 分布均衡（四象限 52–74 题）。
+- debug 图上选中的象限覆盖了 map 的 Wisconsin 高亮区和 magnet 图的距离标签区域，定位合理。
+
+### 7.2 训练与评测
+
+- 同一 `step3546`、同一 60-update 日程/seed；`--visual-corrupt clue --visual-corrupt-prob 0.5`，实际覆盖 **129/240** 个 QA；被选中的 50% 象限替换为灰色，target/head 同时看到 clue-removed 图，loss 不变。
+- test200：**200/200 逐 token 无损**，准确数 **162/200**。
+
+| 分组 | n | base τ | clue τ | clue−base | 95% CI |
+|---|---:|---:|---:|---:|---:|
+| overall | 200 | 6.2305 | 6.2445 | +0.0141 | [−0.0094, +0.0391] |
+| 高 g | 100 | 6.1422 | 6.1577 | +0.0155 | [−0.0164, +0.0522] |
+| 低 g | 100 | 6.3187 | 6.3314 | +0.0127 | [−0.0198, +0.0457] |
+| 最高四分位 | 50 | 5.4706 | 5.4644 | −0.0062 | [−0.0369, +0.0288] |
+| 最低四分位 | 50 | 5.6253 | 5.6657 | +0.0404 | [+0.0095, +0.0760] |
+
+- 高 g 点估计 +0.0155 是四种干预里唯一为正，但 CI 跨零；最高四分位 −0.0062（CI 跨零）；唯一 CI 不跨零的是**最低四分位低 g +0.0404**。
+- 结论：clue-targeted cutout 的方向比随机遮挡/错图好，但仍没有统计证据表明它把收益移到视觉依赖位置；当前证据更像低 g 组的正则化或噪声。**不能据此声称 clue 反事实有效。**
+- 可能的下一步：把 2×2 的 50% clue box 缩小到 3×3（更 targeted）或做第二 seed；如果高 g 仍不显著，转 visual attention 蒸馏或 grounded copy。
+
+## 8. 后续
+
+这轮结果说明：**位置权重、cutout、mismatch、clue-targeted cutout 四种最便宜的视觉侧干预都没有给出统计上站得住的 visual-specific 增益**；clue 的高 g 点估计为正但 CI 跨零，不能算成功。输入里已经有 fused vision-language hidden，瓶颈不在“给视觉位置更高权重”或“加视觉噪声”。下一杠杆按优先级：
 
 1. **Clue 反事实 / 视觉 attention 蒸馏**：用 target 的视觉 attention 或归因选 clue patch/frame，去掉 clue 后要求 student 跟随 target 的 clue-removed 分布，或直接对齐 target 的 visual attention；这比位置权重更强。
 2. **Grounded copy 候选**：OCR/表格/chart 文字、视频字幕作为候选前缀注入树，由 target 正常验证；这不改 OPD loss，但对 DocVQA/ChartQA/VideoDetailCaption 可能比 loss 调参更直接。
