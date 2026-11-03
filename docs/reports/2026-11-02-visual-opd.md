@@ -123,7 +123,19 @@ g_i=\max\left(0,\ \log p_{\text{real}}(y_i)-\log p_{\text{blank}}(y_i)\right)
 - 结论：clue-targeted cutout 的方向比随机遮挡/错图好，但仍没有统计证据表明它把收益移到视觉依赖位置；当前证据更像低 g 组的正则化或噪声。**不能据此声称 clue 反事实有效。**
 - 可能的下一步：把 2×2 的 50% clue box 缩小到 3×3（更 targeted）或做第二 seed；如果高 g 仍不显著，转 visual attention 蒸馏或 grounded copy。
 
-## 8. 后续
+## 8. 3×3 clue（预注册判定）
+
+2×2 clue 的高 g 点估计 +0.0155、CI 跨零，不能给确定性结论。为区分“50% clue box 太大/太粗”与“clue 方向本身无效”，再跑一个更 targeted 的 3×3 遮挡 clue 臂（box 约 11% 图），其余协议完全相同（同一 `step3546`、60 updates、seed、4 QA/update；实际覆盖概率 0.5）。
+
+**预注册判定规则（主终点：test200 高 g τ，clue3−base）：**
+
+- **阳性**：高 g Δ > 0 且 95% CI 下界 > 0。
+- **阴性**：高 g Δ ≤ +0.005，或 95% CI 上界 < +0.02（即排除了有实际意义的正效应）。
+- **不确定**：介于两者之间；此时做第二 seed（同一 3×3 clue 协议，seed 20261103），用两 seed 的 inverse-variance 合并均值和 CI 再判；若合并后仍不满足阳性，则最终判阴性（无统计支持的 visual-specific 增益）。
+
+这个规则在看 3×3 结果之前写定，避免事后挑口径。
+
+## 9. 后续
 
 这轮结果说明：**位置权重、cutout、mismatch、clue-targeted cutout 四种最便宜的视觉侧干预都没有给出统计上站得住的 visual-specific 增益**；clue 的高 g 点估计为正但 CI 跨零，不能算成功。输入里已经有 fused vision-language hidden，瓶颈不在“给视觉位置更高权重”或“加视觉噪声”。下一杠杆按优先级：
 
