@@ -1,6 +1,6 @@
 # 图像 OPD 的视觉依赖诊断与加权实验（2026-11-02）
 
-状态：视觉依赖诊断完成；位置加权、cutout、mismatch、2×2 clue、3×3 clue 均完成。最终结论为**阴性**：没有统计支持的 visual-specific 增益；3×3 高 g −0.0087，2×2 的 +0.0155 未复现，合并高 g +0.0039 [−0.0208,+0.0286]；低 g 正效应反复出现但不是视觉特异性。三卡 clean base 因 GPU 占用未能执行，拓扑混杂已注明。
+状态：视觉依赖诊断完成；位置加权、cutout、mismatch、2×2 clue、3×3 clue、target-attention 权重六种输入侧干预均完成。最终结论为**阴性**：没有统计支持的 visual-specific 增益；3×3 高 g −0.0087，2×2 +0.0155 未复现，合并 +0.0039；target-attention 权重高 g −0.0041、整体 +0.0089。低 g 正效应反复出现但不是视觉特异性。三卡 clean base 因 GPU 占用未能执行，拓扑混杂已注明。
 
 ## 1. 问题
 
@@ -96,8 +96,9 @@ g_i=\max\left(0,\ \log p_{\text{real}}(y_i)-\log p_{\text{blank}}(y_i)\right)
 | mismatch | −0.0028 | −0.0205 | +0.0150 |
 | clue (2×2 occlusion) | +0.0141 | +0.0155 | +0.0127 |
 | clue3 (3×3, 3-card)* | +0.0121 | −0.0087 | +0.0328 |
+| attnw (target attention weights) | +0.0089 | −0.0041 | +0.0220 |
 
-高 g 组只有 2×2 clue 为正（+0.0155，CI 跨零）；3×3 clue 更 targeted 后高 g 反而 −0.0087。低 g 组多臂略正。**视觉侧干预仍没有产生统计上站得住的 visual-specific 增益；不能把 OPD 的 +0.85 解释成多模态增益。**（*3×3 臂因当时只有三张 46GB 空闲卡，跑在三卡/四逻辑 slot 拓扑；三卡 clean base 对照运行中，见 §8.3。）
+高 g 组只有 2×2 clue 为正（+0.0155，CI 跨零）；3×3 clue 与 target-attention 权重都略负。低 g 组多臂略正。**视觉侧干预仍没有产生统计上站得住的 visual-specific 增益；不能把 OPD 的 +0.85 解释成多模态增益。**（*3×3 臂因当时只有三张 46GB 空闲卡，跑在三卡/四逻辑 slot 拓扑；三卡 clean base 对照未能执行，见 §8.2/§8.3。）
 
 ## 7. Clue-targeted cutout
 
@@ -165,7 +166,7 @@ g_i=\max\left(0,\ \log p_{\text{real}}(y_i)-\log p_{\text{blank}}(y_i)\right)
 - 2×2 clue（四卡）高 g 为 +0.0155，但 CI [−0.0164, +0.0522] 跨零；它不是显著正效应。把 2×2 与 3×3 的高 g 用 inverse-variance 合并：**+0.0039，95% CI [−0.0208, +0.0286]**——仍然没有正效应。
 - 低 g 组反复为正：2×2 +0.0127，3×3 +0.0328（CI [+0.0023,+0.0682]）；底部四分位 +0.0404 / +0.0394。这个方向一致，但它是**低视觉依赖组的正则化/语言先验改善**，不是我们想要的 visual-specific 增益。
 - 3×3 的三卡拓扑是一个混杂；但没有 topology-controlled base3 时，3×3 的负值不能单独证明 clue 有害。即便如此，**2×2 四卡臂的高 g 已经不显著，两臂合并高 g 约 +0.004，没有任何一臂给出 CI 下界 >0 的高 g 正效应**。因此对“clue-targeted cutout 能提高 high-g τ”的假设，结论是**否定/无统计支持**，而不是“还不确定”。
-- **最终判定：阴性。** 位置加权、cutout、mismatch、2×2 clue、3×3 clue 五种输入侧视觉干预都没有产生统计上站得住的 visual-specific 增益；可靠的只有低 g 组的小幅正效应。停止在输入侧继续加权重/噪声/clue cutout。
+- **最终判定：阴性。** 位置加权、cutout、mismatch、2×2 clue、3×3 clue、target-attention 权重六种输入侧视觉干预都没有产生统计上站得住的 visual-specific 增益；可靠的只有低 g 组的小幅正效应。停止在输入侧继续加权重/噪声/clue cutout/target-attention 加权。
 
 ## 9. 后续
 
@@ -185,4 +186,23 @@ g_i=\max\left(0,\ \log p_{\text{real}}(y_i)-\log p_{\text{blank}}(y_i)\right)
 - 240 题、38,691 个 answer token 全部算完；`w` 均值 1.228（min 1.0, max 3.0），target attention mass 均值 0.0389（min 0.0069, max 0.0872）。
 - 与 blank-g 权重的 per-token 相关只有 **0.263**，不是同一个信号；因此这是一个独立的 attention-guided 权重实验。
 - 训练：同一 `step3546`、同一 60-update 日程/seed、4 卡；只加 `--visual-weights attnw_u60_l32-35_alpha1_cap2.pt`。评测与 base 对照，重点看高 g τ。
-- 结果：待补。
+
+### 10.1 结果
+
+test200：**200/200 无损，162/200 正确**。
+
+| 分组 | n | base τ | attnw τ | attnw−base | 95% CI |
+|---|---:|---:|---:|---:|---:|
+| overall | 200 | 6.2305 | 6.2394 | +0.0089 | [−0.0131, +0.0312] |
+| 高 g | 100 | 6.1422 | 6.1380 | **−0.0041** | [−0.0351, +0.0212] |
+| 低 g | 100 | 6.3187 | 6.3407 | +0.0220 | [−0.0088, +0.0580] |
+| 最高四分位 | 50 | 5.4706 | 5.4674 | −0.0032 | [−0.0320, +0.0285] |
+| 最低四分位 | 50 | 5.6253 | 5.6189 | −0.0064 | [−0.0389, +0.0258] |
+
+- 高 g −0.0041（CI 跨零），最高四分位 −0.0032；低 g +0.0220（CI 跨零）。`Spearman(g, delta)=0.006`，没有视觉特异性。
+- **target attention 权重也失败**：它与 blank-g 权重的 per-token 相关只有 0.263，但训练结果同样是高 g 不升、低 g 略升。说明“用 target 实际看哪里来加权”这个信号本身不足以把 OPD 的增益移到视觉依赖位置。
+- 这关闭的是 **attention-guided weighting**，不是“head attention 与 target attention 对齐”的完整蒸馏；但 target attention 质量本身与高 g 无关，完整蒸馏的优先级也应降低。
+
+### 10.2 结论
+
+**阴性。** 六种输入侧干预（位置权重、cutout、mismatch、2×2 clue、3×3 clue、target-attention 权重）都没有统计支持的 high-g 增益；唯一反复出现的是低 g 组的小幅正效应，方向与视觉 hypothesis 相反。继续在输入侧调权重/加噪声/去 clue/用 target attention 加权，预期收益很低。
