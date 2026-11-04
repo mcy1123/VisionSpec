@@ -175,3 +175,14 @@ g_i=\max\left(0,\ \log p_{\text{real}}(y_i)-\log p_{\text{blank}}(y_i)\right)
 2. **Grounded copy 候选**：OCR/表格/chart 文字、视频字幕作为候选前缀注入树，由 target 正常验证；这不改 OPD loss，但对 DocVQA/ChartQA/VideoDetailCaption 可能比 loss 调参更直接。
 3. **更强/更细的权重**：当前 blank-image g 是粗代理；可换成 shuffled-image 或 clue-removal 的 g，或按 token 类型（OCR copy vs 推理）分层，而不是全位置统一加权。
 4. **更长预算**：60 updates 只改变了约 +0.01 τ；如果前三条有信号再延长，不先用更长的同配方硬跑。
+
+## 10. Target visual-attention-guided OPD（进行中）
+
+输入侧的位置权重之前用的是 blank-image 的 g；它测的是“去掉图后 target 的 token 概率变化”，不是 target 实际看哪里。这一轮换成 **target 自己的视觉 attention**：
+
+- 用 eager target，对 240 个训练 QA teacher-force 原 greedy answer；取最后 4 层（32–35）的 attention，对 heads 取平均，对 image token 位置求和；去掉第一个 image token 的 attention sink。
+- 每个 answer token 得到 `mass`；构建 `w = 1 + clip(mass/mean - 1, 0, 2)`（`alpha=1, cap=2`），即只把高于该题平均视觉 attention 的 token 加权。
+- 240 题、38,691 个 answer token 全部算完；`w` 均值 1.228（min 1.0, max 3.0），target attention mass 均值 0.0389（min 0.0069, max 0.0872）。
+- 与 blank-g 权重的 per-token 相关只有 **0.263**，不是同一个信号；因此这是一个独立的 attention-guided 权重实验。
+- 训练：同一 `step3546`、同一 60-update 日程/seed、4 卡；只加 `--visual-weights attnw_u60_l32-35_alpha1_cap2.pt`。评测与 base 对照，重点看高 g τ。
+- 结果：待补。
