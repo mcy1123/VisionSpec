@@ -568,7 +568,32 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         self.hidden_norm = Qwen3RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.block_size = int(_draft_value(config, "block_size", 16))
         self.mask_token_id = _draft_value(config, "mask_token_id")
+        self.use_xattn = bool(_draft_value(config, "use_xattn", False))
+        self.use_layer_gate = bool(_draft_value(config, "use_layer_gate", False))
+        if self.use_layer_gate:
+            self.num_target_layers = len(self.target_layer_ids)
+            self.layer_gate = nn.Sequential(
+                nn.Linear(config.hidden_size, 128),
+                nn.GELU(),
+                nn.Linear(128, self.num_target_layers),
+            )
+            nn.init.zeros_(self.layer_gate[-1].weight)
+            nn.init.zeros_(self.layer_gate[-1].bias)
+        if self.use_xattn:
+            self.num_target_layers = len(self.target_layer_ids)
+            self.xattn_layer_emb = nn.Parameter(
+                torch.zeros(self.num_target_layers, config.hidden_size))
+            self.xattn_norm = nn.LayerNorm(config.hidden_size)
+            self.xattn_q_norm = nn.LayerNorm(config.hidden_size)
+            self.xattn_scale = 0.1
+            self.xattn = nn.MultiheadAttention(
+                config.hidden_size, 8, batch_first=True)
+            self.xattn_out = nn.Linear(
+                config.hidden_size, config.hidden_size, bias=False)
+            nn.init.zeros_(self.xattn_out.weight)
         self.post_init()
+        if self.use_xattn:
+            nn.init.zeros_(self.xattn_out.weight)
 
     def forward(
         self,
@@ -581,6 +606,26 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         **kwargs,
     ) -> torch.Tensor:
         hidden_states = noise_embedding
+        if self.use_layer_gate:
+            bsz, ctx_len, hidden = target_hidden.shape
+            layer_dim = hidden // self.num_target_layers
+            layers = target_hidden.view(
+                bsz, ctx_len, self.num_target_layers, layer_dim)
+            gates = 1.0 + self.layer_gate(layers.mean(dim=2))
+            target_hidden = (layers * gates.unsqueeze(-1)).reshape(
+                bsz, ctx_len, hidden)
+        if self.use_xattn:
+            bsz, ctx_len, hidden = target_hidden.shape
+            layer_dim = hidden // self.num_target_layers
+            layers = self.xattn_norm(target_hidden.float().view(
+                bsz, ctx_len, self.num_target_layers, layer_dim))
+            kv = (layers + self.xattn_layer_emb.view(
+                1, 1, self.num_target_layers, layer_dim)).reshape(
+                    bsz, ctx_len * self.num_target_layers, layer_dim)
+            x, _ = self.xattn(self.xattn_q_norm(hidden_states.float()), kv, kv,
+                              need_weights=False)
+            hidden_states = hidden_states + self.xattn_scale * self.xattn_out(
+                x).to(hidden_states.dtype)
         target_hidden = self.hidden_norm(self.fc(target_hidden))
         position_embeddings = self.rotary_emb(hidden_states, position_ids)
         for layer in self.layers:

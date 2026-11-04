@@ -150,6 +150,13 @@ def load_head(path, dtype=None, device="cuda"):
 
     head = DFlashDraftModel.from_pretrained(
         path, dtype=dtype or torch.bfloat16)
+    if getattr(head, "use_xattn", False):
+        # Keep the new cross-attention branch in fp32; bf16 gradients through a
+        # zero-initialised residual can overflow before the first clip.
+        for module in (head.xattn, head.xattn_out, head.xattn_norm,
+                       head.xattn_q_norm):
+            module.float()
+        head.xattn_layer_emb.data = head.xattn_layer_emb.data.float()
     return head.to(device)
 
 
