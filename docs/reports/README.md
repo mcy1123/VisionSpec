@@ -71,7 +71,7 @@
 
 - 2026-10-26/27：[视频长生成 OPD：3 epoch 小幅提升、4 epoch 回落、SFT 崩溃](2026-10-26-video-caption-opd.md)（用户授权夜间测试；VideoDetailCaption 439 train，fresh30 n=30，平均生成 270.9 token；OPD 3e τ +0.0575，SFT 崩溃到 1.92）。
 
-- 2026-11-05：[多模态特征/OPD 训练优化夜跑：DREAM/MASSV-inspired 架构与 cross-modal 数据](2026-11-05-multimodal-architecture.md)（xattn 集成失败；layer gate 高 g −0.0040；cross-modal image↔video 阴性；mixed image+video overall +0.0224、低 g +0.0507 但高 g −0.0059、video 降到 3.416；均非 visual-specific）。
+- 2026-11-05：[多模态特征/OPD 训练优化夜跑：DREAM/MASSV-inspired 架构与 cross-modal 数据](2026-11-05-multimodal-architecture.md)（xattn 集成失败；image layer gate 高 g −0.0040；cross-modal image↔video 阴性；mixed image+video overall +0.0224、低 g +0.0507 但高 g −0.0059、video 降到 3.416；video layer gate 真实 −0.0372、blank +0.0845、visual reliance −0.1217；最终无 visual-specific 优化）。
 - 2026-11-04：[视频 OPD 视觉依赖复现：blank 视频增益更大、视觉依赖反而下降](2026-11-04-video-visual-replication.md)（fresh30 n=30；真实 τ warm 3.7266→OPD3e 3.7841 +0.0575，blank τ 3.0747→3.2826 +0.2079；visual reliance 0.652→0.502，DiD −0.1504 CI[−0.1945,−0.1057]；高 g 不显著、低 g 显著，复现并放大图像阴性）。
 - 2026-11-02：[图像 OPD 的视觉依赖诊断与六种视觉侧干预](2026-11-02-visual-opd.md)（test200 blank-image 反事实：OPD−SFT 在高/低 g 组均约 +0.85，增益不集中在视觉依赖问题；位置加权/cutout/mismatch/2×2 clue/3×3 clue/target-attention 权重六种 60-update 对照均无统计支持的 high-g 增益：2×2 clue +0.0155 CI 跨零，3×3 clue −0.0087，attnw −0.0041，合并 +0.0039；最终判阴性，低 g 组反复小幅正。三卡 clean base 因 GPU 占用未能执行，已注明）。
 
