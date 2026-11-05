@@ -1,5 +1,21 @@
 # SpecOPD E2E-TV 在图像 OPD 上的首次实验（2026-11-05）
 
+状态：已完成。**这是目前唯一一个统计显著的 visual-specific 正结果。**
+
+## TL;DR
+
+| 项目 | 结果 |
+|---|---|
+| 方法 | realized-path E2E-TV 辅助项（w=10），加在现有 Bernoulli+k3 OPD 上 |
+| 三 seed 合并 overall | **+0.0301**，95% CI **[+0.0087,+0.0515]** |
+| 三 seed 合并 高 g | **+0.0465**，95% CI **[+0.0136,+0.0793]** |
+| 三 seed 合并 最高四分位 | **+0.0546**，95% CI **[+0.0090,+0.1001]** |
+| 低 g / 最低四分位 | +0.0137 / +0.0007，均不显著 |
+| 无损 / 正确数 | 200/200 逐 token 无损；162/200（不变） |
+| 性质 | 只改 OPD objective，不改 decoder/tree；不是完整 branch-parallel SpecOPD |
+
+**一句话：token-level Bernoulli/k3 不直接奖励长接受前缀；换成/加上 E2E-TV 后，增益第一次集中到 high-g（真正依赖图的问题），而不是低 g/语言先验。**
+
 ## 0. 动机与来源
 
 [SpecOPD: Branch-Parallel On-Policy Distillation for Speculative Decoding](https://arxiv.org/abs/2611.02846)（Qwen Business Unit，arXiv 2611.02846，2026-11-02）不是多模态论文，但它的 **E2E-TV acceptance-length surrogate** 直接优化“接受长度”，而不是我们当前的 token-level Bernoulli/k3。我们把它作为 **OPD objective** 的借鉴，先做图像侧最小实验。
@@ -108,3 +124,24 @@ seed3：200/200 无损，162/200 正确。
 - 效应量不大：高 g +0.046（base 6.14 的 +0.76%），overall +0.030（+0.48%）；准确数不变。
 - **边界**：三 seed 同一 test200（复用集）、单数据集；E2E-TV 是 **realized-path 辅助项**，不是完整 SpecOPD；没有 branch-parallel sampling/tree mask/indexed replay；权重 10 未调参。不能据此声称完整 SpecOPD 复现，也不能外推到独立集。
 - 下一步：① 在 video fresh30 上复现；② 做完整 SpecOPD branch-parallel（吞吐+更正确的 branch 监督）；③ 调 E2E-TV 权重/与 OPD 的比例；④ 在独立 confirm 集上确认。
+
+## 4. 产物与复现
+
+训练：
+
+```bash
+bash /mnt/local/mcy/GLANCE/results/visual_opd_20261105/launch_e2etv.sh
+# 第二/第三 seed：launch_e2etv_s2.sh / launch_e2etv_s3.sh
+```
+
+评测：
+
+```bash
+cd /home/mcy/Projects/GLANCE
+CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=<gpu-uuid>   /home/mcy/.conda/envs/fin_research/bin/python repro/scienceqa_image/full_epoch/evaluate.py   --run /mnt/local/mcy/GLANCE/results/scienceqa_continue_ep23_3gpu_20261020   --head /mnt/local/mcy/GLANCE/results/visual_opd_20261105/e2etv/step60   --tag e2etv_step60 --split test --gpu 0 --head-dtype float32   --ar-cache /mnt/local/mcy/GLANCE/results/scienceqa_continue_ep23_3gpu_20261020/eval/ar_test.pt   --repeat-spec 0 --out /mnt/local/mcy/GLANCE/results/visual_opd_20261105/eval/e2etv_step60.json
+```
+
+- checkpoints：`e2etv/step60`、`e2etv_s2/step60`、`e2etv_s3/step60`
+- eval：`eval/e2etv_step60.json`、`eval/e2etv_s2_step60.json`、`eval/e2etv_s3_step60.json`
+- 代码：`repro/opd_official_kl/runtime.py`（`e2e_tv_weight`）、`cli.py`（`--e2e-tv-weight`）
+- 训练预算：`/mnt/local/mcy/GLANCE/results/visual_opd_20261102/budget.json` 的 `e2etv` / `e2etv2` / `e2etv3` cases

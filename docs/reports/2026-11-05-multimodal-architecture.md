@@ -116,3 +116,4 @@ test200：200/200 无损，162/200 正确。
 - layer gate 的零初始化保持 base 行为；image 上没有 high-g 收益，video 上显著降低 visual reliance。
 - **最终判断**：这轮换目标（DREAM/MASSV-inspired 的 target feature 融合、cross-modal/mixed 数据、video layer gate）**没有找到 visual-specific 优化**。唯一可量化的正效应是 mixed image+video 的 overall +0.0224 和低 g +0.0507，但高 g −0.0059、video τ 降到 3.416，direction 与视觉 hypothesis 相反。
 - 结论：当前 head 的瓶颈不在“target 多层特征如何融合”或“输入图像/视频如何混合”；继续在输入/特征融合侧做小改动，预期仍是低 g/语言先验收益。下一步应转向 **objective**（full/top-k KL、视觉对比 margin）或 **decoder-side grounded copy**，而不是继续改 feature gate。
+- **后续更新（2026-11-05 下午）**：按这个方向做了 SpecOPD 的 E2E-TV 辅助项，三 seed 合并得到 **高 g +0.0465 [+0.0136,+0.0793]**、最高四分位 +0.0546 [+0.0090,+0.1001]；这是目前唯一 visual-specific 正结果。见 [SpecOPD E2E-TV 报告](2026-11-05-specopd-e2e-tv.md)。本报告关于 feature/input 侧的阴性结论不变，但整条路线的最终结论由 E2E-TV 报告更新。
