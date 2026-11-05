@@ -138,7 +138,8 @@ class ParallelRollout:
                 if received != records or sum(runtime.denominator(traces[s]) for s in range(len(items))) != denominator:
                     raise ValueError('received trace denominator differs')
             except Exception as exc:
-                error = repr(exc)
+                import traceback
+                error = traceback.format_exc()
         self.phase_check(error)
         self.barrier(optimizer_step, cursor)
         return traces, denominator, policy, records, wire_bytes
@@ -306,7 +307,8 @@ def run(args):
                                    if visual_weights is not None else None)
                         for anchor, stat in enumerate(runtime.score(
                                 target, head, trace, draft_fn=adapters.draft,
-                                visual_weights=weights)):
+                                visual_weights=weights,
+                                e2e_tv_weight=args.e2e_tv_weight)):
                             if not stat.numerator.requires_grad or stat.numerator.grad_fn is None:
                                 raise RuntimeError('student replay graph missing')
                             (stat.numerator / loss_denominator).backward()
@@ -321,7 +323,8 @@ def run(args):
                           args.lr * .5 * (1 + math.cos(math.pi * cursor / args.updates)))
                     optimizer.set_lr(lr)
                 except Exception as exc:
-                    error = repr(exc)
+                    import traceback
+                    error = traceback.format_exc()
             executor.phase_check(error)
             if not args.no_update:
                 if rank == 0:

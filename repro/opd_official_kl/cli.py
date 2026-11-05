@@ -52,6 +52,8 @@ def parser():
     ap.add_argument('--lr-schedule', choices=['cosine','constant'], default='cosine')
     ap.add_argument('--clip', type=float, default=1.)
     ap.add_argument('--visual-weights', help='optional .pt mapping task -> per-answer visual weights')
+    ap.add_argument('--e2e-tv-weight', type=float, default=0.0,
+                    help='auxiliary E2E-TV acceptance-surrogate weight (Bebop/SpecOPD)')
     ap.add_argument('--visual-corrupt', choices=['none','cutout','mismatch','clue'], default='none',
                     help='deterministic visual counterfactual applied to selected rollouts')
     ap.add_argument('--visual-corrupt-prob', type=float, default=0.5,

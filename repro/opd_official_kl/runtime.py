@@ -6,7 +6,7 @@ Deployment decoding/verifying is independent and unchanged.
 
 import torch
 from .plan import verify, response_plan
-from .loss import pool
+from .loss import Pool, pool
 
 
 @torch.no_grad()
@@ -203,7 +203,7 @@ def _position_weights(visual_weights, prompt_len, positions):
     return out
 
 
-def score(target, head, trace, *, draft_fn, deferred_checks=False, visual_weights=None):
+def score(target, head, trace, *, draft_fn, deferred_checks=False, visual_weights=None, e2e_tv_weight=0.0):
     """Score recorded proposal tokens with current logits, then yield pool stats.
 
     Replay argmax need not match the collected proposal: its recorded tokens are
@@ -215,6 +215,7 @@ def score(target, head, trace, *, draft_fn, deferred_checks=False, visual_weight
         trace["ids"].numel() - trace["prompt_len"] - sum(n for _, n in trace["plan"])
     )
     for index, (pos, count) in enumerate(trace["plan"]):
+        tv_loss = None
         logits = draft_fn(
             head,
             target,
@@ -246,6 +247,16 @@ def score(target, head, trace, *, draft_fn, deferred_checks=False, visual_weight
                 response_teacher_logp = teacher_logp.gather(1, tokens[:, None]).squeeze(
                     1
                 )
+            tv_loss = None
+            if e2e_tv_weight and count:
+                # E2E-TV (Bebop/SpecOPD): alpha = sum_v min(q(v), p(v)) over the
+                # draft's top-k support; loss = 1 - mean_j prod_{i<=j} alpha_i.
+                k = min(8, student_logp.shape[-1])
+                q_top = student_logp[:count].topk(k, dim=-1)
+                q_prob = q_top.values.exp()
+                p_prob = teacher_logp.gather(1, q_top.indices).exp()
+                alpha = torch.minimum(q_prob, p_prob).sum(dim=-1)
+                tv_loss = 1.0 - torch.cumprod(alpha, dim=0).mean()
         else:
             response_student_logp = response_teacher_logp = empty
         offsets = student_logp.new_tensor(
@@ -262,7 +273,7 @@ def score(target, head, trace, *, draft_fn, deferred_checks=False, visual_weight
                 visual_weights, trace["prompt_len"], positions)
         else:
             rejected_student_logp = rejected_teacher_logp = empty
-        yield pool(
+        result = pool(
             response_student_logp,
             response_teacher_logp,
             rejected_student_logp,
@@ -272,6 +283,12 @@ def score(target, head, trace, *, draft_fn, deferred_checks=False, visual_weight
             response_weights=response_weights,
             rejected_weights=rejected_weights,
         )
+        if tv_loss is not None:
+            result = Pool(
+                result.numerator + e2e_tv_weight * tv_loss * count,
+                result.denominator + e2e_tv_weight * count,
+            )
+        yield result
 
 
 def denominator(trace):

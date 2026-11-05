@@ -357,7 +357,8 @@ def run(args, allow_fresh_start=False):
                 try:
                     for slot in range(len(schedule[cursor])):
                         trace = move_trace(traces[slot], device)
-                        for anchor, stat in enumerate(runtime.score(target, head, trace, draft_fn=adapters.draft)):
+                        for anchor, stat in enumerate(runtime.score(target, head, trace, draft_fn=adapters.draft,
+                                                          e2e_tv_weight=getattr(args, "e2e_tv_weight", 0.0))):
                             if not stat.numerator.requires_grad or stat.numerator.grad_fn is None:
                                 raise RuntimeError('student replay graph missing')
                             (stat.numerator / denominator).backward()
