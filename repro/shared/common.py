@@ -157,6 +157,22 @@ def load_head(path, dtype=None, device="cuda"):
                        head.xattn_q_norm):
             module.float()
         head.xattn_layer_emb.data = head.xattn_layer_emb.data.float()
+    if getattr(head, "use_visual_xattn", False):
+        for module in (head.visual_xattn, head.visual_out, head.visual_norm,
+                       head.visual_q_norm):
+            module.float()
+    if getattr(head, "use_visual_perceiver", False):
+        head.visual_perceiver_attn.float()
+        head.visual_perceiver_norm.float()
+        head.visual_perceiver_latents.data = head.visual_perceiver_latents.data.float()
+    if getattr(head, "use_visual_film", False):
+        head.visual_film.float()
+    if getattr(head, "use_visual_fovea", False):
+        for module in (head.visual_fovea_key, head.visual_fovea_value,
+                       head.visual_fovea_query, head.visual_fovea_depth,
+                       head.visual_fovea_norm, head.visual_fovea_correction,
+                       head.visual_fovea_gate):
+            module.float()
     return head.to(device)
 
 

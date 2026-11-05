@@ -47,6 +47,8 @@ def identity(args):
         config['visual_weights_sha256'] = training_resume.file_hash(args.visual_weights)
     if getattr(args, 'clue_patches', None):
         config['clue_patches_sha256'] = training_resume.file_hash(args.clue_patches)
+    if getattr(args, 'visual_memory', None):
+        config['visual_memory_sha256'] = training_resume.file_hash(args.visual_memory)
     config.update(recipe=STATUS, opd_mode=OPD_MODE, world_size=WORLD,
                   slot_map=SLOT_MAPPING, initial_head_version=initial)
     return dict(opd_mode=OPD_MODE, world_size=WORLD, slot_map=SLOT_MAPPING,
@@ -235,6 +237,8 @@ class ParallelRollout:
                     if not patches or task not in patches:
                         raise KeyError(f'clue patch missing task {task}')
                     clue_patch = patches[task]
+        memories = getattr(self, 'visual_memories', None)
+        self.head.visual_memory = (memories[task].to(self.device) if memories and task in memories else None)
         inputs = adapters.encode(processor, rows.loc[task].to_dict(),
             args.modality, max_pixels=args.max_pixels, time_mode=args.time_mode,
             corrupt=corrupt, seed=corrupt_seed, corrupt_image_path=corrupt_image_path,
@@ -280,6 +284,12 @@ def run(args, allow_fresh_start=False):
             out.mkdir(parents=True, exist_ok=True)
         dist.barrier()
         metadata = identity(args)
+        visual_memories = None
+        if getattr(args, 'visual_memory', None):
+            blob = torch.load(args.visual_memory, map_location='cpu', weights_only=False)
+            visual_memories = blob['features']
+            if rank == 0:
+                print(f"[opd] visual memories: {len(visual_memories)} tasks", flush=True)
         clue_patches = None
         if getattr(args, 'clue_patches', None):
             blob = torch.load(args.clue_patches, map_location='cpu', weights_only=False)
@@ -357,6 +367,11 @@ def run(args, allow_fresh_start=False):
                 try:
                     for slot in range(len(schedule[cursor])):
                         trace = move_trace(traces[slot], device)
+                        task = schedule[cursor][slot]['task']
+                        if visual_memories and task in visual_memories:
+                            head.visual_memory = visual_memories[task].to(device)
+                        else:
+                            head.visual_memory = None
                         for anchor, stat in enumerate(runtime.score(target, head, trace, draft_fn=adapters.draft,
                                                           e2e_tv_weight=getattr(args, "e2e_tv_weight", 0.0))):
                             if not stat.numerator.requires_grad or stat.numerator.grad_fn is None:

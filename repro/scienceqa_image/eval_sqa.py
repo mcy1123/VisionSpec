@@ -98,6 +98,8 @@ def main() -> int:
     ap.add_argument("--per-question", default=None)
     ap.add_argument("--spec-equals-ar", default=None)
     ap.add_argument("--load-manifest", default=None)
+    ap.add_argument("--visual-memory", default=None,
+                    help="optional .pt mapping pid -> raw visual tokens for visual cross-attn")
     a = ap.parse_args()
     dev = f"cuda:{a.gpu}"
     torch.cuda.set_device(a.gpu)
@@ -111,6 +113,10 @@ def main() -> int:
     target, proc = common.load_target(device=dev, dtype=torch.float32)
     eos = int(proc.tokenizer.eos_token_id)
     rows = load_split(a.run, a.split, a.limit or None)
+    visual_memory = None
+    if a.visual_memory:
+        visual_memory = torch.load(a.visual_memory, map_location="cpu", weights_only=False)["features"]
+        print(f"[eval] visual memories: {len(visual_memory)} records", flush=True)
 
     ar = {}
     if a.ar_cache and pathlib.Path(a.ar_cache).exists():
@@ -141,6 +147,8 @@ def main() -> int:
         pix = pixels.to(dev) if pixels is not None else None
         g = grid.to(dev) if grid is not None else None
         pos = VisionPositions(pix, g)
+        head.visual_memory = (visual_memory[r["pid"]].to(dev)
+                              if visual_memory and r["pid"] in visual_memory else None)
 
         if r["pid"] in ar:
             ar_tok = list(ar[r["pid"]]["tokens"])

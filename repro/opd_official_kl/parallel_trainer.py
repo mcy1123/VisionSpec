@@ -115,7 +115,8 @@ class ParallelRollout:
             if self.rank < len(items):
                 trace, record = self.collect_slot(target, processor, rows, items, args, identities, policy, cursor)
         except Exception as exc:
-            error = repr(exc)
+            import traceback
+            error = traceback.format_exc()
         self.phase_check(error)
         records = self.gather(record)[:len(items)]
         denominator = global_denominator(records, [i['task'] for i in items])
@@ -168,6 +169,8 @@ class ParallelRollout:
                     if not patches or task not in patches:
                         raise KeyError(f'clue patch missing task {task}')
                     clue_patch = patches[task]
+        memories = getattr(self, 'visual_memories', None)
+        self.head.visual_memory = (memories[task].to(self.device) if memories and task in memories else None)
         inputs = adapters.encode(processor, rows.loc[task].to_dict(),
             args.modality, max_pixels=args.max_pixels, time_mode=args.time_mode,
             corrupt=corrupt, seed=corrupt_seed, corrupt_image_path=corrupt_image_path,
@@ -220,6 +223,12 @@ def run(args):
                               for k, v in blob['weights'].items()}
             if rank == 0:
                 print(f"[opd] visual weights: {len(visual_weights)} tasks", flush=True)
+        visual_memories = None
+        if getattr(args, 'visual_memory', None):
+            blob = torch.load(args.visual_memory, map_location='cpu', weights_only=False)
+            visual_memories = blob['features']
+            if rank == 0:
+                print(f"[opd] visual memories: {len(visual_memories)} tasks", flush=True)
         clue_patches = None
         if getattr(args, 'clue_patches', None):
             blob = torch.load(args.clue_patches, map_location='cpu', weights_only=False)
@@ -249,6 +258,7 @@ def run(args):
             weight_decay=common.WEIGHT_DECAY, where='cpu', clip=args.clip) if rank == 0 else None)
         executor = ParallelRollout(head, metadata, device)
         executor.clue_patches = clue_patches
+        executor.visual_memories = visual_memories
         start, optimizer_step = 0, 0
         if args.resume_from:
             state = torch.load(Path(args.resume_from)/'training_state.pt', map_location='cpu', weights_only=False)
@@ -303,8 +313,12 @@ def run(args):
                             raise RuntimeError('invalid visual-weighted denominator')
                     for slot in range(len(schedule[cursor])):
                         trace = move_trace(traces[slot], device)
-                        weights = (visual_weights[schedule[cursor][slot]['task']]
-                                   if visual_weights is not None else None)
+                        task = schedule[cursor][slot]['task']
+                        weights = (visual_weights[task] if visual_weights is not None else None)
+                        if visual_memories and task in visual_memories:
+                            head.visual_memory = visual_memories[task].to(device)
+                        else:
+                            head.visual_memory = None
                         for anchor, stat in enumerate(runtime.score(
                                 target, head, trace, draft_fn=adapters.draft,
                                 visual_weights=weights,

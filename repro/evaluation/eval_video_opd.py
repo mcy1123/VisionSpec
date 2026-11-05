@@ -71,6 +71,8 @@ def main():
     ap.add_argument("--rows", required=True,
                     help="parquet whose rows are exactly the rows to score")
     ap.add_argument("--head", required=True)
+    ap.add_argument("--visual-memory", default=None,
+                    help="optional .pt mapping video_name -> raw visual tokens")
     ap.add_argument("--n", type=int, default=0, help="0 = all rows")
     ap.add_argument("--max-new", type=int, default=1024)
     ap.add_argument("--budget", type=int, default=63)
@@ -106,6 +108,11 @@ def main():
     target, _ = common.load_target(device=dev, dtype=dt)
     proc = AutoProcessor.from_pretrained(common.TARGET_PATH)
     head = common.load_head(a.head, device=dev, dtype=dt).eval()
+    visual_memory = None
+    if a.visual_memory:
+        visual_memory = torch.load(a.visual_memory, map_location="cpu",
+                                   weights_only=False)["features"]
+        print(f"[eval] visual memories: {len(visual_memory)} videos", flush=True)
     eos = proc.tokenizer.eos_token_id
 
     res = []
@@ -127,6 +134,8 @@ def main():
         def run_spec():
             pos = VisionPositions(pixel_values_videos=pv, video_grid_thw=vg)
             rounds = []
+            head.visual_memory = (visual_memory[row["video_name"]].to(dev)
+                                  if visual_memory and row["video_name"] in visual_memory else None)
             torch.cuda.synchronize()
             t0 = time.perf_counter()
             out, stats = glance.generate(head, target, ids, a.max_new, [eos],

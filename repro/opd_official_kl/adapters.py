@@ -70,5 +70,5 @@ def draft(head, target, fused, *, anchor_pos, root_token):
         fused[:, :anchor_pos],
         anchor_pos=anchor_pos,
         root_token=root_token,
-        head_dtype=next(head.parameters()).dtype,
+        head_dtype=head.fc.weight.dtype,
     )

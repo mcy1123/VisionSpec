@@ -569,7 +569,46 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         self.block_size = int(_draft_value(config, "block_size", 16))
         self.mask_token_id = _draft_value(config, "mask_token_id")
         self.use_xattn = bool(_draft_value(config, "use_xattn", False))
+        self.use_visual_xattn = bool(_draft_value(config, "use_visual_xattn", False))
+        self.use_visual_fovea = bool(_draft_value(config, "use_visual_fovea", False))
+        self.use_visual_film = bool(_draft_value(config, "use_visual_film", False))
+        self.use_visual_perceiver = bool(_draft_value(config, "use_visual_perceiver", False))
         self.use_layer_gate = bool(_draft_value(config, "use_layer_gate", False))
+        if self.use_visual_perceiver:
+            latents = 32
+            self.visual_perceiver_latents = nn.Parameter(
+                torch.randn(latents, config.hidden_size) * 0.02)
+            self.visual_perceiver_attn = nn.MultiheadAttention(
+                config.hidden_size, 8, batch_first=True)
+            self.visual_perceiver_norm = nn.LayerNorm(config.hidden_size)
+        if self.use_visual_film:
+            self.visual_film = nn.Sequential(
+                nn.Linear(config.hidden_size, config.hidden_size),
+                nn.SiLU(),
+                nn.Linear(config.hidden_size, 2 * config.hidden_size))
+        if self.use_visual_fovea:
+            fovea_key_dim = 256
+            self.visual_fovea_key = nn.Linear(
+                config.hidden_size, fovea_key_dim, bias=False)
+            self.visual_fovea_value = nn.Linear(
+                config.hidden_size, config.hidden_size, bias=False)
+            self.visual_fovea_query = nn.Linear(
+                config.hidden_size, fovea_key_dim, bias=False)
+            self.visual_fovea_depth = nn.Embedding(
+                self.block_size, config.hidden_size)
+            self.visual_fovea_norm = nn.LayerNorm(config.hidden_size)
+            self.visual_fovea_correction = nn.Sequential(
+                nn.Linear(2 * config.hidden_size, config.hidden_size),
+                nn.SiLU(),
+                nn.Linear(config.hidden_size, config.hidden_size))
+            self.visual_fovea_gate = nn.Linear(2 * config.hidden_size, 1)
+        if self.use_visual_xattn:
+            self.visual_xattn = nn.MultiheadAttention(
+                config.hidden_size, 8, batch_first=True)
+            self.visual_out = nn.Linear(
+                config.hidden_size, config.hidden_size, bias=False)
+            self.visual_norm = nn.LayerNorm(config.hidden_size)
+            self.visual_q_norm = nn.LayerNorm(config.hidden_size)
         if self.use_layer_gate:
             self.num_target_layers = len(self.target_layer_ids)
             self.layer_gate = nn.Sequential(
@@ -594,6 +633,15 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         self.post_init()
         if self.use_xattn:
             nn.init.zeros_(self.xattn_out.weight)
+        if self.use_visual_xattn:
+            nn.init.zeros_(self.visual_out.weight)
+        if self.use_visual_fovea:
+            nn.init.zeros_(self.visual_fovea_correction[-1].weight)
+            nn.init.zeros_(self.visual_fovea_correction[-1].bias)
+            nn.init.constant_(self.visual_fovea_gate.bias, -4.0)
+        if self.use_visual_film:
+            nn.init.zeros_(self.visual_film[-1].weight)
+            nn.init.zeros_(self.visual_film[-1].bias)
 
     def forward(
         self,
@@ -606,6 +654,14 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         **kwargs,
     ) -> torch.Tensor:
         hidden_states = noise_embedding
+        visual_memory = getattr(self, "visual_memory", None)
+        if visual_memory is not None and self.use_visual_xattn:
+            q = self.visual_q_norm(hidden_states.float())
+            visual_memory = self._visual_memory_compressed(visual_memory)
+            kv = self.visual_norm(visual_memory.float().unsqueeze(0))
+            x, _ = self.visual_xattn(q, kv, kv, need_weights=False)
+            hidden_states = hidden_states + self.visual_out(x).to(
+                hidden_states.dtype)
         if self.use_layer_gate:
             bsz, ctx_len, hidden = target_hidden.shape
             layer_dim = hidden // self.num_target_layers
@@ -639,7 +695,61 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
                 position_embeddings=position_embeddings,
                 **kwargs,
             )
-        return self.norm(hidden_states)
+        hidden_states = self.norm(hidden_states)
+        hidden_states = self._visual_film(hidden_states)
+        hidden_states = self._visual_fovea(hidden_states)
+        return hidden_states
+
+    def _visual_memory_compressed(self, memory):
+        if not self.use_visual_perceiver:
+            return memory
+        kv = self.visual_perceiver_norm(memory.float()).unsqueeze(0)
+        q = self.visual_perceiver_latents.float().unsqueeze(0)
+        out, _ = self.visual_perceiver_attn(q, kv, kv, need_weights=False)
+        return (q + out)[0]
+
+    def _visual_film(self, hidden):
+        memory = getattr(self, "visual_memory", None)
+        if memory is None or not self.use_visual_film:
+            return hidden
+        memory = self._visual_memory_compressed(memory)
+        g = memory.float().mean(dim=0)
+        film = self.visual_film(g).view(1, 1, 2, hidden.shape[-1])
+        scale = torch.tanh(film[..., 0, :])
+        shift = film[..., 1, :]
+        return (hidden.float() + hidden.float() * scale + shift).to(hidden.dtype)
+
+    def _visual_fovea(self, hidden):
+        memory = getattr(self, "visual_memory", None)
+        if memory is None or not self.use_visual_fovea:
+            return hidden
+        memory = self._visual_memory_compressed(memory)
+        v = self.visual_fovea_norm(memory.float())
+        keys = self.visual_fovea_key(v)
+        values = self.visual_fovea_value(v)
+        b, length, _ = hidden.shape
+        depth_ids = torch.arange(length, device=hidden.device).clamp_max(
+            self.visual_fovea_depth.num_embeddings - 1)
+        q = self.visual_fovea_query(
+            hidden.float() + self.visual_fovea_depth(depth_ids).unsqueeze(0))
+        scores = torch.einsum("bld,nd->bln", q, keys) * (keys.shape[-1] ** -0.5)
+        alpha = scores.softmax(dim=-1)
+        kmax = min(256, alpha.shape[-1])
+        kmin = min(32, kmax)
+        topv, topi = alpha.topk(kmax, dim=-1)
+        cumulative = topv.cumsum(dim=-1)
+        k = (cumulative < 0.8).sum(dim=-1) + 1
+        k = k.clamp(min=kmin, max=kmax)
+        keep = torch.arange(kmax, device=hidden.device).view(1, 1, kmax) < k.unsqueeze(-1)
+        weights = torch.where(keep, topv, torch.zeros_like(topv))
+        weights = weights / weights.sum(dim=-1, keepdim=True).clamp_min(1e-6)
+        selected = values[topi]
+        readout = torch.einsum("blk,blkd->bld", weights, selected)
+        fused = torch.cat([hidden.float(), readout], dim=-1)
+        correction = self.visual_fovea_correction(fused)
+        gate = torch.sigmoid(self.visual_fovea_gate(fused))
+        corrected = hidden.float() + gate * correction
+        return corrected.to(hidden.dtype)
 
     def compute_logits(self, hidden, output_head):
         logits = output_head(hidden)
