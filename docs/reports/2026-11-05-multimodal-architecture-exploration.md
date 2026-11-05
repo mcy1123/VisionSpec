@@ -85,10 +85,11 @@ GLANCE 当前 head 是 **DFlash 文本 block-draft head + target 5 层 fused hid
 - blank τ **3.3676** vs OPD3e blank 3.2826（**+0.0850 [+0.0496,+0.1204]**）；visual reliance 0.3854 vs 0.5015，DiD **−0.1161 [−0.1613,−0.0712]**。
 - 和 video E2E-TV 同一模式：real 变差、blank 变好、视觉依赖下降；不可用。
 
-### V7 `video_film30b`：视频 global FiLM（30 updates，real 评测运行中）
+### V7 `video_film30b`：视频 global FiLM（30 updates，real 已完成）
 
-- 从 video OPD3e step220，3 卡，30 updates，global visual FiLM；30/30 待评测；这是最后一个视频架构变体。
-- 不改变总判断：image 侧 FiLM 已经是高 g 负、低 g 正；视频侧预计同类。
+- 从 video OPD3e step220，3 卡，30 updates，global visual FiLM；30/30 逐 token 无损。
+- real τ **3.7707** vs OPD3e 3.7841（**−0.0134**），vs warm 3.7266（+0.0441）；没有 blank（08:00 前未跑完）。
+- 与 image FiLM 一致：global modulation 不解决视频 visual-specific；real 略低于 OPD3e。
 
 ### V8 未跑：MoE / modality routing / slot attention
 
@@ -121,6 +122,7 @@ GLANCE 当前 head 是 **DFlash 文本 block-draft head + target 5 层 fused hid
 | V5 Perceiver K=32 + FOVEA | image | +0.0015 | +0.0129 | 中性 |
 | V3 video E2E-TV | video | —（real +0.0165，blank +0.1539） | — | 主要 blank/语言先验，reliance −0.1374 |
 | V6 video FOVEA | video | —（real −0.0311 [−0.0515,−0.0113]） | — | real 显著低于 OPD3e；blank +0.0850，reliance −0.1161；不可用 |
+| V7 video FiLM（30 upd） | video | —（real −0.0134） | — | real 略低于 OPD3e；无 blank；不可用 |
 
 ### 6.2 结论
 
@@ -129,3 +131,4 @@ GLANCE 当前 head 是 **DFlash 文本 block-draft head + target 5 层 fused hid
 - video E2E-TV 的 real +0.0165 不显著，blank +0.1539 显著，visual reliance 从 0.5015 降到 0.3641；它优化的是 blank/语言先验，不是视频视觉依赖。
 - 因此，**当前 GLANCE block head 的瓶颈不在“视觉特征怎么融合”**：给 raw visual tokens、gated retrieval、FiLM、Perceiver 都无效；更大的杠杆是 **objective / teacher alignment**（E2E-TV），以及可能的 decoder-side grounded copy。
 - 本夜没有找到“可用于图像/视频的架构优化方法”；这是一个明确的阴性结论，不是未完成。
+- 视频侧最后一个变体 video FiLM（30 updates）real τ 3.7707 vs OPD3e 3.7841（−0.0134），同样不可用；未跑 blank，因为 08:00 截止。
