@@ -126,3 +126,50 @@
 
 - 两个 seed 的高 g（+0.0768 / +0.0624）和 top quartile（+0.0849 / +0.0845）都显著，低 g 都不显著；合并后 overall/high/top 全部 CI 不含 0。
 - **结论更新**：image E2E-TV 120 的 visual-specific 正收益在第二 seed 上复现；180 时同预算 base 追上（不显著），说明收益有预算窗口，不是无限增长。
+
+
+## 10. 5–10k 视频视觉 token 的实测（2026-11-09）
+
+按“5–10k 才够”的假设，把 16 帧缓存每帧复制 2×、分辨率 2×，得到 32 帧/768×576：
+
+- 单视频 `video_grid_thw=[16,48,48]`，`<|video_pad|>` = **9216 token**；
+- 439 条 train memory 实际 **3840–9216**，均值 **6025**，中位数 5376；
+- fresh30 memory 实际 **4992–9216**，均值 **6118**。
+
+### 10.1 直接喂 target
+
+| 输入 | dtype | 结果 |
+|---|---|---|
+| 9k（32f2x） | fp32 | **OOM**（一次 attention 申请 10.48 GiB；47.5GB 卡） |
+| 9k（32f2x） | bf16 | 能跑；fresh30 τ **3.438**，**lossless 1/30** |
+| 1k（原 16f） | bf16 | fresh30 τ **3.703**，**lossless 2/30** |
+
+- bf16 下 9k 比 1k **还低 0.265**，且两者都不是逐 token 无损（bf16 树/单 token 归约顺序不同）；**9k target 输入在 fp32 + 47GB 卡上不可行**。
+- 结论：不是“token 数不够”，而是当前 target/fp32/显存与 draft 训练分布都不支持 5–10k target 输入。
+
+### 10.2 draft-side 9k memory（FOVEA）
+
+- 用 3840–9216 token 的 2× memory 训练 FOVEA 60 updates；target 仍 480–1152，30/30 无损。
+
+| arm | real τ | blank τ | reliance |
+|---|---:|---:|---:|
+| OPD3e | 3.7841 | 3.2826 | 0.5015 |
+| FOVEA 1k memory | 3.7530 | 3.3676 | 0.3854 |
+| FOVEA 3k memory | 3.7519 | 3.3676 | 0.3843 |
+| **FOVEA 9k memory (mean 6025)** | **3.7485** | 3.3676 | **0.3809** |
+
+- 9k − OPD3e real **−0.0357 [−0.0556,−0.0169]**；blank +0.0850；DiD −0.1207。
+- 与 1k/3k FOVEA 几乎相同，甚至略低：**把 draft memory 从 1k 增到 6k 没有收益**；FOVEA 的 topK 检索没有因为 token 多而变好。
+
+### 10.3 对论文的判断
+
+- `docs/research/five-paper-survey.md`：HIPPO 是“保留 top 10% visual tokens”，不是 5–10k；GLANCE 的 draft 读 target fused states，不直接读 raw visual tokens，所谓“给 drafter 更多视觉 token”没有直接对应物。
+- MSD（`docs/research/2026-10-09-opd-multimodal/texts/2505.14260.txt`）用全部 visual token，但没有 5–10k 的预算结论。
+- 因此“5–10k 才够”在目录论文里没有直接证据；本次实测也不支持“单纯加 token 数”是杠杆。
+
+## 11. 最终结论（2026-11-09）
+
+- image E2E-TV **120 vs base120 两 seed 复现**：overall +0.0368 [+0.0077,+0.0659]、high-g +0.0690 [+0.0229,+0.1150]、top +0.0847 [+0.0293,+0.1401]，low-g 不显著；200/200 无损。
+- image E2E-TV **180 vs base180 饱和**：high-g +0.0436（CI 跨零），base 追上。
+- video **5–10k token**：target fp32 OOM；bf16 非无损且 τ 更低；draft memory 6k 与 1k/3k 相同，**没有收益**。
+- 视频要真正利用 5–10k token，需要 **target 侧 fp32 多卡/分块 prefill**，且 draft 要在高 token 分布上训练；只把 token 数堆上去不够。
