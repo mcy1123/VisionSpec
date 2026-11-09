@@ -126,8 +126,14 @@ def append_jsonl(path, rows):
 # Model loading
 # --------------------------------------------------------------------------
 
-def load_target(path=TARGET_PATH, device="cuda", attn_implementation="sdpa", dtype=None):
-    """The frozen Qwen3-VL target and its processor. [§5.1] never modified."""
+def load_target(path=TARGET_PATH, device="cuda", attn_implementation="sdpa", dtype=None,
+                device_map=None, max_memory=None):
+    """The frozen Qwen3-VL target and its processor. [§5.1] never modified.
+
+    ``device_map`` is opt-in and only used by the high-token diagnostic: the
+    default single-GPU path is unchanged, so existing numbers keep their exact
+    loading/rounding behaviour.
+    """
     import torch
     from transformers import AutoProcessor
 
@@ -135,9 +141,18 @@ def load_target(path=TARGET_PATH, device="cuda", attn_implementation="sdpa", dty
 
     use_fast_patch_embed()
     cls = target_class_for(path)
-    target = cls.from_pretrained(
-        path, dtype=dtype or torch.bfloat16,
-        attn_implementation=attn_implementation).to(device).eval()
+    kwargs = {}
+    if device_map is not None:
+        kwargs["device_map"] = device_map
+        if max_memory is not None:
+            kwargs["max_memory"] = max_memory
+        target = cls.from_pretrained(
+            path, dtype=dtype or torch.bfloat16,
+            attn_implementation=attn_implementation, **kwargs).eval()
+    else:
+        target = cls.from_pretrained(
+            path, dtype=dtype or torch.bfloat16,
+            attn_implementation=attn_implementation).to(device).eval()
     target.requires_grad_(False)
     processor = AutoProcessor.from_pretrained(path)
     return target, processor

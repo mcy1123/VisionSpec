@@ -109,12 +109,15 @@ def gather_cache(cache, n_prefix, keep):
 
     if layers is not None:
         for layer in layers:
-            layer.keys = layer.keys.index_select(2, index)
-            layer.values = layer.values.index_select(2, index)
+            local = index.to(layer.keys.device)
+            layer.keys = layer.keys.index_select(2, local)
+            layer.values = layer.values.index_select(2, local)
     else:
         for i in range(len(cache.key_cache)):
-            cache.key_cache[i] = cache.key_cache[i].index_select(2, index)
-            cache.value_cache[i] = cache.value_cache[i].index_select(2, index)
+            local = index.to(cache.key_cache[i].device)
+            cache.key_cache[i] = cache.key_cache[i].index_select(2, local)
+            local = index.to(cache.value_cache[i].device)
+            cache.value_cache[i] = cache.value_cache[i].index_select(2, local)
     if hasattr(cache, "_seen_tokens"):
         cache._seen_tokens = index.numel()
     return cache

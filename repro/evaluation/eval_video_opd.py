@@ -90,6 +90,10 @@ def main():
                          "single-token pass reduce in different orders and near-ties "
                          "land on either side (audit_lossless.py docstring).")
     ap.add_argument("--gpu", type=int, default=0)
+    ap.add_argument("--device-map", default=None,
+                    help="opt-in multi-GPU target placement (e.g. 'auto'); only for high-token diagnostics")
+    ap.add_argument("--max-memory", default=None,
+                    help="accelerate max_memory, e.g. '0:44GiB,1:44GiB'")
     ap.add_argument("--tag", default="")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
@@ -105,7 +109,42 @@ def main():
           f"head {a.head}, dtype {a.dtype}, max_new {a.max_new} "
           f"b{a.budget}k{a.branch} ar={a.ar}", flush=True)
 
-    target, _ = common.load_target(device=dev, dtype=dt)
+    max_memory = None
+    if a.max_memory:
+        max_memory = {}
+        for part in a.max_memory.split(","):
+            k, v = part.split(":", 1)
+            max_memory[int(k) if k.strip().isdigit() else k.strip()] = v.strip()
+    target, _ = common.load_target(device=dev, dtype=dt,
+                                   device_map=a.device_map, max_memory=max_memory)
+    if a.device_map:
+        # accelerate places different layers on different GPUs. The decode code
+        # below owns the head and the KV/out tensors on cuda:0, so bring target
+        # outputs back to the input device and route lm_head through its owner.
+        import torch as _t
+        _dev = next(target.parameters()).device
+        _lm = target.lm_head
+        class _LM(_t.nn.Module):
+            def __init__(self, inner):
+                super().__init__()
+                self.inner = inner
+            def forward(self, x):
+                return self.inner(x.to(self.inner.weight.device)).to(x.device)
+            @property
+            def weight(self):
+                return self.inner.weight
+        target.lm_head = _LM(_lm)
+        _orig_forward = target.forward
+        def _forward(*args, **kwargs):
+            out = _orig_forward(*args, **kwargs)
+            if getattr(out, "logits", None) is not None:
+                out.logits = out.logits.to(_dev)
+            hs = getattr(out, "hidden_states", None)
+            if hs is not None:
+                out.hidden_states = tuple(h.to(_dev) for h in hs)
+            return out
+        target.forward = _forward
+        print(f"[eval] target device_map={a.device_map} max_memory={max_memory} outputs->{_dev} map={getattr(target, 'hf_device_map', None)}", flush=True)
     proc = AutoProcessor.from_pretrained(common.TARGET_PATH)
     head = common.load_head(a.head, device=dev, dtype=dt).eval()
     visual_memory = None
