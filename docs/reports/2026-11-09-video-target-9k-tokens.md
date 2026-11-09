@@ -56,3 +56,32 @@ fresh30，OPD3e step220，fp32，b63/k8，AR 逐 token 门禁：
 - 9k memory：`vmem/video_train439_9k.pt`（21G）、`vmem/video_fresh30_9k.pt`
 - target 9k eval：`eval/opd_9k_3gpu.json`（30/30 lossless, τ 3.4098）
 - 代码：`repro/shared/common.py`（`device_map`）、`repro/evaluation/eval_video_opd.py`（多卡输出/ lm_head 路由）、`GLANCE_repo/glance/decode.py`（device-local cache gather）
+
+
+## 7. 9k target 训练（已安排并跑通）
+
+新增单进程入口 `repro/video_caption/train_video_9k.py`：
+
+- target：fp32，`device_map="balanced"` 跨 3×47GB；输出/lm_head 统一回 cuda:0；
+- head/master/Adam：cuda:0；target 3 卡 + head 同卡 0；
+- 9k 视频：`video_cache_32f_2x`，`max_seq_len=16384`；
+- 1 update smoke：loss 4.99，grad 6.25，完成并保存 step1。
+
+### 7.1 5-update 学习率对比（fresh30，9k fp32 target，30/30 无损）
+
+| arm | τ |
+|---|---:|
+| OPD3e zero-shot @9k | 3.4098 |
+| E2E-TV 9k，lr 1e-5，5 updates | 3.4189 |
+| E2E-TV 9k，lr 1e-4，5 updates | **3.4790** |
+
+- lr 1e-4 把 9k 上的 τ 从 3.4098 提到 3.4790（+0.069），30/30 无损；但仍比 1k 的 3.7841 低 **0.305**。
+- 5 updates 只能恢复约 19% 的差距；训练确实在起作用，但预算远不够。
+- 训练速度约 **3 分钟/update**（4 视频/update，9k target，3 卡），20 updates 约 1 小时；比 1k 训练慢很多。
+
+### 7.2 状态
+
+- `video_e2e_9k/step5`：lr 1e-5，5 updates（τ 3.4189）。
+- `video_e2e_9k_lr1e4/step5`：lr 1e-4，5 updates（τ 3.4790）。
+- 已从 `video_e2e_9k_lr1e4/step5` 续训 15 updates（lr 1e-4），产物在 `video_e2e_9k_lr1e4_s2`；完成后用同一 3 卡 9k 评测。
+- 结论：**target 5–10k 的训练路径已经打通；5 updates 有正趋势但远未追平 1k；需要更长训练/更大 lr 预算才能判断 9k 是否能超过 1k。**
