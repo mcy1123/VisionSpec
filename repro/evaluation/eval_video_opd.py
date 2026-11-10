@@ -95,6 +95,8 @@ def main():
     ap.add_argument("--max-memory", default=None,
                     help="accelerate max_memory, e.g. '0:44GiB,1:44GiB'")
     ap.add_argument("--tag", default="")
+    ap.add_argument("--zero-visual", action="store_true",
+                    help="diagnostic: zero visual-token rows of target_hidden before the head")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
 
@@ -147,6 +149,20 @@ def main():
         print(f"[eval] target device_map={a.device_map} max_memory={max_memory} outputs->{_dev} map={getattr(target, 'hf_device_map', None)}", flush=True)
     proc = AutoProcessor.from_pretrained(common.TARGET_PATH)
     head = common.load_head(a.head, device=dev, dtype=dt).eval()
+    if a.zero_visual:
+        head._vmask = None
+        _head_forward = head.forward
+        def _zero_visual_forward(*args, **kwargs):
+            th = kwargs.get("target_hidden")
+            if th is not None and head._vmask is not None and th.shape[1] > 0:
+                m = head._vmask[:th.shape[1]]
+                if bool(m.any()):
+                    th = th.clone()
+                    th[:, m, :] = 0
+                    kwargs["target_hidden"] = th
+            return _head_forward(*args, **kwargs)
+        head.forward = _zero_visual_forward
+        print("[eval] zero-visual diagnostic enabled", flush=True)
     visual_memory = None
     if a.visual_memory:
         visual_memory = torch.load(a.visual_memory, map_location="cpu",
@@ -165,6 +181,9 @@ def main():
         ins = proc(text=[text], videos=[row["cache_path"]], return_tensors="pt",
                    fps=float(row["fps"]))
         ids = ins["input_ids"].to(dev)
+        if a.zero_visual:
+            _vid = proc.tokenizer.convert_tokens_to_ids("<|video_pad|>")
+            head._vmask = (ids[0] == _vid).to(dev)
         pv = ins["pixel_values_videos"].to(dev)
         vg = ins["video_grid_thw"].to(dev)
         n_in = int(ids.shape[1])
