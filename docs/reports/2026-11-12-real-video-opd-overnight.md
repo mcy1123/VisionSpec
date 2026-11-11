@@ -7,7 +7,7 @@
 - 仓库/分支：`mcy1123/VisionSpec`、`fix/visual-opd-long-video-protocol`；已确认包含 **ab6e2fa**（`Add deadline-aware stopping and overnight OPD execution protocol`）。
 - 隔离 worktree：`/home/mcy/Projects/GLANCE-real-video`（`run/real-video-20261111`）。
 
-**一句话结论**：真实 80/40 Video-MME-derived、128 真实帧（5376 visual token）上，20 updates 的真实视频 OPD 训练把 fresh dev20 的 τ 从 **6.578 → 7.070（λ0）→ 7.171（λ10）**；λ10 相对 λ0 **+0.101 [0.040,0.170]**，20/20 逐 token 无损。但输出全部撞 1024 cap，λ10 只到21 updates，dev20 不是独立 test，不能外推为最终结论。
+**一句话结论**：真实 80/40 Video-MME-derived 上，20 updates 的真实视频 OPD 训练把 128-frame fresh dev20 的 τ 从 **6.578 → 7.070（λ0）→ 7.171（λ10）**；λ10 相对 λ0 **+0.101 [0.040,0.170]**，20/20 无损。但同一 head 跑 **64-frame 输入更高：原 head 8.341，128-trained λ10 head 8.970**；所以这条任务上 **64 帧优于 128 帧**，128 训练的正增益不能掩盖预算选择错误。输出全部撞 1024 cap，λ10 只到21 updates，dev20 不是独立 test。
 
 ## 1. 执行门禁
 
