@@ -43,10 +43,10 @@
 - **target 层 gate 在这个预算下中性**，没有可测收益；不是“学不会”，而是步数/信号不足以让零初始化 gate 偏离 1。
 - 静态看 head `fc` 的层权重：layer1 **1064.5**、layer9 753.8、layer17 876.1、layer25 676.2、layer33 **339.1**——**早层特征在投影中占主导**，layer33 最弱。
 
-## 5. 跨层融合 xattn / 视觉特征因果（进行中）
+## 5. 跨层融合 xattn / 视觉特征因果
 
-- xattn：跨层 cross-attention（零初始化输出），10 updates，评测中。
-- zero-visual：推理时把 head 看到的视觉 token 的 target_hidden 置零，文本保留，测 head 对视觉特征的因果依赖；评测中。
+- xattn：跨层 cross-attention（零初始化输出），10 updates；结果见 5.1。
+- zero-visual：推理时把 head 看到的视觉 token 的 target_hidden 置零，文本保留；结果见 5.2。
 
 ## 5.1 跨层 xattn：中性
 
