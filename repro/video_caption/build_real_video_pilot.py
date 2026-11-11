@@ -102,21 +102,32 @@ def unique_sources(rows, exclusions, source_root=None):
 
 
 def probe_video(path):
-    proc = subprocess.run(
-        ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
-         "stream=width,height,avg_frame_rate,nb_frames,duration:format=duration",
-         "-of", "json", str(path)], check=True, capture_output=True, text=True)
-    data = json.loads(proc.stdout)
-    stream = data["streams"][0]
-    raw_duration = stream.get("duration")
-    if raw_duration in (None, "N/A"):
-        raw_duration = data.get("format", {}).get("duration", "nan")
-    duration = float(raw_duration)
-    fps = float(Fraction(stream.get("avg_frame_rate", "0/1")))
+    try:
+        proc = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+             "stream=width,height,avg_frame_rate,nb_frames,duration:format=duration",
+             "-of", "json", str(path)], check=True, capture_output=True, text=True)
+        data = json.loads(proc.stdout)
+        stream = data["streams"][0]
+        raw_duration = stream.get("duration")
+        if raw_duration in (None, "N/A"):
+            raw_duration = data.get("format", {}).get("duration", "nan")
+        duration = float(raw_duration)
+        fps = float(Fraction(stream.get("avg_frame_rate", "0/1")))
+        width, height = int(stream["width"]), int(stream["height"])
+    except FileNotFoundError:
+        # Minimal fallback for hosts without the ffprobe binary; PyAV is already
+        # required for exact PTS decoding below.
+        import av
+        with av.open(str(path)) as container:
+            stream = container.streams.video[0]
+            duration = float(container.duration / 1_000_000) if container.duration else 0.0
+            fps = float(stream.average_rate) if stream.average_rate else 0.0
+            width, height = int(stream.width), int(stream.height)
     if not math.isfinite(duration) or duration <= 0 or fps <= 0:
         raise ValueError(f"invalid video duration/fps: {path}")
     return {"video_duration": duration, "source_fps": fps,
-            "source_width": int(stream["width"]), "source_height": int(stream["height"])}
+            "source_width": int(width), "source_height": int(height)}
 
 
 def assign_splits(videos, n_train, n_dev, seed):
