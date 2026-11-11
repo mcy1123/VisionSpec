@@ -7,7 +7,7 @@
 - 仓库/分支：`mcy1123/VisionSpec`、`fix/visual-opd-long-video-protocol`；已确认包含 **ab6e2fa**（`Add deadline-aware stopping and overnight OPD execution protocol`）。
 - 隔离 worktree：`/home/mcy/Projects/GLANCE-real-video`（`run/real-video-20261111`）。
 
-**一句话结论**：真实 80/40 Video-MME-derived 上，20 updates 的真实视频 OPD 训练把 128-frame fresh dev20 的 τ 从 **6.578 → 7.070（λ0）→ 7.171（λ10）**；λ10 相对 λ0 **+0.101 [0.040,0.170]**，20/20 无损。但同一 head 跑 **64-frame 输入更高：原 head 8.341，128-trained λ10 head 8.970**；所以这条任务上 **64 帧优于 128 帧**，128 训练的正增益不能掩盖预算选择错误。输出全部撞 1024 cap，λ10 只到21 updates，dev20 不是独立 test。
+**一句话结论**：真实 80/40 Video-MME-derived 上，20 updates 的真实视频 OPD 训练把 128-frame fresh dev20 的 τ 从 **6.578 → 7.070（λ0）→ 7.171（λ10）**；λ10 相对 λ0 **+0.101 [0.040,0.170]**，20/20 无损。但同一 head 跑 **64-frame 输入更高：原 head 8.341，128-trained λ10 head 8.970，64-trained 10-step 8.735**；最佳组合是 **128 训练 + 64 推理（8.970）**，不是单纯64训练。输出全部撞 1024 cap，λ10 只到21 updates，dev20 不是独立 test。
 
 ## 1. 执行门禁
 
@@ -90,11 +90,12 @@
 - 20/20 spec ids 与 AR ids **完全相同**；zero 只轻微改变接受路径，不改变输出文本。
 - 视觉 token 行的因果贡献小且边界；不能把该任务上的 τ 增益归因于 head 直接读取 visual rows，更多来自 target 上下文。
 
-## 4.3 64-frame 追加训练（截止前启动，评测可能未完成）
+## 4.3 64-frame 追加训练（10 updates，已完成评测）
 
 - 在已完成主配对后，用同一原 head 追加 **64-frame λ10、10 updates**（`arms/seed20261111_lambda10_64_u10`，lr1e-5、4 QA/update、real/global_pooled）。
 - 目的：验证64输入不仅是推理预算更优，也能继续训练。该臂不计入主配对；总真实 optimizer updates 增至 **67**（仍≤240）。
-- 截止时该臂的 dev20 64-frame 评测若未完整，不计入结论，只作为下一步实验。
+- 结果：**8.735**（20/20 lossless），比原64 head **+0.394 [0.287,0.510]**，但比“128-trained λ10 head 跑64输入” **8.970 低 −0.234 [−0.300,−0.164]**。
+- 解释：64 输入本身更有利；**128 训练学到的接受能力可迁移到64推理**，而仅10步的64训练不足以超过迁移。最佳组合是 **128训练 + 64推理（8.970）**，不是单纯换64训练。
 
 ## 5. 与旧结果的关系
 
