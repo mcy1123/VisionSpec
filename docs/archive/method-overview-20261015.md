@@ -101,9 +101,9 @@
 
 ## 实验记录
 
-- [图像解码实验记录](reports/2026-09-25-reproduction-history.md)
-- [视频特征对齐实验](reports/2026-10-09-phase-a4.md)
-- [视频描述短程训练对照](reports/2026-10-12-phase-c4-frozen-10update.md)
-- [在线训练闭环实现与检查](reports/2026-10-13-opd-online-fix.md)
+- [图像解码实验记录](../reports/2026-09-25-reproduction-history.md)
+- [视频特征对齐实验](../reports/2026-10-09-phase-a4.md)
+- [视频描述短程训练对照](../reports/2026-10-12-phase-c4-frozen-10update.md)
+- [在线训练闭环实现与检查](../reports/2026-10-13-opd-online-fix.md)
 - [视频问答跨数据集结果](/mnt/local/mcy/GLANCE/results/qa_opd_fair_20261013_195500/reports/cross_dataset_tables.md)
 - [视频问答训练与评测记录](/mnt/local/mcy/GLANCE/results/qa_opd_fair_20261013_195500/reports/FINAL_QA_SFT_VS_OPD.md)
