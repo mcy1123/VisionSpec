@@ -19,6 +19,7 @@ import math
 import random
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -36,6 +37,42 @@ from opd_official_kl.trainer import move_trace
 
 
 LOSS_NORMALIZATIONS = ("legacy_per_qa", "global_pooled")
+
+
+def parse_deadline(value):
+    """Require an absolute, timezone-aware instant; never guess server time."""
+    if value is None:
+        return None
+    deadline = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if deadline.tzinfo is None or deadline.utcoffset() is None:
+        raise ValueError("--deadline-utc must include an explicit timezone, e.g. 2026-11-12T00:00:00Z")
+    return deadline.astimezone(timezone.utc)
+
+
+def stop_reason(deadline=None, stop_file=None, *, now=None):
+    """An update-boundary stop, not an interrupt in backward/optimizer/save."""
+    if stop_file and Path(stop_file).exists():
+        return "stop_file"
+    current = now if now is not None else datetime.now(timezone.utc)
+    if deadline is not None and current >= deadline:
+        return "deadline"
+    return None
+
+
+def checkpoint_and_status(out, step, budget, reason, save_fn):
+    """Preserve the last completed update once, including a non-periodic stop."""
+    out = Path(out)
+    if step > 0 and not (out / f"step{step}").exists():
+        save_fn(step)
+    result = dict(status="STOPPED" if reason else "COMPLETED",
+                  stop_reason=reason, completed_updates=step, planned_updates=budget,
+                  resume_supported=False,
+                  last_checkpoint=str(out / f"step{step}") if step else None,
+                  finished_utc=datetime.now(timezone.utc).isoformat())
+    # A single final status; never repurpose an older run's output directory.
+    with (out / "RUN_STATUS.json").open("x") as stream:
+        json.dump(result, stream, indent=2)
+    return result
 
 
 def load_schedule(path, rows, updates, qa_per_update):
@@ -281,12 +318,17 @@ def parser():
                     help="legacy sums per-QA losses; global pools all QAs with one base denominator")
     ap.add_argument("--dry-run", action="store_true",
                     help="validate inputs/configs and print protocol on CPU; no model loads or output writes")
+    ap.add_argument("--deadline-utc", default=None,
+                    help="timezone-aware ISO instant; save/stop at update boundary, not a hard interrupt")
+    ap.add_argument("--stop-file", default=None,
+                    help="existence requests a checkpoint and stop at the next update boundary")
     return ap
 
 
 def main(argv=None):
     ap = parser()
     a = ap.parse_args(argv)
+    deadline = parse_deadline(a.deadline_utc)
     if not a.device_map:
         ap.error("9k trainer requires --device-map")
     for name in ("updates", "qa_per_update", "save_every", "max_new_tokens", "max_seq_len"):
@@ -317,6 +359,10 @@ def main(argv=None):
         print(json.dumps(protocol, indent=2))
         return protocol
 
+    initial_stop = stop_reason(deadline, a.stop_file)
+    if initial_stop:
+        raise SystemExit(f"not starting model load: {initial_stop}")
+
     dev = "cuda:0"
     random.seed(a.seed)
     np.random.seed(a.seed)
@@ -336,7 +382,26 @@ def main(argv=None):
                                   weight_decay=common.WEIGHT_DECAY,
                                   where=a.master_weights, clip=a.clip)
 
+    def save_checkpoint(step):
+        training_resume.save_atomic_checkpoint(
+            out / f"step{step}", head,
+            dict(head=head.state_dict(), master_optimizer=optimizer.state_dict(),
+                 update=step, data_cursor=step,
+                 training_protocol=protocol, protocol_sha256=protocol["protocol_sha256"],
+                 world_size=1, slot_map=protocol["slot_map"],
+                 head_version=dict(optimizer_step=step, schedule_cursor=step,
+                                   protocol_sha256=protocol["protocol_sha256"]),
+                 initialization="weights_only_fresh_optimizer", resume_supported=False,
+                 loss_normalization=a.loss_normalization, time_mode=a.time_mode,
+                 diagnostic_only=True, smoke=False, opd_mode="pure_block",
+                 block_native=True, teacher_verify_impl="pure_block_native"))
+
     for cursor in range(a.updates):
+        reason = stop_reason(deadline, a.stop_file)
+        if reason:
+            result = checkpoint_and_status(out, cursor, a.updates, reason, save_checkpoint)
+            print(json.dumps(result), flush=True)
+            return result
         started = time.perf_counter()
         head.zero_grad(set_to_none=True)
         optimizer.zero_grad(set_to_none=True)
@@ -386,19 +451,15 @@ def main(argv=None):
         with (out / "log.jsonl").open("a") as stream:
             stream.write(json.dumps(record) + "\n")
         print(json.dumps(record), flush=True)
-        if (cursor + 1) % a.save_every == 0 or cursor + 1 == a.updates:
-            training_resume.save_atomic_checkpoint(
-                out / f"step{cursor+1}", head,
-                dict(head=head.state_dict(), master_optimizer=optimizer.state_dict(),
-                     update=cursor + 1, data_cursor=cursor + 1,
-                     training_protocol=protocol, protocol_sha256=protocol["protocol_sha256"],
-                     world_size=1, slot_map=protocol["slot_map"],
-                     head_version=dict(optimizer_step=cursor + 1, schedule_cursor=cursor + 1,
-                                       protocol_sha256=protocol["protocol_sha256"]),
-                     initialization="weights_only_fresh_optimizer", resume_supported=False,
-                     loss_normalization=a.loss_normalization, time_mode=a.time_mode,
-                     diagnostic_only=True, smoke=False, opd_mode="pure_block",
-                     block_native=True, teacher_verify_impl="pure_block_native"))
+        reason = stop_reason(deadline, a.stop_file)
+        if reason or cursor + 1 == a.updates:
+            # Completing the fixed budget wins over a simultaneous deadline.
+            reason = reason if cursor + 1 < a.updates else None
+            result = checkpoint_and_status(out, cursor + 1, a.updates, reason, save_checkpoint)
+            print(json.dumps(result), flush=True)
+            return result
+        if (cursor + 1) % a.save_every == 0:
+            save_checkpoint(cursor + 1)
 
 
 if __name__ == "__main__":

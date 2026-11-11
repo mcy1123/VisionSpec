@@ -6,6 +6,8 @@
 
 本轮用户要求是诊断、修改代码、写方案并推送，实验在另一台服务器执行。本文件区分已经实现的基础修复与尚待实现的新方法，不把 CPU 测试当成 GPU 无损或加速结果。
 
+**执行入口按任务选择：** 只做零更新诊断使用第 6 节；用户设置“持续工作到明早 08:00”的夜间任务使用第 8 节。用户采纳第 8 节 prompt 后，其中最多 240 次真实更新的限定授权覆盖第 6 节的零更新预算；这不授权本机训练，也不授权尚未验证的 B/C 新方法训练。
+
 ## 1. 研究问题与已有证据边界
 
 目标：**长视觉上下文中，随生成前缀变化的证据读取，能否与 OPD 配合，改善长文本生成的实际草稿接受效率及端到端速度？**
@@ -239,7 +241,7 @@ AR文本质量、EOS/截断、lossless、有效tokens/round、输入固定时的
 
 ## 7. 本机验证记录
 
-本机所列六组 CPU 回归 **55 项测试、30 项子测试通过**，覆盖真实视频解码/PTS/NPZ 往返、源视频划分与排除、schedule 预算、梯度归一化、配置兼容、绝对位置视觉掩码、跨层缓存与全前缀重算/rollback/extension 一致性，以及分片协议混合拒绝。`git diff --check` 通过；没有本机 GPU lossless、吞吐或训练恢复结论。
+首轮六组 CPU 回归 **55 项测试、30 项子测试通过**。夜间停止接口追加 6 项测试后，七组全套 **61 项测试、30 项子测试通过**，覆盖真实视频解码/PTS/NPZ 往返、源视频划分与排除、schedule 预算、梯度归一化、配置兼容、绝对位置视觉掩码、跨层缓存与全前缀重算/rollback/extension 一致性、分片协议混合拒绝，以及截止时区解析、更新边界保存、停止/完成状态区分。`git diff --check` 通过；没有本机 GPU lossless、吞吐或训练恢复结论。
 
 另用本机已有 Qwen3-VL-32B-Thinking 的 processor（只加载处理器，不加载模型）完成 CPU 小样本：4 个合成帧对应源时间 0/3/6/9 秒，实际输出时间标记 1.5/7.5 秒、grid `[2,4,4]`、8 个 visual token，符合 temporal patch 成对平均。它只验证真实时间接口，并非 8B 模型推理或真实长视频验收。
 
@@ -248,3 +250,167 @@ AR文本质量、EOS/截断、lossless、有效tokens/round、输入固定时的
 未完成的远端检查：真实 8B processor 的 64/128 token 数及时间标记、fp32 多卡 AR/SPEC 无损、GPU 峰值内存、跨层 xattn 的目标尺寸运行及实际收益、新旧归一化的新配对训练。既有 checkpoint 和旧结果不因 CPU 测试通过而重新标为已验证。
 
 边界：native rollout 靠近 `max_seq_len` 时还需要约一个 draft block 的空间；不能把 `prompt + max_new == max_seq_len` 当作能完整生成的保证。本方案 32768 上限预留了余量，实际输入仍须门禁测量，后续扩大长度需重新核验。
+
+## 8. 持续到用户设定截止时间的夜间执行协议与 prompt
+
+本节用于另一台有可用 GPU 的服务器。截止由用户任务设置中的“明早 08:00”决定，必须在启动记录中展开成**绝对日期＋时区**，不是从启动时刻计算固定 8 小时。比如，只有任务明确指定北京时间 2026-11-12 08:00 时，才能写成 `2026-11-12T08:00:00+08:00`，等价 UTC 为 `2026-11-12T00:00:00Z`；`2026-11-12T08:00:00Z` 则是另一个截止时间。示例不是默认时区，实际值以本次任务设置为准。
+
+### 夜间优先级与预算
+
+1. **先打通真实输入与无损门禁。** 沿用第 3 节的隔离 checkout、GPU UUID、挂载检查、历史视频排除和 80 train/40 dev。先做 CPU 测试、manifest/config preflight、4 条 GPU 无损门禁；再在预先固定的代表性 dev 子集上检查 64/128 输入、同输入 zero-visual、输出长度与可见证据。子集不按任何方法收益筛选。门禁不通过时优先修复和重验，不启动有疑问的训练。
+2. **先完成一个 seed 的通用目标配对。** 只训练现有结构：`e2e_tv_weight=0` 与 `10` 各连续 3 epoch、60 updates、4 QA/update，合计最多 120 updates。它们都保留原 Bernoulli/k3 OPD；λ 只控制现有 `top8_overlap_prefix_proxy`，不是“无 OPD 对 OPD”，也不是第二阶段的视觉 B/C。每个 seed 内共享完全相同的初始 head、pool、shuffle schedule、精度和 optimizer 配方，不能让 λ10 从 λ0 的训练结果初始化。
+3. **完成第一组配对和必要评测后，再考虑第二个 seed。** 第二组仍是 λ0/λ10 各 60 updates。必须用另一个 seed **重新生成 shuffle schedule**，组内继续共享；不能仅改 trainer 的 `--seed` 而复用原 schedule，就宣称获得独立随机重复。最多 2 个训练顺序 seed、4 个臂，**全部真实 optimizer updates 合计不超过 240**。预算是上限，不要求为了完成数字越过截止。
+4. **每 20 updates 保存，并优先保住公平配对。** 保留 step20/40/60 和停止时保存点。中途截止时，只比较两臂都拥有的共同更新数，如双方 step20；一臂 step60、另一臂 step20 不能当等预算对照。第二 seed 未配齐就报告未完成，不与第一 seed 凑平均。所有已发生的真实更新都计入上限，失败重启不会让用掉的预算归零；不要另做未计数的训练 smoke。
+5. **连续保留 Adam。** 每个臂由一次训练进程连续完成。当前入口仍不支持 training-state resume，`--init-from` 始终只读 head 权重并建立新 Adam；不能用三次 20 步 fresh init 伪称 60 步续训。被提前停止的臂保留结果并结束，不自动从它的 step checkpoint 再启动“续训”。
+6. **把剩余时间用于证据与分析。** 第一组配对优先于抢开第二组；配对评测和保存优先于新训练。训练上限达到后，可继续完整 dev 配对、输出前中后段接受率、视觉置零诊断、AR 事件审阅、耗时分解，以及 EvidenceReadout/时间组缓存/候选 oracle 的 CPU 原型与单元测试。原型必须标为尚未 GPU 验证，不能因此自动启动 B/C 联合训练。数据仍仅用本次既定 Video-MME-derived 子集，不临时扩大数据集或切换 32B。
+
+第一轮代表 dev 诊断用于确认任务和测量执行成本，不必先跑完三组各 40 条才允许启动已通过门禁的训练。正式比较应在同一套 dev 上补齐相同 checkpoint 更新数与相同评测协议；若时间不够，明确报告小样本和未完成项。仍没有独立最终测试结论。
+
+### 截止与安全保存的实际接口
+
+夜间运行前执行原六组加新增停止接口这一组 CPU 回归：
+
+```bash
+CUDA_VISIBLE_DEVICES='' "$VS_PY" -m pytest -q \
+  repro/tests/test_real_video_pilot.py \
+  repro/tests/test_pilot_schedule.py \
+  repro/tests/test_video_9k_protocol.py \
+  repro/tests/test_video_visual_probe.py \
+  repro/tests/test_video_eval_merge.py \
+  repro/tests/test_visual_context_cache.py \
+  repro/tests/test_video_training_stop.py
+```
+
+`train_video_9k.py` 支持 `--deadline-utc` 和 `--stop-file`。前者接受带 `Z` 或显式 UTC offset 的 ISO 时间并转为 UTC，拒绝没有时区的时间；后者文件存在时请求停止。检查发生在模型加载前及更新边界，不在一次 forward/backward 中间中断，因此**不是硬实时截止**。
+
+调度器应记录用户截止 `VS_DEADLINE`，并设置更早的训练停止阈值 `VS_TRAIN_STOP`。两者至少间隔保守估计的“一次最长 update＋一次 checkpoint 保存＋最终报告”所需时间；还须为计划中的配对评测留出时间。用已测 update/写盘时间更新余量，未有实测时采用保守预算，不以平均 update 时间保证最后一步能按时结束。临近截止不再启动大模型加载、新训练臂或预计无法完成的评测。
+
+更新边界触发停止后，trainer 保存最近完成的 step；若它恰好已被周期保存，不重复覆盖。`RUN_STATUS.json` 给出 `status=STOPPED/COMPLETED`、`stop_reason`、`completed_updates`、`planned_updates`、`last_checkpoint`、`finished_utc` 和 `resume_supported=false`。**STOPPED 也正常退出 0，调度器必须读取状态文件，不能仅凭退出码写“训练完成”。** 模型加载过程中到期可能得到 STOPPED、0 updates、无 checkpoint；强制杀进程则只能依赖此前完整 checkpoint。
+
+使用第 3 节已核实的路径变量，先明确两个时间值。下面的占位值必须替换成用户任务的实际绝对时间：
+
+```bash
+VS_DEADLINE='YYYY-MM-DDT08:00:00+HH:MM'
+VS_TRAIN_STOP='YYYY-MM-DDTHH:MM:SS+HH:MM'
+VS_STOPFILE="$VS_RUN/STOP_TRAINING"
+
+# Python 读取变量，校验两者都有时区且训练阈值早于用户截止。
+export VS_DEADLINE VS_TRAIN_STOP
+"$VS_PY" - <<'PY'
+import os
+from datetime import datetime, timezone
+values = {name: datetime.fromisoformat(os.environ[name].replace('Z', '+00:00'))
+          for name in ('VS_DEADLINE', 'VS_TRAIN_STOP')}
+assert all(value.tzinfo is not None for value in values.values()), 'explicit timezone required'
+assert datetime.now(timezone.utc) < values['VS_TRAIN_STOP'] < values['VS_DEADLINE']
+for name, value in values.items():
+    print(name, value.astimezone(timezone.utc).isoformat())
+PY
+```
+
+每个 seed 单独生成 schedule；不要每个 λ 重新生成不同顺序。以下 seed 是可记录的示例编号，与截止日期没有关系：
+
+```bash
+"$VS_PY" repro/video_caption/build_pilot_schedule.py \
+  --rows "$VS_RUN/data/train_128.jsonl" --epochs 3 --qa-per-update 4 \
+  --seed 20261111 --out "$VS_RUN/schedule_seed20261111.jsonl"
+
+"$VS_PY" repro/video_caption/build_pilot_schedule.py \
+  --rows "$VS_RUN/data/train_128.jsonl" --epochs 3 --qa-per-update 4 \
+  --seed 20261112 --out "$VS_RUN/schedule_seed20261112.jsonl"
+```
+
+启动每一臂前，调度器检查截止、已消费总更新预算、磁盘和 GPU，并明确该臂属于哪一个配对。不要把下面命令放进不检查状态的四臂循环。初始化目录始终是相同 `VS_HEAD`，输出目录每臂唯一且为空：
+
+```bash
+VS_SEED=20261111
+VS_WEIGHT=0
+VS_ARM="$VS_RUN/seed${VS_SEED}_lambda${VS_WEIGHT}"
+
+# 首次先附加 --dry-run 核验；正式运行时才去掉该参数。
+"$VS_PY" repro/video_caption/train_video_9k.py \
+  --pool "$VS_RUN/data/train_128.parquet" \
+  --schedule "$VS_RUN/schedule_seed${VS_SEED}.jsonl" \
+  --target "$VS_TARGET" --init-from "$VS_HEAD" --out "$VS_ARM" \
+  --updates 60 --qa-per-update 4 --seed "$VS_SEED" \
+  --time-mode real --loss-normalization global_pooled \
+  --device-map balanced --master-weights cpu \
+  --max-new-tokens 1024 --max-seq-len 32768 \
+  --e2e-tv-weight "$VS_WEIGHT" --lr 1e-5 --save-every 20 \
+  --deadline-utc "$VS_TRAIN_STOP" --stop-file "$VS_STOPFILE" --dry-run
+```
+
+同 seed 的 λ10 使用同一 schedule 和 `VS_HEAD`，只换 `VS_WEIGHT=10` 与独立输出路径。第二 seed 只在第一组已配齐、剩余时间足够时启动。若人工或监督脚本要求停止，可创建 `VS_STOPFILE`；它影响使用该文件的后续训练，不能为了继续跑而静默删除。所有长进程仍由 tmux 管理并记录 stdout/stderr、开始/结束时间、退出码和 trainer 状态。保存完整训练状态可能需要数百 GB，启动前核对空间并为一次原子 checkpoint 写入保留余量；不删除历史产物腾空间。
+
+### 可复制给目标服务器代理的夜间 prompt
+
+```text
+请在这台有可用GPU的服务器上推进VisionSpec真实视频长生成实验，持续工作到
+我在本次任务中设置的“明早08:00”截止。按任务设置记录绝对日期和时区，
+不要改成从现在起固定8小时，也不要把服务器本地时间擅自当作我的时区。
+开工先将实际截止转为带offset或Z的ISO时间，写入本run的协议与进度记录。
+
+仓库：https://github.com/mcy1123/VisionSpec
+分支：fix/visual-opd-long-video-protocol
+先读AGENTS.md和docs/reports/2026-11-11-real-video-opd-execution-plan.md。
+本次采用文档第8节夜间协议，其限定训练预算覆盖第6节的0更新预算和旧交接中
+没有剩余训练授权的状态。授权只用于本目标服务器、本次夜间任务；不是在之前
+那台GPU已满的开发机训练，也不是不设上限的持续训练。
+
+请自主执行已授权的路径定位、隔离worktree、代码检查和必要修复，普通实现选择
+无需反复确认。实际模型/输入身份不清或缺资源时先查现有目录并如实报告，不能
+静默换checkpoint、精度、模型规模或输入任务。不要终止其他人的进程。
+
+先完成第8节所列七组CPU测试（包含test_video_training_stop.py）与数据preflight，
+从已有Video-MME原视频构建80train/40dev，
+按源视频排除历史使用记录，真实64/128帧嵌套采样，保存原始时间与输入哈希。
+数据/权重/cache/checkpoint实际落在允许的/mnt/local、/mnt/local2或/mnt/local3；
+先realpath、df和GPU UUID检查。不要复制帧、用VFR近似时间冒充精确时间，或强制
+最少输出token。不要临时下载其他数据集或换32B。
+
+先4条GPU逐token无损门禁，再在预先固定、非按收益挑选的代表dev子集检查任务：
+真实64/128输入、同输入的zero-visual、输出长度/EOS/截断、AR文本是否需要多段
+视频证据。采用fp32 target、b63k8、max_new=1024、eos_stop=immediate、独立AR。
+任何失配先保存现场并修复，重跑必要门禁通过前不训练，不放宽零容差。
+GPU小门禁不包含optimizer update。预留时间补齐完整dev评测，不要让全面零更新
+评测耗尽全部夜间后才决定是否启动已经通过门禁的训练。
+
+门禁与任务检查通过后，优先执行一组现有结构的配对训练：同seed下λ0/λ10各
+连续3epoch、60updates、4QA/update。λ仅表示e2e_tv_weight的现有top8 overlap
+辅助项，两臂都保留原Bernoulli/k3 OPD。这是通用训练目标诊断，不能命名为
+新视觉结构B/C或“无OPD对OPD”。两臂从相同VS_HEAD权重独立fresh init，使用
+完全相同pool、schedule、精度、lr和optimizer配置；不从另一臂的结果初始化。
+
+先完成第一组公平配对及必要评测，时间充足才做第二个训练顺序seed。第二seed
+重新生成shuffle schedule，同seed内两臂共享；不能仅改--seed而不改训练顺序。
+最多2seed×2λ×60updates，总共最多240次真实optimizer更新，包含发生在失败
+或调试过程中的更新。不要另追加训练smoke，不因重启把已用预算清零。
+
+每20步保存step20/40/60；每臂一次连续进程保留Adam。当前入口不支持恢复训练
+状态，--init-from永远是weights-only fresh optimizer，禁止把三次20步fresh
+启动写成60步续训。若提前截止，只比较双方共同保存的同更新数checkpoint；
+不得拿60步对20步作等预算对照，未配齐的第二seed单列未完成。
+
+使用trainer的--deadline-utc和--stop-file。根据已测最长update、checkpoint
+写盘和最终报告时间，设置早于用户截止的训练停止阈值，并另留配对评测时间。
+它只在更新边界停止，不是硬实时；临近截止不启动预计无法完成的新臂或大评测。
+到点保存最近已完成step并读RUN_STATUS.json：STOPPED退出码也可以是0，不能
+据exit0宣称COMPLETED。模型加载时到点可能0步无checkpoint。不要从STOPPED
+checkpoint悄悄fresh重训当作resume，也不要删除stop-file擅自延长预算。
+
+长进程用tmux和独立脚本运行，后台不依赖聊天在线。写日志、进度、已消耗更新数、
+预计剩余时间、退出码、RUN_STATUS及DONE/STOPPED/FAILED；每次启动前核对时间、
+空闲GPU和磁盘。失败先诊断，不在原输出目录覆盖或盲目重复消耗预算。
+
+若训练上限已经完成但尚未到截止，继续做同协议配对评测、前中后段接受情况、
+AR事件审阅、固定输入的zero-visual和运行成本分析；也可实现EvidenceReadout、
+时间组memory、候选oracle的CPU原型与测试，独立记录其尚未GPU验证的状态。
+不要为了占满时间自动追加训练、扩大数据或启动尚未实现/验证的B/C联合训练。
+若时间不足第二seed，优先补第一组证据和保存报告，不抢开一个无法公平比较的臂。
+
+截止前写新报告并登记docs/reports/README.md，报告实际完成/停止/失败的每个臂、
+同更新预算配对、真实帧/token/输出长度、lossless、有效tokens/round、墙钟边界、
+视觉置零配对差与bootstrap按视频统计。明确区分开发集观察和独立最终结论，
+64/128改变target的差不是selector因果证据，不能重用“76%视觉信息”解释。
+最后给出是否值得进入视觉读出与接受收益监督阶段的判断，以及具体证据缺口。
+```
