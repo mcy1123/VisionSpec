@@ -2,15 +2,26 @@
 """Single-process 9k-target video OPD/E2E-TV trainer.
 
 Target is fp32, sharded with accelerate ``device_map='balanced'`` across the
-visible GPUs. The draft head, master weights and all trace tensors live on
-cuda:0. This is the high-token diagnostic path, not the default three-rank
+visible GPUs. The draft head and active trace live on cuda:0; global mode
+stages the remaining traces on CPU, and master weights default to CPU.
+This is the high-token diagnostic path, not the default three-rank
 video launcher; it is intentionally explicit and refuses to run without
-``--device-map``.
+``--device-map``. Initialization always loads head weights only and creates a
+fresh optimizer; this entry does not resume training state. Historical
+``legacy_per_qa`` normalization and cache-relative time remain explicit defaults.
+Use ``--loss-normalization global_pooled --time-mode real`` for the new protocol.
 """
 from __future__ import annotations
-import argparse, json, math, sys, time
+import argparse
+import hashlib
+import json
+import math
+import random
+import sys
+import time
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -19,7 +30,186 @@ REPRO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPRO))
 from shared import common, training_resume
 from shared.master_optim import MasterWeightAdamW
+from shared.model_contract import validate_model_contract
 from opd_official_kl import adapters, runtime
+from opd_official_kl.trainer import move_trace
+
+
+LOSS_NORMALIZATIONS = ("legacy_per_qa", "global_pooled")
+
+
+def load_schedule(path, rows, updates, qa_per_update):
+    """Validate the entire finite schedule before loading any model."""
+    if updates < 1 or qa_per_update < 1:
+        raise ValueError("updates and qa-per-update must be positive")
+    schedule = {}
+    for number, line in enumerate(Path(path).read_text().splitlines(), 1):
+        if not line.strip():
+            continue
+        item = json.loads(line)
+        for field in ("update", "slot"):
+            if not isinstance(item.get(field), int) or isinstance(item[field], bool):
+                raise ValueError(f"schedule line {number}: {field} must be an integer")
+        task = item.get("task")
+        if task not in rows.index:
+            raise ValueError(f"schedule line {number}: unknown task {task!r}")
+        prompt_sha = hashlib.sha256(rows.loc[task, "prompt"].encode()).hexdigest()
+        if item.get("prompt_sha256", prompt_sha) != prompt_sha:
+            raise ValueError(f"schedule line {number}: prompt hash mismatch for {task}")
+        schedule.setdefault(item["update"], []).append(item)
+    if sorted(schedule) != list(range(updates)):
+        raise ValueError("schedule must cover exactly all updates, numbered from zero")
+    for update, items in schedule.items():
+        items.sort(key=lambda item: item["slot"])
+        if [item["slot"] for item in items] != list(range(qa_per_update)):
+            raise ValueError(f"update {update} must contain slots 0..{qa_per_update - 1} exactly once")
+    return schedule
+
+
+def validate_rows(rows, schedule, time_mode):
+    """Validate inputs without decoding frames or touching CUDA."""
+    from qa_opd_fair.videoencode import validate_real_metadata
+
+    diagnostics = []
+    cache_hashes = {}
+    tasks = list(dict.fromkeys(item["task"] for items in schedule.values() for item in items))
+    for task in tasks:
+        row = rows.loc[task].to_dict()
+        if row.get("modality", "video") != "video":
+            raise ValueError(f"{task}: this entry accepts video rows only")
+        if not isinstance(row.get("prompt"), str) or not row["prompt"].strip():
+            raise ValueError(f"{task}: nonempty prompt required")
+        if time_mode == "real":
+            diagnostics.append(dict(task=task, **validate_real_metadata(row, require_exact=True)))
+        else:
+            if not isinstance(row.get("cache_path"), str) or not Path(row["cache_path"]).is_file():
+                raise ValueError(f"{task}: cache_path must identify an existing file")
+            if Path(row["cache_path"]).suffix.lower() == ".npz":
+                raise ValueError(f"{task}: NPZ frame caches require --time-mode real")
+            fps = float(row.get("fps", 0))
+            if not math.isfinite(fps) or fps <= 0:
+                raise ValueError(f"{task}: positive cache fps required")
+        cache_path = str(Path(row["cache_path"]).resolve())
+        if cache_path not in cache_hashes:
+            cache_hashes[cache_path] = training_resume.file_hash(cache_path)
+        expected_hash = row.get("cache_hash")
+        if isinstance(expected_hash, str) and expected_hash:
+            if expected_hash != cache_hashes[cache_path]:
+                raise ValueError(f"{task}: cache_hash mismatch for {cache_path}")
+    return dict(scheduled_unique_tasks=len(tasks), time_mode=time_mode,
+                real_timeline_diagnostics=diagnostics, cache_sha256=cache_hashes)
+
+
+def validate_training_head(head_path):
+    """This diagnostic has no per-video external evidence-memory interface."""
+    config = json.loads((Path(head_path) / "config.json").read_text())
+    draft = config.get("dflash_config", {})
+    unsupported = [name for name in ("use_visual_fovea", "use_visual_film",
+                                      "use_visual_xattn", "use_visual_perceiver")
+                   if draft.get(name, config.get(name, False))]
+    if unsupported:
+        raise ValueError("9k trainer has no external visual-memory input; refusing to silently disable "
+                         + ", ".join(unsupported)
+                         + ". A shared real-video memory interface is required before these arms can train.")
+
+
+def backward_update(traces, score_fn, normalization, *, denominator_fn=runtime.denominator,
+                    stage_trace=lambda trace: trace, restore_trace=lambda trace: trace):
+    """Accumulate the requested objective, with one rollout per QA.
+
+    The base response/rejected denominator is intentional: the auxiliary loss
+    in runtime.score is additive, as in the existing three-card trainer. Its
+    augmented Pool.denominator is NOT the normalization used by this protocol.
+    Global mode stages detached traces on CPU before scoring, keeping only one
+    restored trace on the GPU. Legacy mode preserves collect/score interleaving.
+    """
+    if normalization not in LOSS_NORMALIZATIONS:
+        raise ValueError(f"unknown loss normalization {normalization!r}")
+    staged = None
+    if normalization == "global_pooled":
+        staged = []
+        for trace in traces:
+            denom = float(denominator_fn(trace))
+            if not math.isfinite(denom) or denom <= 0:
+                raise ValueError("each trace must have a positive finite base denominator")
+            staged.append((stage_trace(trace), denom))
+            del trace
+        total_denom = sum(denom for _, denom in staged)
+        if not staged:
+            raise ValueError("an update must contain at least one QA")
+        work = staged
+    else:
+        total_denom = None
+        work = traces
+    numerator = optimized_loss = 0.0
+    denominators, qa_losses = [], []
+    for item in work:
+        if staged is not None:
+            stored_trace, denom = item
+            trace = restore_trace(stored_trace)
+        else:
+            trace = item
+            denom = float(denominator_fn(trace))
+        if not math.isfinite(denom) or denom <= 0:
+            raise ValueError("each trace must have a positive finite base denominator")
+        divisor = total_denom if total_denom is not None else denom
+        qa_numerator = 0.0
+        for stat in score_fn(trace):
+            if not stat.numerator.requires_grad or stat.numerator.grad_fn is None:
+                raise RuntimeError("missing student graph")
+            value = float(stat.numerator.detach())
+            if not math.isfinite(value):
+                raise RuntimeError("non-finite objective numerator")
+            (stat.numerator / divisor).backward()
+            qa_numerator += value
+        numerator += qa_numerator
+        optimized_loss += qa_numerator / divisor
+        denominators.append(denom)
+        qa_losses.append(qa_numerator / denom)
+        del trace, item
+    if not denominators:
+        raise ValueError("an update must contain at least one QA")
+    denominator = sum(denominators)
+    return dict(loss=optimized_loss, optimized_loss=optimized_loss,
+                pooled_loss=numerator / denominator, numerator=numerator,
+                denominator=denominator, qa_denominators=denominators,
+                qa_normalized_losses=qa_losses, loss_normalization=normalization)
+
+
+def make_protocol(args, input_diagnostics, model_dimensions):
+    init = Path(args.init_from)
+    weights = sorted(init.glob("*.safetensors")) + sorted(init.glob("pytorch_model*.bin"))
+    if not weights:
+        raise ValueError("init-from must contain head weight files; no training-state resume is supported")
+    config = {key: value for key, value in vars(args).items() if key not in ("out", "dry_run")}
+    protocol = dict(
+        schema=2, entry="video_caption_9k_diagnostic", diagnostic_only=True,
+        opd_mode="pure_block", teacher_verify_impl="pure_block_native",
+        initialization="weights_only_fresh_optimizer", resume_supported=False,
+        optimizer_step_start=0, world_size=1,
+        slot_map={"0": list(range(args.qa_per_update))},
+        target_dtype="float32", head_dtype="bfloat16", master_dtype="float32",
+        optimizer=dict(name="AdamW", betas=list(common.BETAS), weight_decay=common.WEIGHT_DECAY),
+        loss_contract=dict(
+            normalization=args.loss_normalization,
+            formula=("sum_i N_i / sum_i D_i" if args.loss_normalization == "global_pooled"
+                     else "sum_i (N_i / D_i); no division by QA count"),
+            denominator="runtime.denominator: response count + 2 * rejected offset decay",
+            auxiliary="additive top8-overlap prefix-product proxy; not full-vocabulary TV",
+            score_pool_denominator_used=False),
+        config=config, model_dimensions=model_dimensions,
+        inputs=input_diagnostics,
+        hashes=dict(pool=training_resume.file_hash(args.pool),
+                    schedule=training_resume.file_hash(args.schedule),
+                    target_config=training_resume.file_hash(Path(args.target) / "config.json"),
+                    head_config=training_resume.file_hash(init / "config.json"),
+                    initial_head_weights={p.name: training_resume.file_hash(p) for p in weights},
+                    trainer=training_resume.file_hash(__file__),
+                    runtime=training_resume.file_hash(runtime.__file__)),
+    )
+    protocol["protocol_sha256"] = hashlib.sha256(
+        json.dumps(protocol, sort_keys=True).encode()).hexdigest()
+    return protocol
 
 
 class _MoveOut(nn.Module):
@@ -62,36 +252,79 @@ def wrap_target(target, dev):
     target.forward = _MoveOut(target.forward, dev)
 
 
-def main():
+def parser():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pool", required=True)
     ap.add_argument("--schedule", required=True)
-    ap.add_argument("--init-from", required=True)
+    ap.add_argument("--target", default=common.TARGET_PATH,
+                    help="local target model directory; its config must match the head")
+    ap.add_argument("--init-from", required=True,
+                    help="head weights only; starts optimizer/cursor afresh, never resumes training_state.pt")
     ap.add_argument("--out", required=True)
     ap.add_argument("--updates", type=int, default=30)
     ap.add_argument("--qa-per-update", type=int, default=4)
     ap.add_argument("--seed", type=int, default=20261113)
     ap.add_argument("--lr", type=float, default=1e-5)
     ap.add_argument("--clip", type=float, default=1.0)
-    ap.add_argument("--max-pixels", type=int, default=768)
+    ap.add_argument("--max-pixels", type=int, default=768,
+                    help="legacy compatibility argument; video encoding uses the cached frame geometry")
     ap.add_argument("--max-new-tokens", type=int, default=512)
     ap.add_argument("--max-seq-len", type=int, default=16384)
     ap.add_argument("--e2e-tv-weight", type=float, default=10.0)
     ap.add_argument("--device-map", default="balanced")
-    ap.add_argument("--master-weights", default="cpu")
+    ap.add_argument("--master-weights", choices=["cpu", "gpu"], default="cpu")
     ap.add_argument("--save-every", type=int, default=30)
-    a = ap.parse_args()
+    ap.add_argument("--time-mode", choices=["legacy", "real"], default="legacy",
+                    help="real requires unique frame indices and original source timeline metadata")
+    ap.add_argument("--loss-normalization", choices=LOSS_NORMALIZATIONS,
+                    default="legacy_per_qa",
+                    help="legacy sums per-QA losses; global pools all QAs with one base denominator")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="validate inputs/configs and print protocol on CPU; no model loads or output writes")
+    return ap
+
+
+def main(argv=None):
+    ap = parser()
+    a = ap.parse_args(argv)
     if not a.device_map:
-        raise SystemExit("9k trainer requires --device-map")
+        ap.error("9k trainer requires --device-map")
+    for name in ("updates", "qa_per_update", "save_every", "max_new_tokens", "max_seq_len"):
+        if getattr(a, name) < 1:
+            ap.error(f"--{name.replace('_', '-')} must be positive")
+    if a.max_seq_len <= a.max_new_tokens:
+        ap.error("max-seq-len must leave room for prompt and max-new-tokens")
+    for name in ("lr", "clip", "e2e_tv_weight"):
+        value = getattr(a, name)
+        if not math.isfinite(value) or value < 0 or (name in ("lr", "clip") and value == 0):
+            ap.error(f"invalid --{name.replace('_', '-')}")
+
+    out = Path(a.out)
+    if out.exists() and (not out.is_dir() or any(out.iterdir())):
+        raise SystemExit("new output must be empty")
+    # This is the same storage contract enforced by save_atomic_checkpoint;
+    # reject bad destinations before training rather than at the first save.
+    training_resume.validate_output(out)
+    rows = pd.read_parquet(a.pool).set_index("task", verify_integrity=True)
+    if "prompt" not in rows or not rows["prompt"].map(lambda p: isinstance(p, str) and bool(p.strip())).all():
+        raise ValueError("pool must contain nonempty string prompts")
+    schedule = load_schedule(a.schedule, rows, a.updates, a.qa_per_update)
+    inputs_summary = validate_rows(rows, schedule, a.time_mode)
+    model_dimensions = validate_model_contract(a.target, a.init_from)
+    validate_training_head(a.init_from)
+    protocol = make_protocol(a, inputs_summary, model_dimensions)
+    if a.dry_run:
+        print(json.dumps(protocol, indent=2))
+        return protocol
 
     dev = "cuda:0"
+    random.seed(a.seed)
+    np.random.seed(a.seed)
     torch.manual_seed(a.seed)
-    out = Path(a.out)
-    if out.exists() and any(out.iterdir()):
-        raise SystemExit("new output must be empty")
     out.mkdir(parents=True, exist_ok=True)
-
-    target, processor = common.load_target(device=dev, dtype=torch.float32,
+    (out / "PROTOCOL.json").write_text(json.dumps(protocol, indent=2) + "\n")
+    print(f"[9k] weights-only fresh initialization; {a.time_mode=}, {a.loss_normalization=}", flush=True)
+    target, processor = common.load_target(path=a.target, device=dev, dtype=torch.float32,
                                            device_map=a.device_map)
     wrap_target(target, dev)
     target.eval().requires_grad_(False)
@@ -103,56 +336,53 @@ def main():
                                   weight_decay=common.WEIGHT_DECAY,
                                   where=a.master_weights, clip=a.clip)
 
-    rows = pd.read_parquet(a.pool).set_index("task", verify_integrity=True)
-    schedule = {}
-    for line in Path(a.schedule).read_text().splitlines():
-        if line.strip():
-            item = json.loads(line)
-            schedule.setdefault(int(item["update"]), []).append(item)
-    if sorted(schedule) != list(range(a.updates)):
-        raise SystemExit("schedule must cover exactly all updates")
-
     for cursor in range(a.updates):
         started = time.perf_counter()
         head.zero_grad(set_to_none=True)
         optimizer.zero_grad(set_to_none=True)
-        numerator = 0.0
-        denominator = 0.0
         tasks = []
         input_token_counts = []
-        for item in sorted(schedule[cursor], key=lambda x: x["slot"]):
-            task = item["task"]
-            tasks.append(task)
-            row = rows.loc[task].to_dict()
-            head.visual_memory = None
-            inputs = adapters.encode(processor, row, "video", max_pixels=a.max_pixels,
-                                     time_mode="legacy")
-            input_token_counts.append(int(inputs["input_ids"].numel()))
-            head.eval()
-            trace = adapters.collect(target, head, inputs,
-                                     max_new_tokens=a.max_new_tokens,
-                                     max_seq_len=a.max_seq_len,
-                                     teacher_verify_impl="pure_block_native")
-            denom = runtime.denominator(trace)
-            denominator += denom
-            for stat in runtime.score(target, head, trace,
-                                     draft_fn=adapters.draft,
-                                     e2e_tv_weight=a.e2e_tv_weight):
-                if not stat.numerator.requires_grad or stat.numerator.grad_fn is None:
-                    raise RuntimeError("missing student graph")
-                (stat.numerator / denom).backward()
-                numerator += float(stat.numerator.detach())
-            del trace
+        visual_token_counts = []
+        video_id = processor.tokenizer.convert_tokens_to_ids("<|video_pad|>")
+
+        def collect_traces():
+            for item in schedule[cursor]:
+                task = item["task"]
+                tasks.append(task)
+                row = rows.loc[task].to_dict()
+                head.visual_memory = None
+                inputs = adapters.encode(processor, row, "video", max_pixels=a.max_pixels,
+                                         time_mode=a.time_mode)
+                n_input = int(inputs["input_ids"].numel())
+                if n_input + a.max_new_tokens > a.max_seq_len:
+                    raise ValueError(f"{task}: prompt {n_input} + output budget {a.max_new_tokens} exceeds max-seq-len")
+                input_token_counts.append(n_input)
+                visual_token_counts.append(int((inputs["input_ids"] == video_id).sum()))
+                head.eval()
+                yield adapters.collect(target, head, inputs,
+                                       max_new_tokens=a.max_new_tokens,
+                                       max_seq_len=a.max_seq_len,
+                                       teacher_verify_impl="pure_block_native")
+
+        stats = backward_update(
+            collect_traces(),
+            lambda trace: runtime.score(target, head, trace, draft_fn=adapters.draft,
+                                        e2e_tv_weight=a.e2e_tv_weight),
+            a.loss_normalization,
+            stage_trace=lambda trace: move_trace(trace, "cpu"),
+            restore_trace=lambda trace: move_trace(trace, dev))
         optimizer.sync_grads()
         norm = optimizer.grad_norm()
         if not math.isfinite(norm):
             raise RuntimeError("non-finite gradient")
         optimizer.step()
         record = dict(update=cursor + 1, optimizer_step=cursor + 1,
-                      tasks=tasks, loss=numerator / denominator,
-                      denominator=denominator, gradient_norm=norm,
+                      tasks=tasks, **stats, gradient_norm=norm,
+                      protocol_sha256=protocol["protocol_sha256"],
                       elapsed_seconds=time.perf_counter() - started,
-                      target_input_tokens=sum(input_token_counts))
+                      target_input_tokens=sum(input_token_counts),
+                      input_tokens_per_qa=input_token_counts,
+                      visual_tokens_per_qa=visual_token_counts)
         with (out / "log.jsonl").open("a") as stream:
             stream.write(json.dumps(record) + "\n")
         print(json.dumps(record), flush=True)
@@ -161,6 +391,12 @@ def main():
                 out / f"step{cursor+1}", head,
                 dict(head=head.state_dict(), master_optimizer=optimizer.state_dict(),
                      update=cursor + 1, data_cursor=cursor + 1,
+                     training_protocol=protocol, protocol_sha256=protocol["protocol_sha256"],
+                     world_size=1, slot_map=protocol["slot_map"],
+                     head_version=dict(optimizer_step=cursor + 1, schedule_cursor=cursor + 1,
+                                       protocol_sha256=protocol["protocol_sha256"]),
+                     initialization="weights_only_fresh_optimizer", resume_supported=False,
+                     loss_normalization=a.loss_normalization, time_mode=a.time_mode,
                      diagnostic_only=True, smoke=False, opd_mode="pure_block",
                      block_native=True, teacher_verify_impl="pure_block_native"))
 

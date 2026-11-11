@@ -671,13 +671,8 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
             target_hidden = (layers * gates.unsqueeze(-1)).reshape(
                 bsz, ctx_len, hidden)
         if self.use_xattn:
-            bsz, ctx_len, hidden = target_hidden.shape
-            layer_dim = hidden // self.num_target_layers
-            layers = self.xattn_norm(target_hidden.float().view(
-                bsz, ctx_len, self.num_target_layers, layer_dim))
-            kv = (layers + self.xattn_layer_emb.view(
-                1, 1, self.num_target_layers, layer_dim)).reshape(
-                    bsz, ctx_len * self.num_target_layers, layer_dim)
+            kv = self._xattn_context(target_hidden, position_ids,
+                                     past_key_values, use_cache)
             x, _ = self.xattn(self.xattn_q_norm(hidden_states.float()), kv, kv,
                               need_weights=False)
             hidden_states = hidden_states + self.xattn_scale * self.xattn_out(
@@ -699,6 +694,44 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         hidden_states = self._visual_film(hidden_states)
         hidden_states = self._visual_fovea(hidden_states)
         return hidden_states
+
+    def _xattn_context(self, target_hidden, position_ids, cache, use_cache):
+        """Keep cross-layer context aligned with the draft's committed KV.
+
+        Training scores a full prefix with a fresh cache, whereas deployment
+        passes only newly accepted target hidden rows. Store normalized rows
+        on that *request's cache*, never on the model. Speculative noise rows
+        are not stored; a crop/rollback is honored at the next call. This
+        changes the old experimental use_xattn path, not the default head.
+        """
+        bsz, ctx_len, hidden = target_hidden.shape
+        layer_dim = hidden // self.num_target_layers
+        layers = self.xattn_norm(target_hidden.float().reshape(
+            bsz, ctx_len, self.num_target_layers, layer_dim))
+        new = layers + self.xattn_layer_emb.reshape(
+            1, 1, self.num_target_layers, layer_dim)
+        prefix_len = int(cache.get_seq_length()) if cache is not None else 0
+        if position_ids.ndim != 2 or position_ids.shape[0] not in (1, bsz):
+            raise ValueError("cross-layer xattn requires 2-D absolute stream positions")
+        if position_ids.shape[1] < ctx_len:
+            raise ValueError("cross-layer xattn context positions are missing")
+        expected = torch.arange(prefix_len, prefix_len + position_ids.shape[1],
+                                device=position_ids.device)
+        if not torch.equal(position_ids, expected[None].expand_as(position_ids)):
+            raise ValueError("cross-layer xattn positions disagree with draft cache")
+        if prefix_len:
+            state = getattr(cache, "_glance_xattn_context", None)
+            if state is None or state[0] != id(self):
+                raise ValueError("cross-layer xattn requires its own populated context cache")
+            previous = state[1]
+            if previous.shape[0] != bsz or previous.shape[1] < prefix_len:
+                raise ValueError("cross-layer xattn context cache is shorter than committed KV")
+            new = torch.cat((previous[:, :prefix_len], new), dim=1)
+        if new.shape[1] == 0:
+            raise ValueError("cross-layer xattn needs a nonempty target context")
+        if use_cache and cache is not None:
+            cache._glance_xattn_context = (id(self), new)
+        return new.reshape(bsz, new.shape[1] * self.num_target_layers, layer_dim)
 
     def _visual_memory_compressed(self, memory):
         if not self.use_visual_perceiver:

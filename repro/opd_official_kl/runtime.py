@@ -249,8 +249,11 @@ def score(target, head, trace, *, draft_fn, deferred_checks=False, visual_weight
                 )
             tv_loss = None
             if e2e_tv_weight and count:
-                # E2E-TV (Bebop/SpecOPD): alpha = sum_v min(q(v), p(v)) over the
-                # draft's top-k support; loss = 1 - mean_j prod_{i<=j} alpha_i.
+                # Historical top-8 overlap-prefix proxy (CLI name e2e_tv).
+                # q is normalized over the FULL vocabulary, then truncated:
+                # this is neither full-vocab TV nor exact greedy-tree expected
+                # acceptance. Keep the formula unchanged for old checkpoints.
+                # New protocols must name it top8_overlap_prefix_proxy.
                 k = min(8, student_logp.shape[-1])
                 q_top = student_logp[:count].topk(k, dim=-1)
                 q_prob = q_top.values.exp()

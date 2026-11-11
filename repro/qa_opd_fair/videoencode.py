@@ -28,7 +28,9 @@ one marker per frame.
 VFR caveat: for a variable-frame-rate source, `frame_index / source_fps` is not
 the true PTS. The per-frame PyAV PTS is available in the manifest, so the gate
 reports the deviation instead of hiding it, and any sample whose real timeline
-cannot be represented this way is flagged `real_time_exact: false`.
+cannot be represented this way is flagged `real_time_exact: false`. Strict
+`encode_inputs(..., 'real')` now rejects those samples. New real-frame pilots
+may use lossless NPZ caches, which are only supported by this strict real mode.
 """
 from __future__ import annotations
 
@@ -44,7 +46,62 @@ for _p in (REPRO, os.path.join(ROOT, "GLANCE_repo")):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-__all__ = ["build_video_text", "encode_inputs", "input_key", "encode_signature"]
+__all__ = ["build_video_text", "encode_inputs", "input_key", "encode_signature",
+           "validate_real_metadata"]
+
+
+def validate_real_metadata(row, *, require_cache=True, require_exact=False,
+                           tolerance_s=1e-3):
+    """Validate a real-frame manifest without loading a model or importing torch.
+
+    Frame ids refer to the source decode order, timestamps to source PTS relative
+    to its first decoded frame. Qwen's current metadata interface represents time
+    as ``frame_id / source_fps``. An irregular source may have valid PTS yet fail
+    this representation; ``require_exact`` rejects that case explicitly.
+    """
+    import math
+    from pathlib import Path
+
+    required = ("n_frames", "source_fps", "video_duration", "sample_frame_ids",
+                "sample_timestamps", "height", "width")
+    missing = [key for key in required if key not in row or row[key] is None]
+    if missing:
+        raise ValueError(f"missing real video metadata: {missing}")
+    n = int(row["n_frames"])
+    if n < 1 or n != row["n_frames"]:
+        raise ValueError("n_frames must be a positive integer")
+    fps, duration = float(row["source_fps"]), float(row["video_duration"])
+    if not all(math.isfinite(x) and x > 0 for x in (fps, duration)):
+        raise ValueError("source_fps and video_duration must be finite and positive")
+    if any(int(row[key]) <= 0 for key in ("height", "width")):
+        raise ValueError("video dimensions must be positive")
+    raw_ids = list(row["sample_frame_ids"])
+    ids = [int(x) for x in raw_ids]
+    ts = [float(x) for x in row["sample_timestamps"]]
+    if len(ids) != n or len(ts) != n:
+        raise ValueError("frame ids and timestamps must both have n_frames entries")
+    if any(i != raw or i < 0 for i, raw in zip(ids, raw_ids)):
+        raise ValueError("source frame ids must be non-negative integers")
+    if any(a >= b for a, b in zip(ids, ids[1:])):
+        raise ValueError("source frame ids must be unique and strictly increasing")
+    if any(not math.isfinite(t) or t < 0 or t > duration + tolerance_s for t in ts):
+        raise ValueError("source timestamps must be finite and within video duration")
+    if any(a >= b for a, b in zip(ts, ts[1:])):
+        raise ValueError("source timestamps must be strictly increasing")
+    source_count = row.get("source_frame_count")
+    if source_count is not None and (int(source_count) <= ids[-1]):
+        raise ValueError("sampled frame id exceeds source_frame_count")
+    exact, error = real_time_exact(row, tol=tolerance_s)
+    if require_exact and not exact:
+        raise ValueError(f"source PTS cannot be represented exactly by frame_id/fps "
+                         f"(max error {error:.6f}s); strict real mode refuses this input")
+    if require_cache:
+        path = row.get("cache_path")
+        if not path or not Path(str(path)).is_file():
+            raise ValueError("real input needs an existing cache_path; metadata-only "
+                             "manifests must first be materialized with --cache-root")
+    return {"real_time_exact": exact, "max_timestamp_error_s": error,
+            "n_unique_frames": n, "time_origin": row.get("time_origin", "unspecified")}
 
 
 def build_video_text(proc, question_prompt):
@@ -69,7 +126,7 @@ def _video_metadata(row):
 
 
 def _cache_frames(row):
-    """The cache clip's 16 frames as a (16, C, H, W) uint8 tensor.
+    """All preselected cache frames as an (N, C, H, W) uint8 tensor.
 
     MEASURED, and the reason this function exists: passing the cache PATH plus
     `video_metadata` does NOT work with transformers 4.57.3. The processor
@@ -84,16 +141,26 @@ def _cache_frames(row):
     adapter needs: same frames, corrected timeline.
     """
     import numpy as np
-    from torchvision.io import read_video
+    from pathlib import Path
+    import torch
 
-    frames, _, _ = read_video(str(row["cache_path"]), pts_unit="sec",
-                              output_format="TCHW")
+    if Path(str(row["cache_path"])).suffix == ".npz":
+        with np.load(str(row["cache_path"]), allow_pickle=False) as data:
+            pixels = data["frames"]
+            if pixels.dtype != np.uint8 or pixels.ndim != 4 or pixels.shape[1] != 3:
+                raise ValueError("frame cache must contain uint8 frames shaped (N,3,H,W)")
+            frames = torch.from_numpy(pixels.copy())
+    else:
+        from torchvision.io import read_video
+        frames, _, _ = read_video(str(row["cache_path"]), pts_unit="sec",
+                                  output_format="TCHW")
     n = int(frames.shape[0])
     if n != int(row["n_frames"]):
-        raise RuntimeError(f"{row['video_id']}: cache decodes to {n} frames but "
+        raise RuntimeError(f"{row.get('video_id', 'video')}: cache decodes to {n} frames but "
                            f"the manifest says {row['n_frames']}")
-    idx = np.linspace(0, n - 1, int(row["n_frames"])).round().astype(int).tolist()
-    return frames[idx]
+    if tuple(frames.shape[-2:]) != (int(row["height"]), int(row["width"])):
+        raise ValueError("decoded frame dimensions differ from the manifest")
+    return frames
 
 
 def encode_inputs(proc, row, time_mode, *, text=None):
@@ -108,8 +175,11 @@ def encode_inputs(proc, row, time_mode, *, text=None):
         raise ValueError(f"time_mode must be 'legacy' or 'real', got {time_mode!r}")
     text = text or build_video_text(proc, row["prompt"])
     if time_mode == "legacy":
+        if str(row["cache_path"]).endswith(".npz"):
+            raise ValueError("NPZ real-frame caches require --time-mode real")
         return proc(text=[text], videos=[row["cache_path"]], return_tensors="pt",
                     fps=float(row["fps"]))
+    validate_real_metadata(row, require_exact=True)
     return proc(text=[text], videos=[_cache_frames(row)],
                 video_metadata=[_video_metadata(row)],
                 do_sample_frames=False, return_tensors="pt")

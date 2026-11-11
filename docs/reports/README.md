@@ -54,6 +54,7 @@
 | 2026-11-05 | [多模态特征/OPD 训练优化夜跑](2026-11-05-multimodal-architecture.md) | 架构与 cross-modal 阴性，无 visual-specific 优化 |
 | 2026-11-09 | [视频 target 输入 5–10k 视觉 token](2026-11-09-video-target-9k-tokens.md) | 9k fp32 3 卡 30/30 无损；τ **3.4098** vs 1k 3.7841；token 数本身不是收益 |
 | 2026-11-11 | **[视频高视觉 token 多模态完整整理](2026-11-11-consolidated-video-token-multimodal.md)** | 汇总 image E2E120 正结果、1k/3k/9k32f2x、128f1x 两 seed、TV20、token 减半、layer gate/xattn/zero-visual 与存储清理 |
+| 2026-11-11 | [真实视频长生成：诊断修复与跨服务器执行方案](2026-11-11-real-video-opd-execution-plan.md) | CPU 修复与回归；真实帧/时间、归一化、视觉掩码、xattn 缓存；含零更新远端执行 prompt，联合选择器训练尚待实现 |
 | 2026-11-11 | [多模态融合与视觉 token 选择](2026-11-11-multimodal-fusion-token-selection.md) | 128f1x 9k **3.8796**；32/64f1x 3.75/3.68；9k head 减半 3.70；layer gate/xattn 中性；zero-visual 掉 0.248（blank 1.04）；**TV20 3.9046（+0.025，CI 刚跨零）** |
 | 2026-11-10 | [视频 5–10k 视觉 token 的多模态特性](2026-11-10-high-token-video-multimodal.md) | 128f1x 9k **3.8796**（blank 2.8428，reliance 1.04）；32f2x 9k 仅 3.533，上采样稀释 |
 | 2026-11-06 | [长训练 / 多数据 / 高视觉 token：E2E-TV 120 vs base120](2026-11-06-long-horizon-token-scaling.md) | image E2E-TV high-g **+0.0768 [+0.0102,+0.1463]**、top +0.0849；video 3456 token FOVEA 无增益 |
