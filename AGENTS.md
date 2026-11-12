@@ -1,5 +1,13 @@
 # GLANCE 当前交接
 
+## 2026-11-12 用户授权清理 checkpoint 与稀疏保存
+
+用户明确要求“保存的太多了，清理一些，以及不要这么频繁地保存”。本条覆盖下文禁止删除历史 checkpoint 的规则，但仅限本次 run 经依赖检查确认可退休的中间/诊断二进制；不得删除日志、评测 JSON、曲线或协议。未来训练默认只保存最终/分段终点（显式 `--save-every` 取该任务完整更新预算），只有实际中间评测或恢复需要才额外保存。不得沿用本轮每20步保存为未来默认。
+
+当前六臂 λ10 的 CLI 已冻结，不能动态修改间隔或为了省空间重启训练。通过 `repro/local_h100/checkpoint_retention.py` 自动退休无后续引用的旧点：保留全部正式 step80、待运行/运行中队列引用、初始化、每臂最新发布点以及两份指定恢复诊断 step1。清理仅移除 `model.safetensors`/`training_state.pt`，原元数据原位保留并另存，`RETIRED.json` 标明其已不可加载，历史 SHA 不代表二进制仍存在。审计位于 run 的 `analysis/checkpoint_cleanup_20261112/`，策略位于 `control/CHECKPOINT_POLICY.json`。
+
+首轮退休75个 checkpoint、释放695.31 GiB。有限 tmux `visionspec-checkpoint-retention` 只做文件依赖与回收，等六臂训练及原中间点评测结束后退出，最长12小时；不操作 GPU、不恢复已解除的遥测监控、不启动训练/重试/追加预算。
+
 ## 2026-11-12 13:05 UTC 用户授权补齐 λ10
 
 用户明确要求“对，补上吧，你是不是分支搞错了，你现在是哪个分支”。当前仍为 `run/local-h100-fresh-20261112`；fetch 后确认包含 `origin/exp/visual-opd@06ca7a7`、`origin/run/real-video-20261111@2d39df7`、`origin/feat/temporal-evidence-readout@1aa387c` 和 `origin/fix/visual-opd-long-video-protocol@ab6e2fa`。此前缺少的是实际参数中的 λ10 对照，历史辅助项代码已在当前分支。

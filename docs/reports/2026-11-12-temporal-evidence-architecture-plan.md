@@ -304,3 +304,11 @@ A_plain 本来就可从融合 Target 特征读到视觉位置；B_text 的文本
 队列新增37个有限任务，先三架构peak2和独立AR门禁，再六臂正式训练和128帧dev40，随后长输入；尚未完成的旧 C/B λ0 长输入主要对照保留优先级，已启动任务定义不变。`repro/local_h100/prepare_lambda10.py` 负责原子采纳、CPU预检及预算约束，`summarize_lambda10.py` 对完整40源、实际输入SHA、独立AR、checkpoint identity及新旧训练协议进行严格核验，并在六个正式dev40全部完成后生成 `analysis/lambda10_summary.json`。同时给出每seed λ10−λ0、λ10−SFT、λ10内C−B，以及 `(C10−B10)−(C0−B0)`；不把两seed当80源，不把开发集复用和并发墙钟写成独立确认或正式速度证据。
 
 CPU验证覆盖真实 A/B/C forward 的 full-vocabulary softmax→截取top8→overlap→prefix-product 公式、loss/梯度、原GPU-memory/boundary入口组合，以及拒绝额外更改起点/日程/源码/预算的统计契约。该补充保留原 global_pooled 的基础分母，辅助项只加到 numerator，不能用 Pool 的辅助增广 denominator 偷换归一化。本机任务仍是自然三段摘要；此次对照若为正，只证明旧辅助目标可迁移到这个新任务，不能宣称旧服务器 checkpoint 或千token完整报告已经复现。持续监控维持关闭。
+
+### 11.5 用户授权的 checkpoint 清理与保存策略
+
+用户要求清理过多保存点、降低保存频率。首轮按队列依赖、任务状态与正式终点检查，退休75个中间/诊断 checkpoint，删除746,586,614,034字节（约695.31 GiB），磁盘空闲恢复约2.12 TiB。保留的12份原 factorial 正式 step80 权重逐一检查存在，未发现待运行/运行中引用被退休。训练并发仍会生成新点，不能用首轮数量当作后续实时数量。
+
+清理工具 `repro/local_h100/checkpoint_retention.py` 只删除已发布、已确认无用途保存点中的两种大二进制；检查队列版本、文件身份和路径，删除前归档原JSON并记录清单。所有原日志、评测JSON、曲线、协议保留；已退休点的原SHA仅为历史身份记录，不能继续推理或恢复。保留全部正式step80、实际排队引用、公共初始化、λ10每臂最新发布点及两份指定完整恢复step1。六项CPU测试覆盖依赖保护、最新点、dry-run与幂等、队列/文件变动拒绝和未知/未完成/软链接保护，均通过。
+
+未来训练默认只保存最终或分段终点，显式设置 `--save-every` 等于完整更新预算，需要额外中间评测或恢复时才另定。已运行六臂的save_every20已在进程内冻结；不修改运行中源码/CLI、不重启配对轨迹，由有限tmux自动回收后续不再引用的中间点。该文件回收任务在六臂和原中间点评测结束时退出，最长12小时，不恢复GPU遥测，也不追加训练预算。权威审计为 run 下 `analysis/checkpoint_cleanup_20261112/{deleted.jsonl,STATUS.json,metadata/}`，策略为 `control/CHECKPOINT_POLICY.json`。
