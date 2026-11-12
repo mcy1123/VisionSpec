@@ -110,8 +110,15 @@ def validate_output(path):
         raise ValueError("checkpoint output must resolve under /mnt/local{,2,3}")
 
 
-def save_atomic_checkpoint(destination, head, state):
+def save_atomic_checkpoint(destination, head, state, *, metadata=None):
     """Publish a complete, hashed training checkpoint without replacing a prior one."""
+    metadata_json = None
+    if metadata is not None:
+        if not isinstance(metadata, dict):
+            raise TypeError("checkpoint metadata must be a small JSON object")
+        # Validate before creating any files. Tensors and nonfinite numbers do
+        # not belong in this lightweight, independently inspectable identity.
+        metadata_json = json.dumps(metadata, indent=2, allow_nan=False) + "\n"
     dest = Path(destination)
     validate_output(dest)
     if dest.exists():
@@ -121,6 +128,8 @@ def save_atomic_checkpoint(destination, head, state):
     tmp.mkdir()
     head.save_pretrained(tmp)
     torch.save(state, tmp / "training_state.pt")
+    if metadata_json is not None:
+        (tmp / "CHECKPOINT_IDENTITY.json").write_text(metadata_json)
     hashes = {p.name: file_hash(p) for p in tmp.iterdir() if p.is_file()}
     (tmp / "SHA256.json").write_text(json.dumps(hashes, indent=2) + "\n")
     os.rename(tmp, dest)

@@ -32,6 +32,7 @@ sys.path.insert(0, str(REPRO))
 from shared import common, training_resume
 from shared.master_optim import MasterWeightAdamW
 from shared.model_contract import validate_model_contract
+from shared.evidence import build_evidence_request, configure_evidence, evidence_settings
 from opd_official_kl import adapters, runtime
 from opd_official_kl.trainer import move_trace
 
@@ -137,8 +138,8 @@ def validate_rows(rows, schedule, time_mode):
                 real_timeline_diagnostics=diagnostics, cache_sha256=cache_hashes)
 
 
-def validate_training_head(head_path):
-    """This diagnostic has no per-video external evidence-memory interface."""
+def validate_training_head(head_path, time_mode=None, loss_normalization=None):
+    """Keep old external-memory heads closed; explicitly gate the new readout."""
     config = json.loads((Path(head_path) / "config.json").read_text())
     draft = config.get("dflash_config", {})
     unsupported = [name for name in ("use_visual_fovea", "use_visual_film",
@@ -148,6 +149,64 @@ def validate_training_head(head_path):
         raise ValueError("9k trainer has no external visual-memory input; refusing to silently disable "
                          + ", ".join(unsupported)
                          + ". A shared real-video memory interface is required before these arms can train.")
+    settings = evidence_settings(config)
+    if settings["mode"] != "none":
+        if any(draft.get(name, config.get(name, False)) for name in ("use_xattn", "use_layer_gate")):
+            raise ValueError("evidence readout must be tested separately from legacy adapters")
+        if time_mode != "real" or loss_normalization != "global_pooled":
+            raise ValueError("evidence heads require --time-mode real --loss-normalization global_pooled")
+    return settings
+
+
+def move_evidence_tree(value, device):
+    """Stage frozen request features recursively, without sharing mutable dicts."""
+    if torch.is_tensor(value):
+        return value.detach().to(device)
+    if isinstance(value, dict):
+        return {key: move_evidence_tree(item, device) for key, item in value.items()}
+    if isinstance(value, list):
+        return [move_evidence_tree(item, device) for item in value]
+    if isinstance(value, tuple):
+        return tuple(move_evidence_tree(item, device) for item in value)
+    return value
+
+
+def move_training_trace(trace, device):
+    moved = move_trace(trace, device)
+    if "evidence_request" in trace:
+        moved["evidence_request"] = move_evidence_tree(trace["evidence_request"], device)
+    return moved
+
+
+def score_training_trace(target, head, trace, *, e2e_tv_weight, diagnostics=None):
+    """Rebind each QA before scoring, never inherit the last collected video."""
+    if evidence_settings(head)["mode"] != "none":
+        if "evidence_request" not in trace:
+            raise ValueError("evidence training trace has no request identity")
+        configure_evidence(head, trace["evidence_request"])
+    yield from runtime.score(target, head, trace, draft_fn=adapters.draft,
+                             e2e_tv_weight=e2e_tv_weight)
+    if diagnostics is not None and evidence_settings(head)["mode"] != "none":
+        diagnostics.append(head.evidence_diagnostics())
+
+
+def evidence_gradient_diagnostics(head):
+    module = getattr(head, "evidence_readout", None)
+    if module is None:
+        return None
+    gradients = {name: parameter.grad for name, parameter in module.named_parameters()}
+    norms = {name: float(gradient.detach().float().norm())
+             for name, gradient in gradients.items() if gradient is not None}
+    if not norms:
+        raise RuntimeError("evidence readout received no gradients")
+    if not all(math.isfinite(value) for value in norms.values()):
+        raise RuntimeError("non-finite evidence readout gradient")
+    return dict(gradient_l2=math.sqrt(sum(value * value for value in norms.values())),
+                gradient_norms=norms,
+                missing_gradients=[name for name, value in gradients.items() if value is None],
+                nonzero_gradient_parameters=sum(value > 0 for value in norms.values()),
+                parameter_count=sum(parameter.numel() for parameter in module.parameters()),
+                parameter_dtypes=sorted({str(parameter.dtype) for parameter in module.parameters()}))
 
 
 def backward_update(traces, score_fn, normalization, *, denominator_fn=runtime.denominator,
@@ -220,7 +279,7 @@ def make_protocol(args, input_diagnostics, model_dimensions):
         raise ValueError("init-from must contain head weight files; no training-state resume is supported")
     config = {key: value for key, value in vars(args).items() if key not in ("out", "dry_run")}
     protocol = dict(
-        schema=2, entry="video_caption_9k_diagnostic", diagnostic_only=True,
+        schema=3, entry="video_caption_9k_diagnostic", diagnostic_only=True,
         opd_mode="pure_block", teacher_verify_impl="pure_block_native",
         initialization="weights_only_fresh_optimizer", resume_supported=False,
         optimizer_step_start=0, world_size=1,
@@ -235,18 +294,68 @@ def make_protocol(args, input_diagnostics, model_dimensions):
             auxiliary="additive top8-overlap prefix-product proxy; not full-vocabulary TV",
             score_pool_denominator_used=False),
         config=config, model_dimensions=model_dimensions,
+        evidence=evidence_settings(init),
+        evidence_parameter_dtype=("float32" if evidence_settings(init)["mode"] != "none" else None),
+        evidence_learning_rate=(args.lr if evidence_settings(init)["mode"] != "none" else None),
         inputs=input_diagnostics,
         hashes=dict(pool=training_resume.file_hash(args.pool),
                     schedule=training_resume.file_hash(args.schedule),
                     target_config=training_resume.file_hash(Path(args.target) / "config.json"),
                     head_config=training_resume.file_hash(init / "config.json"),
+                    initialization_manifest=(training_resume.file_hash(init / "INIT_MANIFEST.json")
+                                             if (init / "INIT_MANIFEST.json").is_file() else None),
                     initial_head_weights={p.name: training_resume.file_hash(p) for p in weights},
                     trainer=training_resume.file_hash(__file__),
-                    runtime=training_resume.file_hash(runtime.__file__)),
+                    runtime=training_resume.file_hash(runtime.__file__),
+                    draft_model=training_resume.file_hash(
+                        REPRO.parent / "scripts/dflash_pkg/dflash-0.1.0/dflash/model.py"),
+                    evidence_readout=training_resume.file_hash(
+                        REPRO.parent / "scripts/dflash_pkg/dflash-0.1.0/dflash/evidence.py"),
+                    evidence_helper=training_resume.file_hash(REPRO / "shared/evidence.py")),
     )
     protocol["protocol_sha256"] = hashlib.sha256(
         json.dumps(protocol, sort_keys=True).encode()).hexdigest()
     return protocol
+
+
+def checkpoint_identity(protocol, step):
+    """Small, explicit training identity; never infer a step from its directory."""
+    config = protocol["config"]
+    hashes = protocol["hashes"]
+    common_initial = hashes["initial_head_weights"]
+    initialization_manifest = hashes.get("initialization_manifest")
+    if protocol["evidence"]["mode"] != "none":
+        common_initial = None
+        if initialization_manifest:
+            manifest_path = Path(config["init_from"]) / "INIT_MANIFEST.json"
+            if training_resume.file_hash(manifest_path) != initialization_manifest:
+                raise ValueError("initialization manifest changed since training preflight")
+            manifest = json.loads(manifest_path.read_text())
+            source = manifest.get("source_weights_sha256")
+            if not isinstance(source, dict) or not source or not all(
+                isinstance(name, str) and isinstance(value, str) and len(value) == 64
+                and all(character in "0123456789abcdef" for character in value)
+                for name, value in source.items()
+            ):
+                raise ValueError("initialization manifest lacks common source weight SHA256")
+            if manifest.get("base_tensors_verified_equal") is not True:
+                raise ValueError("initialization manifest does not verify common base tensors")
+            common_initial = source
+    return dict(
+        schema="video_opd_checkpoint_identity_v1", optimizer_step=step, data_cursor=step,
+        protocol_sha256=protocol["protocol_sha256"], evidence=protocol["evidence"],
+        common_initial_head_weights_sha256=common_initial,
+        initialization_manifest_sha256=initialization_manifest,
+        pool_sha256=hashes["pool"], schedule_sha256=hashes["schedule"],
+        target_config_sha256=hashes["target_config"], seed=config["seed"], lr=config["lr"],
+        qa_per_update=config["qa_per_update"], time_mode=config["time_mode"],
+        qa_exposures=step * config["qa_per_update"],
+        max_new_tokens=config.get("max_new_tokens"), max_seq_len=config.get("max_seq_len"),
+        loss_normalization=config["loss_normalization"], e2e_tv_weight=config["e2e_tv_weight"],
+        precision={name: protocol[name] for name in (
+            "target_dtype", "head_dtype", "master_dtype", "evidence_parameter_dtype")},
+        optimizer=protocol["optimizer"], initialization="weights_only_fresh_optimizer",
+        resume_supported=False, diagnostic_only=True)
 
 
 class _MoveOut(nn.Module):
@@ -353,7 +462,7 @@ def main(argv=None):
     schedule = load_schedule(a.schedule, rows, a.updates, a.qa_per_update)
     inputs_summary = validate_rows(rows, schedule, a.time_mode)
     model_dimensions = validate_model_contract(a.target, a.init_from)
-    validate_training_head(a.init_from)
+    evidence_config = validate_training_head(a.init_from, a.time_mode, a.loss_normalization)
     protocol = make_protocol(a, inputs_summary, model_dimensions)
     if a.dry_run:
         print(json.dumps(protocol, indent=2))
@@ -377,6 +486,8 @@ def main(argv=None):
     print(f"[9k] target map={getattr(target, 'hf_device_map', None)}", flush=True)
 
     head = common.load_head(a.init_from, device=dev, dtype=torch.bfloat16).eval()
+    if evidence_config["mode"] != "none":
+        head.evidence_readout.float()
     head.requires_grad_(True)
     optimizer = MasterWeightAdamW(head, lr=a.lr, betas=common.BETAS,
                                   weight_decay=common.WEIGHT_DECAY,
@@ -394,7 +505,8 @@ def main(argv=None):
                  initialization="weights_only_fresh_optimizer", resume_supported=False,
                  loss_normalization=a.loss_normalization, time_mode=a.time_mode,
                  diagnostic_only=True, smoke=False, opd_mode="pure_block",
-                 block_native=True, teacher_verify_impl="pure_block_native"))
+                 block_native=True, teacher_verify_impl="pure_block_native"),
+            metadata=checkpoint_identity(protocol, step))
 
     for cursor in range(a.updates):
         reason = stop_reason(deadline, a.stop_file)
@@ -408,6 +520,8 @@ def main(argv=None):
         tasks = []
         input_token_counts = []
         visual_token_counts = []
+        evidence_rollout_diagnostics = []
+        evidence_score_diagnostics = []
         video_id = processor.tokenizer.convert_tokens_to_ids("<|video_pad|>")
 
         def collect_traces():
@@ -424,23 +538,33 @@ def main(argv=None):
                 input_token_counts.append(n_input)
                 visual_token_counts.append(int((inputs["input_ids"] == video_id).sum()))
                 head.eval()
-                yield adapters.collect(target, head, inputs,
-                                       max_new_tokens=a.max_new_tokens,
-                                       max_seq_len=a.max_seq_len,
-                                       teacher_verify_impl="pure_block_native")
+                request = None
+                if evidence_config["mode"] != "none":
+                    request = build_evidence_request(inputs, row, processor)
+                    configure_evidence(head, request)
+                trace = adapters.collect(target, head, inputs,
+                                         max_new_tokens=a.max_new_tokens,
+                                         max_seq_len=a.max_seq_len,
+                                         teacher_verify_impl="pure_block_native")
+                if request is not None:
+                    trace["evidence_request"] = request
+                    evidence_rollout_diagnostics.append(head.evidence_diagnostics())
+                yield trace
 
         stats = backward_update(
             collect_traces(),
-            lambda trace: runtime.score(target, head, trace, draft_fn=adapters.draft,
-                                        e2e_tv_weight=a.e2e_tv_weight),
+            lambda trace: score_training_trace(target, head, trace,
+                                               e2e_tv_weight=a.e2e_tv_weight,
+                                               diagnostics=evidence_score_diagnostics),
             a.loss_normalization,
-            stage_trace=lambda trace: move_trace(trace, "cpu"),
-            restore_trace=lambda trace: move_trace(trace, dev))
+            stage_trace=lambda trace: move_training_trace(trace, "cpu"),
+            restore_trace=lambda trace: move_training_trace(trace, dev))
+        evidence_gradients = evidence_gradient_diagnostics(head)
         optimizer.sync_grads()
         norm = optimizer.grad_norm()
         if not math.isfinite(norm):
             raise RuntimeError("non-finite gradient")
-        optimizer.step()
+        update_norms = optimizer.step()
         record = dict(update=cursor + 1, optimizer_step=cursor + 1,
                       tasks=tasks, **stats, gradient_norm=norm,
                       protocol_sha256=protocol["protocol_sha256"],
@@ -448,6 +572,13 @@ def main(argv=None):
                       target_input_tokens=sum(input_token_counts),
                       input_tokens_per_qa=input_token_counts,
                       visual_tokens_per_qa=visual_token_counts)
+        if evidence_gradients is not None:
+            deltas = {name: value for name, value in update_norms.items()
+                      if name.startswith("evidence_readout.")}
+            record["evidence"] = dict(
+                **evidence_gradients, update_norms=deltas,
+                update_l2=math.sqrt(sum(value * value for value in deltas.values())),
+                rollout=evidence_rollout_diagnostics, scoring=evidence_score_diagnostics)
         with (out / "log.jsonl").open("a") as stream:
             stream.write(json.dumps(record) + "\n")
         print(json.dumps(record), flush=True)

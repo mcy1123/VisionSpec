@@ -25,12 +25,14 @@ from pathlib import Path
 
 CONFIG_KEYS = ("rows", "head", "budget", "branch", "max_new", "ar", "warmup", "dtype",
                "n", "time_mode", "eos_stop", "target", "zero_visual", "visual_memory",
-               "require_exact_time")
+               "require_exact_time", "evidence_mode", "evidence_intervention",
+               "evidence_intervention_seed", "export_evidence_memory", "evidence_donor_memory")
 PROTOCOL_KEYS = ("version", "time_mode", "eos_stop", "visual_mask", "rows_sha256",
                  "target", "model_contract", "artifacts", "lossless_checked", "timing_scope",
                  "spec_prefill_definition", "tau_definition",
                  "effective_tokens_per_round_definition", "diagnostic_only",
-                 "uses_cpu_or_disk_offload")
+                 "uses_cpu_or_disk_offload", "evidence", "evidence_donor_memory",
+                 "evidence_memory_export_requested", "evidence_memory_io_scope")
 
 
 def _require_equal(items, key, label):
@@ -88,6 +90,8 @@ def merge_results(parts, *, expect=0):
     cfg.pop("shard", None)
     cfg["shards"] = len(parts)
     result = {"config": cfg, "rows": rows}
+    if any("evidence_memory_io" in part for part in parts):
+        result["shard_evidence_memory_io"] = [part.get("evidence_memory_io") for part in parts]
     if all(has_protocol):
         protocol = dict(parts[0]["protocol"])
         # GPU indices may legitimately differ across processes; do not present

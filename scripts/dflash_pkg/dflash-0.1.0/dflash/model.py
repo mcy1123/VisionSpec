@@ -5,6 +5,7 @@ from typing import ClassVar
 import torch
 from torch import nn
 from torch.nn import functional as F
+from .evidence import EvidenceReadout
 from transformers import DynamicCache
 from transformers.cache_utils import Cache
 from transformers.models.qwen3.modeling_qwen3 import (
@@ -550,6 +551,7 @@ class CandidateSelector(nn.Module):
 class DFlashDraftModel(Qwen3PreTrainedModel):
     config_class = Qwen3Config
     _no_split_modules: ClassVar[list[str]] = ["Qwen3DFlashDecoderLayer"]
+    _keep_in_fp32_modules_strict = ["evidence_readout"]
 
     def __init__(self, config) -> None:
         super().__init__(config)
@@ -574,6 +576,21 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         self.use_visual_film = bool(_draft_value(config, "use_visual_film", False))
         self.use_visual_perceiver = bool(_draft_value(config, "use_visual_perceiver", False))
         self.use_layer_gate = bool(_draft_value(config, "use_layer_gate", False))
+        self.evidence_mode = str(_draft_value(config, "evidence_mode", "none"))
+        if self.evidence_mode == "none":
+            self._keep_in_fp32_modules_strict = None
+        if self.evidence_mode not in ("none", "visual", "text"):
+            raise ValueError("evidence_mode must be none, visual, or text")
+        if self.evidence_mode != "none":
+            if any((self.use_xattn, self.use_visual_xattn, self.use_visual_fovea,
+                    self.use_visual_film, self.use_visual_perceiver, self.use_layer_gate)):
+                raise ValueError("evidence readout must be tested separately from legacy adapters")
+            self.evidence_readout = EvidenceReadout(
+                config.hidden_size,
+                dim=int(_draft_value(config, "evidence_dim", 256)),
+                max_tokens=int(_draft_value(config, "evidence_max_tokens", 256)),
+                spatial_bins=int(_draft_value(config, "evidence_spatial_bins", 2)),
+                mode=self.evidence_mode)
         if self.use_visual_perceiver:
             latents = 32
             self.visual_perceiver_latents = nn.Parameter(
@@ -631,6 +648,8 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
                 config.hidden_size, config.hidden_size, bias=False)
             nn.init.zeros_(self.xattn_out.weight)
         self.post_init()
+        if self.evidence_mode != "none":
+            self.evidence_readout.reset_output()
         if self.use_xattn:
             nn.init.zeros_(self.xattn_out.weight)
         if self.use_visual_xattn:
@@ -654,6 +673,13 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         **kwargs,
     ) -> torch.Tensor:
         hidden_states = noise_embedding
+        evidence = None
+        if self.evidence_mode != "none":
+            # Last retained target layer (layer 33 in the supported 8B head).
+            # Only committed target context, never draft/noise states, is memory.
+            evidence = self.evidence_readout.prepare(
+                target_hidden[..., -self.config.hidden_size:], position_ids,
+                past_key_values, use_cache)
         visual_memory = getattr(self, "visual_memory", None)
         if visual_memory is not None and self.use_visual_xattn:
             q = self.visual_q_norm(hidden_states.float())
@@ -693,7 +719,20 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         hidden_states = self.norm(hidden_states)
         hidden_states = self._visual_film(hidden_states)
         hidden_states = self._visual_fovea(hidden_states)
+        if evidence is not None:
+            hidden_states = self.evidence_readout(hidden_states, evidence)
         return hidden_states
+
+    def set_evidence_request(self, request):
+        if self.evidence_mode == "none":
+            if request is not None:
+                raise ValueError("cannot attach evidence to an evidence_mode=none head")
+            return
+        self.evidence_readout.set_request(request)
+
+    def evidence_diagnostics(self):
+        return ({"mode": "none"} if self.evidence_mode == "none"
+                else self.evidence_readout.diagnostics())
 
     def _xattn_context(self, target_hidden, position_ids, cache, use_cache):
         """Keep cross-layer context aligned with the draft's committed KV.
