@@ -165,6 +165,10 @@ def load_head(path, dtype=None, device="cuda"):
 
     head = DFlashDraftModel.from_pretrained(
         path, dtype=dtype or torch.bfloat16)
+    if getattr(head, "evidence_readout", None) is not None:
+        # The model's _keep_in_fp32_modules also preserves these tensors while
+        # loading; casting here alone would not undo a bf16 load round-trip.
+        head.evidence_readout.float()
     if getattr(head, "use_xattn", False):
         # Keep the new cross-attention branch in fp32; bf16 gradients through a
         # zero-initialised residual can overflow before the first clip.

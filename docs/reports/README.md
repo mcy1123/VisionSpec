@@ -8,6 +8,7 @@
 
 | 日期 | 报告 | 结论 / 状态 |
 |---|---|---|
+| 2026-11-12 | [真实视频的时间感知视觉读出架构实验](2026-11-12-temporal-evidence-architecture-plan.md) | 新增时间分组视觉/文本 readout、逐QA memory绑定、配对初始化及评测；A/B/C各60步执行计划，GPU验证在目标服务器进行 |
 | 2026-09-25 | [GLANCE 复现：TextVQA+COCO 训练 → ChartQA 接受率与加速比](2026-09-25-reproduction-history.md) | 原 repro README；含已被后续审计替代的历史表述 |
 | 2026-09-28 | [EAGLE-3 对比：阶段 0 交接](2026-09-28-eagle3-stage0.md) | M-RoPE 静默失效等实现结论的来源 |
 | 2026-10-05 | [视觉适配诊断：MLP 投影在 VLM 投机解码中的作用](2026-10-05-视觉适配诊断.md) | 软链到产物盘，依赖本机挂载 |

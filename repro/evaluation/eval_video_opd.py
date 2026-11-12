@@ -47,6 +47,34 @@ from qa_opd_fair.videoencode import (build_video_text, encode_inputs,
                                     validate_real_metadata)
 from evaluation.visual_probe import VisualZeroProbe
 from shared.model_contract import validate_model_contract
+from shared.evidence import (INTERVENTIONS, build_evidence_request,
+                             configure_evidence, evidence_settings)
+from shared.evidence_memory import (bank_contract, checked_bank_path, entry_key,
+                                    load_bank, memory_entry, save_bank, select_donor,
+                                    source_identity)
+
+
+def validate_evidence_eval(settings, *, time_mode, intervention="normal",
+                           visual_memory=None, zero_visual=False,
+                           export_memory=None, donor_memory=None, shards=1):
+    """Reject ambiguous interventions before loading any target weights."""
+    mode = settings["mode"]
+    if intervention not in INTERVENTIONS:
+        raise ValueError(f"unsupported evidence intervention: {intervention}")
+    if export_memory and (mode != "visual" or intervention != "normal" or shards != 1):
+        raise ValueError("memory export requires one unsharded normal visual evaluation")
+    if bool(donor_memory) != (intervention == "wrong_video"):
+        raise ValueError("wrong_video requires --evidence-donor-memory, used only for this probe")
+    if mode == "none":
+        if intervention != "normal":
+            raise ValueError("evidence interventions require an enabled evidence head")
+        return
+    if time_mode != "real":
+        raise ValueError("evidence readout evaluation requires --time-mode real")
+    if visual_memory or zero_visual:
+        raise ValueError("evidence readout cannot combine legacy visual memory or --zero-visual")
+    if mode != "visual" and intervention in ("time_shuffle", "wrong_video"):
+        raise ValueError(f"{intervention} requires visual evidence memory")
 
 
 def validate_rows(df, time_mode, *, require_exact_time=False):
@@ -125,13 +153,34 @@ def evaluation_artifacts(target_path, head_path):
     weights = sorted(head.glob("*.safetensors")) + sorted(head.glob("pytorch_model*.bin"))
     if not weights:
         raise ValueError("evaluation head has no weight files")
+    head_config_sha256 = file_sha256(head / "config.json")
+    head_weights_sha256 = {p.name: file_sha256(p) for p in weights}
+    identity_path = head / "CHECKPOINT_IDENTITY.json"
+    checkpoint_identity, checkpoint_identity_sha256 = None, None
+    if identity_path.exists():
+        checkpoint_identity_sha256 = file_sha256(identity_path)
+        manifest_path = head / "SHA256.json"
+        manifest = json.loads(manifest_path.read_text()) if manifest_path.is_file() else {}
+        if manifest.get(identity_path.name) != checkpoint_identity_sha256:
+            raise ValueError("checkpoint identity sidecar missing or mismatched in SHA256.json")
+        actual = {"config.json": head_config_sha256, **head_weights_sha256}
+        if any(manifest.get(name) != digest for name, digest in actual.items()):
+            raise ValueError("checkpoint config/weights do not match the identity sidecar SHA256 manifest")
+        checkpoint_identity = json.loads(identity_path.read_text())
+        if not isinstance(checkpoint_identity, dict):
+            raise ValueError("checkpoint identity sidecar must be a JSON object")
     root = _REPRO_ROOT.parent
     sources = [Path(__file__), _REPRO_ROOT / "evaluation/visual_probe.py",
                _REPRO_ROOT / "qa_opd_fair/videoencode.py",
+               _REPRO_ROOT / "shared/evidence.py",
+               _REPRO_ROOT / "shared/evidence_memory.py",
                root / "GLANCE_repo/glance/decode.py",
-               root / "scripts/dflash_pkg/dflash-0.1.0/dflash/model.py"]
-    return {"head_config_sha256": file_sha256(head / "config.json"),
-            "head_weights_sha256": {p.name: file_sha256(p) for p in weights},
+               root / "scripts/dflash_pkg/dflash-0.1.0/dflash/model.py",
+               root / "scripts/dflash_pkg/dflash-0.1.0/dflash/evidence.py"]
+    return {"head_config_sha256": head_config_sha256,
+            "head_weights_sha256": head_weights_sha256,
+            "checkpoint_identity": checkpoint_identity,
+            "checkpoint_identity_sha256": checkpoint_identity_sha256,
             "target_config_sha256": file_sha256(Path(target_path) / "config.json"),
             "target_weight_verification": "external_verified_manifest_required",
             "source_sha256": {str(p.relative_to(root)): file_sha256(p) for p in sources}}
@@ -186,6 +235,14 @@ def main():
     ap.add_argument("--tag", default="")
     ap.add_argument("--zero-visual", action="store_true",
                     help="diagnostic: zero visual-token rows of target_hidden before the head")
+    ap.add_argument("--evidence-intervention", choices=INTERVENTIONS, default="normal",
+                    help="draft evidence branch only; never changes the target input")
+    ap.add_argument("--evidence-intervention-seed", type=int, default=0,
+                    help="deterministic content/time correspondence shuffle seed")
+    ap.add_argument("--export-evidence-memory", default=None,
+                    help="normal visual run: atomically export frozen pooled memory under /mnt/local*")
+    ap.add_argument("--evidence-donor-memory", default=None,
+                    help="wrong_video only: identity-bound bank exported by the same normal C evaluation")
     ap.add_argument("--time-mode", choices=("legacy", "real"), default="legacy",
                     help="real uses unique source-frame indices and explicit timeline metadata")
     ap.add_argument("--require-exact-time", action="store_true",
@@ -208,6 +265,15 @@ def main():
     if a.time_mode == "real" and a.visual_memory:
         ap.error("real mode rejects legacy video_name-only visual memories; rebuild an "
                  "input-identity-bound memory and validate its integration first")
+    evidence_cfg = evidence_settings(a.head)
+    validate_evidence_eval(evidence_cfg, time_mode=a.time_mode,
+                           intervention=a.evidence_intervention,
+                           visual_memory=a.visual_memory, zero_visual=a.zero_visual,
+                           export_memory=a.export_evidence_memory,
+                           donor_memory=a.evidence_donor_memory, shards=a.shards)
+    if a.export_evidence_memory:
+        checked_bank_path(a.export_evidence_memory, writing=True)
+    a.evidence_mode = evidence_cfg["mode"]
 
     dev = f"cuda:{a.gpu}"
     dt = torch.float32 if a.dtype == "float32" else None
@@ -223,12 +289,26 @@ def main():
     row_identities = validate_rows(df, a.time_mode,
                                   require_exact_time=a.require_exact_time)
     model_contract = validate_model_contract(a.target, a.head)
-    protocol = {"version": "video_eval_real_timeline_v1",
+    if a.export_evidence_memory or a.evidence_donor_memory:
+        for _, row in df.iterrows():
+            source_identity(row)
+        if a.export_evidence_memory and len(df) < 2:
+            raise ValueError("memory export needs at least two distinct evaluation videos")
+    protocol = {"version": "video_eval_real_timeline_v2_evidence",
                 "time_mode": a.time_mode, "eos_stop": a.eos_stop,
                 "visual_mask": "absolute_stream_positions_v1" if a.zero_visual else None,
                 "rows_sha256": hashlib.sha256(Path(a.rows).read_bytes()).hexdigest(),
                 "target": str(Path(a.target).resolve()),
                 "model_contract": model_contract,
+                "evidence": {**evidence_cfg, "intervention": a.evidence_intervention,
+                             "intervention_seed": a.evidence_intervention_seed,
+                             "request_scope": "fresh_per_spec_call; target inputs unchanged",
+                             "timing_scope": "request preparation and readout included in spec_wall_s; "
+                                             "shared encoded-input SHA audit excluded",
+                             "kv_projection_cache": "visual only in no_grad; keyed by request, "
+                                                    "intervention, feature and parameter versions; "
+                                                    "text and gradient scoring recompute",
+                             "mechanism_only": a.evidence_intervention == "wrong_video"},
                 "artifacts": evaluation_artifacts(a.target, a.head),
                 "lossless_checked": bool(a.ar and not a.preflight_only),
                 "timing_scope": "encoded_input_to_output; CPU preprocessing separately recorded",
@@ -238,9 +318,27 @@ def main():
                 "effective_tokens_per_round_definition": "final output tokens after EOS/cap "
                                                           "divided by verification rounds",
                 "diagnostic_only": True}
+    memory_contract = (bank_contract(evidence_cfg, protocol["artifacts"], model_contract, a.dtype)
+                       if a.export_evidence_memory or a.evidence_donor_memory else None)
+    donor_bank, exported_entries = None, {}
+    memory_io = {"donor_load_s": 0., "export_copy_s": 0., "export_save_s": 0.}
+    if a.evidence_donor_memory:
+        started = time.perf_counter()
+        donor_bank = load_bank(a.evidence_donor_memory, memory_contract)
+        protocol["evidence_donor_memory"] = {
+            "path": str(Path(a.evidence_donor_memory).resolve()),
+            "sha256": file_sha256(a.evidence_donor_memory), "contract": memory_contract}
+        memory_io["donor_load_s"] = time.perf_counter() - started
+    else:
+        protocol["evidence_donor_memory"] = None
+    protocol["evidence_memory_export_requested"] = bool(a.export_evidence_memory)
+    protocol["evidence_memory_io_scope"] = (
+        "bank load and export are separately reported and excluded from SPEC timing; "
+        "wrong_video is a mechanism probe, not a speed measurement")
     if a.preflight_only:
         write_result(a.out, {"config": vars(a), "protocol": protocol,
                              "preflight": row_identities,
+                             "evidence_memory_io": memory_io,
                              "status": "CPU_PREFLIGHT_ONLY_NO_MODEL_EXECUTION"})
         print(f"CPU preflight passed for {len(df)} rows -> {a.out}")
         return
@@ -342,6 +440,20 @@ def main():
                 zero_probe.reset(visual_mask)
             torch.cuda.synchronize()
             t0 = time.perf_counter()
+            evidence_request = None
+            donor_audit = None
+            evidence_prepare_s = 0.0
+            if evidence_cfg["mode"] != "none":
+                t_evidence = time.perf_counter()
+                evidence_request = build_evidence_request(
+                    ins, row, proc, identity=input_identity,
+                    intervention=a.evidence_intervention,
+                    seed=a.evidence_intervention_seed)
+                if donor_bank is not None:
+                    evidence_request["donor_visual"], donor_audit = select_donor(
+                        donor_bank, str(row["video_name"]), row, evidence_request)
+                configure_evidence(head, evidence_request)
+                evidence_prepare_s = time.perf_counter() - t_evidence
             head.visual_memory = (visual_memory[row["video_name"]].to(dev)
                                   if visual_memory and row["video_name"] in visual_memory else None)
             out, stats = glance.generate(head, target, ids, a.max_new, [eos],
@@ -351,7 +463,24 @@ def main():
                                          eos_stop=a.eos_stop,
                                          on_round=rounds.append)
             torch.cuda.synchronize()
-            return out, stats, time.perf_counter() - t0, rounds
+            elapsed = time.perf_counter() - t0
+            evidence_audit = ({"identity": evidence_request["identity"],
+                               "metadata": evidence_request["metadata"],
+                               "prepare_s": evidence_prepare_s,
+                               "donor": donor_audit,
+                               "diagnostics": head.evidence_diagnostics()}
+                              if evidence_request is not None else None)
+            if a.export_evidence_memory:
+                export_started = time.perf_counter()
+                entry = memory_entry(str(row["video_name"]), row, evidence_request)
+                key = entry_key(entry)
+                if key in exported_entries:
+                    raise ValueError("memory export encountered a repeated video/input identity")
+                exported_entries[key] = entry
+                export_s = time.perf_counter() - export_started
+                evidence_audit["export_copy_s"] = export_s
+                memory_io["export_copy_s"] += export_s
+            return out, stats, elapsed, rounds, evidence_audit
 
         def run_ar():
             pos = VisionPositions(pixel_values_videos=pv, video_grid_thw=vg)
@@ -364,11 +493,11 @@ def main():
 
         # Interleave the order so a drifting clock cannot favour one arm.
         if i % 2 == 0:
-            spec_out, spec_st, spec_s, spec_rounds = run_spec()
+            spec_out, spec_st, spec_s, spec_rounds, evidence_audit = run_spec()
             ar_out, ar_st, ar_s = (run_ar() if a.ar else (None, None, None))
         else:
             ar_out, ar_st, ar_s = (run_ar() if a.ar else (None, None, None))
-            spec_out, spec_st, spec_s, spec_rounds = run_spec()
+            spec_out, spec_st, spec_s, spec_rounds, evidence_audit = run_spec()
         t_row1 = time.perf_counter()
 
         n_spec = int(spec_out.shape[1]) - n_in
@@ -397,6 +526,7 @@ def main():
                "video_grid_thw": vg.detach().cpu().tolist(),
                "timeline": row_identities[i],
                "zero_visual_calls": zero_probe.records if zero_probe is not None else None,
+               "evidence": evidence_audit,
                "row_wall_s": t_row1 - t_row0, "warmup": i < a.warmup,
                "width": int(row.get("width", 0)), "height": int(row.get("height", 0)),
                "n_frames": int(row.get("n_frames", 0)),
@@ -434,7 +564,17 @@ def main():
                  f"mm={rec.get('first_mismatch')}" if a.ar else ""), flush=True)
 
     bad = [r["video"] for r in res if a.ar and not r.get("lossless")]
+    if a.export_evidence_memory:
+        if bad:
+            memory_io["export_status"] = "SKIPPED_LOSSLESS_FAILED"
+        else:
+            started = time.perf_counter()
+            bank_path = save_bank(a.export_evidence_memory, memory_contract, exported_entries)
+            memory_io.update(export_status="SAVED", export_path=str(bank_path),
+                             export_sha256=file_sha256(bank_path), export_entries=len(exported_entries),
+                             export_save_s=time.perf_counter() - started)
     write_result(a.out, {"config": vars(a), "protocol": protocol, "rows": res,
+                         "evidence_memory_io": memory_io,
                          "status": "LOSSLESS_FAILED" if bad else
                          "LOSSLESS_PASSED" if a.ar else "LOSSLESS_NOT_CHECKED"})
 
