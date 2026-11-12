@@ -1,5 +1,9 @@
 # GLANCE 当前交接
 
+## 2026-11-13 用户再次授权 checkpoint 清理
+
+已删除已完成的factorial/night13正式step80中的20份training_state.pt，释放274.332GiB；保留jobs下全部30份模型权重，以及两份long_resume/long_sft恢复诊断step1完整状态。原日志、评测、协议、identity和SHA清单不变；每个精简目录新增COMPACTION.json，原SHA包含的training_state.pt已不再存在，不得把它当完整可恢复checkpoint。模型仍可推理或作为fresh optimizer起点。审计 `analysis/checkpoint_compaction_20261112T234445Z/{PLAN.json,RESULT.json,deleted.jsonl,metadata/}`。清理时无运行或待运行队列，磁盘余量约2.305TiB。
+
 ## 2026-11-13 首夜已结束（07:42 北京时间检查）
 
 夜间54任务46成功、8失败，738更新训练预算已执行完毕。128帧warm τ7.0384；A/B/C/D的λ10分别7.5257/7.5606/7.5571/7.5587，warm加八臂共360/360逐token无损；各架构λ10优于λ0，但C/D相对B区间跨零。全部128输出到1024上限、无自然EOS。64帧八臂均39/40无损，同视频vgWlRdNOGx4在索引65处分叉，必须保留FAILED；未重试、不能作为无损加速正证据。详见既有实验报告11.7与run的overnight_timeline_20261113/DONE.json。当前没有本夜剩余训练预算。

@@ -328,3 +328,7 @@ CPU验证覆盖真实 A/B/C forward 的 full-vocabulary softmax→截取top8→o
 64帧八臂均实际完成40条生成，但同一个视频vgWlRdNOGx4在索引65处SPEC/AR不一致，均39/40无损、EXIT=2，故不能作为无损加速结果。原因尚未定位，未放宽门禁、未自动重试。权威结果为 `overnight_timeline_20261113/DONE.json` 与各job原始result/stdout。
 
 占卡程序曾于队列结束后启动，但22:36 UTC因读取scheduler/STATE.json时短暂FileNotFoundError退出。23:42检查时八卡空闲；已保留原崩溃日志，补充最多5次状态读取重试后安全退出的处理，并按既有授权重新启动tmux等待器。此修复不重试科研任务、不追加训练。持续异常仍释放占卡负载，未来入队仍须先显式STOP并确认子进程退出。
+
+### 11.8 用户再次授权精简最终 checkpoint
+
+北京时间11月13日07:44，确认队列全终态后，删除factorial及night13的20份最终training_state.pt，释放274.332GiB；全部30份jobs内模型权重保留，两份step1恢复诊断完整状态保留。所有原结果/协议/identity/SHA不改，新增COMPACTION.json说明优化器状态已经移除，原SHA为历史身份而非完整文件承诺。权重可用于评测或fresh optimizer初始化，不能恢复已删除的Adam状态。逐文件归档元数据并核对文件身份，审计见run的 `analysis/checkpoint_compaction_20261112T234445Z/`；完成后磁盘空闲约2.305TiB。
