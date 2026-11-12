@@ -269,4 +269,6 @@ A_plain 本来就可从融合 Target 特征读到视觉位置；B_text 的文本
 
 恢复诊断的六次实际更新已完成，SFT 和 OPD 的 `RESTORE_AUDIT.json` 均为 `EXACT_RESTORE_VERIFIED`，在下一次更新前确认完整 Head/master/Adam/RNG 零容差载入；四个 step2 checkpoint 的 dev2 合计八次部署检查全部无损。连续/恢复第二步的细粒度比较另行生成，完整加载成功本身不等于跨进程更新逐位一致。窗口小样的 16 条 teacher 也全部自然 EOS、零截断，平均 245.125 token；仍只有四个独立视频源。
 
+本次随后完成两份 CPU 细粒度比较：`analysis/sft_long_resume_comparison.json`、`analysis/opd_long_resume_comparison.json` 均为 `CONTINUATION_DIFFERENT`，完整载入硬门禁通过、第二步后的 RNG 仍完全相同，但参数更新未逐位复现。SFT/OPD 的 Head 不同元素分别为 1,376,392/5,813,848，最大绝对差均 3.051758e-5；master 最大绝对差分别 1.444668e-5/1.691468e-5。未追加容差把差异改判为 exact，具体差异来源尚未隔离。因此可报告完整状态可恢复及恢复后部署无损，不能报告 CUDA 续训逐位等价或仅凭此门禁保证长训稳定。
+
 本次发现长输入 OPD 队列有一处 prerequisite 路径错误：该 pilot 把训练协议存于 `run/PROTOCOL.json`，排程误等待不存在的 `step80/TRAINING_PROTOCOL.json`，造成物理 0/6/7 空闲。已逐头核实 checkpoint identity 的协议 SHA 与实际文件一致，只替换 18 个尚未派发任务的只读输入路径；未改已启动定义、评测数学、数据或训练预算。三条相应最长输入门禁已开始，失败记录中的一项首 anchor 历史错误及其两条 BLOCKED 保持原样，未出现新的 GPU 失败。预计关键长输入 OPD 完整对照仍需约 60–90 分钟，不从已完成的 SFT 小子集推断 OPD 的长输入收益。
