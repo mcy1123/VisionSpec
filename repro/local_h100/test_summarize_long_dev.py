@@ -66,3 +66,24 @@ def test_path_alone_does_not_bind_checkpoint():
     right['protocol']['artifacts']['head_weights_sha256']['model.safetensors'] = 'changed'
     with pytest.raises(ValueError, match='checkpoint identity'):
         summary.same_head(left,right)
+
+
+def test_gate_cannot_borrow_another_target():
+    left = dict(config=dict(target='/target'), protocol=dict(model_contract={'hidden':8},
+        artifacts=dict(target_config_sha256='a', source_sha256={'decoder':'b'})))
+    right = copy.deepcopy(left)
+    summary.same_target_and_decoder(left, right)
+    right['protocol']['artifacts']['source_sha256']['decoder'] = 'changed'
+    with pytest.raises(ValueError, match='shared decoder'):
+        summary.same_target_and_decoder(left, right)
+
+
+@pytest.mark.parametrize('field,value', [('input_identity', {'ids':'changed'}), ('ar_ids',[7,8])])
+def test_full512_must_match_its_own_peak_input_and_ar(field, value):
+    gate = dict(rows={'peak':dict(input_identity={'ids':'a'},ar_ids=[1,2],
+        ar_hit_eos=True,truncated=False)})
+    full = copy.deepcopy(gate)
+    summary.match_peak_row(gate, full)
+    full['rows']['peak'][field] = value
+    with pytest.raises(ValueError, match='own peak gate'):
+        summary.match_peak_row(gate, full)

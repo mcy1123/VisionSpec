@@ -65,6 +65,26 @@ def same_head(left, right):
             raise ValueError('checkpoint identity differs across gates at ' + name)
 
 
+def same_target_and_decoder(left, right):
+    if left['config']['target'] != right['config']['target']:
+        raise ValueError('Target path differs across head gates')
+    for name in warm.ARTIFACT_FIELDS:
+        if left['protocol']['artifacts'].get(name) != right['protocol']['artifacts'].get(name):
+            raise ValueError('Target or shared decoder identity differs across gates at ' + name)
+    if left['protocol']['model_contract'] != right['protocol']['model_contract']:
+        raise ValueError('Target/draft dimensions differ across gates')
+
+
+def match_peak_row(gate, full):
+    if len(gate['rows']) != 1:
+        raise ValueError('peak gate must contain exactly one row')
+    for video, row in gate['rows'].items():
+        other = full['rows'][video]
+        for field in ('input_identity', 'ar_ids', 'ar_hit_eos', 'truncated'):
+            if row[field] != other[field]:
+                raise ValueError('full512 source differs from its own peak gate at ' + field)
+
+
 def completed_result(job, pool, frames, root, profile_path):
     path = Path(job['result']['path']).resolve()
     if path.parent != Path(job['job_dir']).resolve() or not path.is_relative_to(root / 'jobs'):
@@ -79,7 +99,8 @@ def completed_result(job, pool, frames, root, profile_path):
         raise factorial.PendingResult('incomplete source set; no partial-row comparison')
     args = factorial.options(job['argv'])
     if (Path(args['--rows']).resolve() != Path(pool['path']).resolve()
-            or Path(args['--head']).resolve() != Path(result['config']['head']).resolve()):
+            or Path(args['--head']).resolve() != Path(result['config']['head']).resolve()
+            or args['--target'] != result['config']['target']):
         raise ValueError('evaluated inputs/head differ from queue')
     for key, expected in dict(ar=True, warmup=0, dtype='float32', max_new=1024,
             budget=63, branch=8, time_mode='real', require_exact_time=True,
@@ -95,6 +116,16 @@ def build_summary(root, *, resamples=20000):
     root = Path(root).resolve()
     data = root / 'data/dev40_long_input_fixed_spatial'
     profile_path = data / 'PROCESSOR_PROFILE.json'
+    plan_path = root / 'LONG_INPUT_DEV40_PROTOCOL.json'
+    plan = READ(plan_path)
+    adoption = READ(root / 'LONG_INPUT_DEV40_ADOPTION_REQUIREMENTS.json')
+    if (warm.file_sha(plan_path) != adoption['protocol_file_sha256']
+            or warm.file_sha(root / 'FACTORIAL80_PROTOCOL.json') != plan['parent_factorial_protocol_sha256']
+            or plan['heads']['factorial']['optimizer_step'] != 80
+            or plan['heads']['factorial']['seeds'] != [20261112,20261113]
+            or plan['heads']['factorial']['arms'] != list(factorial.MODES)
+            or plan['heads']['factorial']['objectives'] != ['sft','opd']):
+        raise ValueError('frozen long-input/parent factorial protocol changed')
     ready = READ(data / 'READY.json')
     if ready['status'] != 'READY_ACTUAL80_ENCODINGS_VALIDATED':
         raise ValueError('long-input development data is not ready')
@@ -103,8 +134,20 @@ def build_summary(root, *, resamples=20000):
             raise ValueError('frozen data file changed: ' + path)
     if warm.file_sha(profile_path) != ready['processor_profile_sha256']:
         raise ValueError('processor profile changed after data validation')
+    if ready['original_dev128_files_sha256'] != adoption['original_dev_files_sha256']:
+        raise ValueError('original development identity changed at data adoption')
+    for path, digest in adoption['original_dev_files_sha256'].items():
+        if warm.file_sha(path) != digest:
+            raise ValueError('original development file changed')
+    for path, digest in [(ready['source_provenance'],ready['source_provenance_sha256']),
+            (data / 'ENCODE_VALIDATION.json',ready['encoding_validation_sha256']),
+            (data / 'PROTOCOL.json',ready['protocol_sha256'])]:
+        if warm.file_sha(path) != digest:
+            raise ValueError('long-input provenance/encoding validation/protocol changed')
     jobs = {j['id']: j for j in READ(root / 'control/scheduler/queue.json')['jobs']}
     pool128 = warm.pool_identity(root / 'data/bounded_summary_v2/dev_128.parquet', 128)
+    if pool128['sources'] != adoption['source_sha256_by_video']:
+        raise ValueError('development sources differ from frozen adoption contract')
     pools = {frames: warm.pool_identity(data / f'dev_{frames}.parquet', frames) for frames in (256, 512)}
     if any(pool['sources'] != pool128['sources'] for pool in pools.values()):
         raise ValueError('long-input sources differ from the frozen dev40')
@@ -119,17 +162,28 @@ def build_summary(root, *, resamples=20000):
             short = factorial.load_arm(jobs[short_id], pool128, arm, objective, seed, 80, root)
             gate_job = jobs[prefix + '_512f_peak1']
             gate_path = Path(factorial.options(gate_job['argv'])['--rows'])
+            expected_peak = ready['peak_sources']['512']
+            if (gate_path.resolve() != Path(expected_peak['parquet']).resolve()
+                    or warm.file_sha(gate_path) != expected_peak['parquet_sha256']):
+                raise ValueError('gate is not the frozen longest-input parquet')
             # Gate contains one predeclared longest-input source, not dev40.
             import pandas as pd
             rows = pd.read_parquet(gate_path).to_dict('records')
             if len(rows) != 1 or rows[0]['video_name'] not in pools[512]['sources']:
                 raise ValueError('peak gate is not one declared development source')
             row = rows[0]
+            if (row['video_name'] != expected_peak['source']
+                    or row['source_sha256'] != expected_peak['source_sha256']
+                    or row['cache_hash'] != pools[512]['caches'][row['video_name']]):
+                raise ValueError('gate source/cache differs from the frozen longest-input source')
             gate_pool = dict(path=str(gate_path), sha256=warm.file_sha(gate_path),
                 sources={row['video_name']: row['source_sha256']},
                 caches={row['video_name']: row['cache_hash']})
             gate = completed_result(gate_job, gate_pool, 512, root, profile_path)
             same_head(short, gate)
+            same_target_and_decoder(short, gate)
+            if gate['rows'][row['video_name']]['prompt_len'] != expected_peak['input_tokens']:
+                raise ValueError('peak gate actual input length differs from frozen encoding')
             gates[prefix] = dict(path=gate['path'], result_sha256=gate['result_sha256'],
                 process_memory=gate['protocol']['cuda_process_peak_memory'])
         except factorial.PendingResult as exc:
@@ -143,6 +197,9 @@ def build_summary(root, *, resamples=20000):
             try:
                 value = completed_result(jobs[name], pool, frames, root, profile_path)
                 same_head(short, value)
+                same_target_and_decoder(short, value)
+                if frames == 512:
+                    match_peak_row(gate, value)
                 if value['config']['evidence_mode'] != factorial.MODES[arm]:
                     raise ValueError('evaluated architecture differs from its fixed head')
                 for result_row in value['rows'].values():
@@ -196,6 +253,7 @@ def build_summary(root, *, resamples=20000):
             'Comparisons are within the same frame tier, never across changed AR inputs/outputs.',
             'Concurrent wall times are descriptive only; peak memory covers the whole eval process.',
             'Warm20 reference is scheduled but excluded from this factorial-only summary.',
+            'Target weight hashes rely on the externally verified local manifest; result files bind Target config and shared decoder source hashes.',
             'Long visual input does not imply thousand-token reasoning or independently held-out performance.'])
 
 
