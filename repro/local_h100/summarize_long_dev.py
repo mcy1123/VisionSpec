@@ -31,6 +31,8 @@ def validate_profile(value, profile_path, frames):
             or Path(config['processor_profile']).resolve() != profile_path.resolve()
             or audit['profile'] != profile or audit['actual_processor_instantiated'] is not True):
         raise ValueError('actual processor profile differs from the frozen profile')
+    if audit.get('runtime_source_sha256') != warm.file_sha(Path(__file__).with_name('processor_profile_runtime.py')):
+        raise ValueError('actual processor runtime implementation changed')
     encoded = audit['actual_encodings']
     if len(encoded) != len(value['rows']) or len({r['video'] for r in encoded}) != len(encoded):
         raise ValueError('encoding audit has missing or duplicate source videos')
@@ -83,6 +85,15 @@ def match_peak_row(gate, full):
         for field in ('input_identity', 'ar_ids', 'ar_hit_eos', 'truncated'):
             if row[field] != other[field]:
                 raise ValueError('full512 source differs from its own peak gate at ' + field)
+
+
+def match_validated_inputs(value, expected, frames):
+    for video, row in value['rows'].items():
+        validated = expected[(frames, video)]
+        if (row['input_identity'] != validated['input_identity']
+                or row['prompt_len'] != validated['input_ids_len']
+                or row['timeline']['cache_sha256'] != validated['cache_sha256']):
+            raise ValueError('evaluation differs from actual CPU-validated input: ' + video)
 
 
 def completed_result(job, pool, frames, root, profile_path):
@@ -144,6 +155,10 @@ def build_summary(root, *, resamples=20000):
             (data / 'PROTOCOL.json',ready['protocol_sha256'])]:
         if warm.file_sha(path) != digest:
             raise ValueError('long-input provenance/encoding validation/protocol changed')
+    validated_rows = READ(data / 'ENCODE_VALIDATION.json')['rows']
+    validated_inputs = {(row['n_frames'],row['video']):row for row in validated_rows}
+    if len(validated_inputs) != 80 or len(validated_rows) != 80:
+        raise ValueError('expected exactly80 unique prevalidated input conditions')
     jobs = {j['id']: j for j in READ(root / 'control/scheduler/queue.json')['jobs']}
     pool128 = warm.pool_identity(root / 'data/bounded_summary_v2/dev_128.parquet', 128)
     if pool128['sources'] != adoption['source_sha256_by_video']:
@@ -180,6 +195,7 @@ def build_summary(root, *, resamples=20000):
                 sources={row['video_name']: row['source_sha256']},
                 caches={row['video_name']: row['cache_hash']})
             gate = completed_result(gate_job, gate_pool, 512, root, profile_path)
+            match_validated_inputs(gate, validated_inputs, 512)
             same_head(short, gate)
             same_target_and_decoder(short, gate)
             if gate['rows'][row['video_name']]['prompt_len'] != expected_peak['input_tokens']:
@@ -196,6 +212,7 @@ def build_summary(root, *, resamples=20000):
             name = prefix + f'_{frames}f_full40'
             try:
                 value = completed_result(jobs[name], pool, frames, root, profile_path)
+                match_validated_inputs(value, validated_inputs, frames)
                 same_head(short, value)
                 same_target_and_decoder(short, value)
                 if frames == 512:

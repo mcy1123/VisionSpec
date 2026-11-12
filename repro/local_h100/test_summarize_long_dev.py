@@ -20,6 +20,7 @@ def encoding(tmp_path):
         processor_profile_sha256=digest, processor_size=profile['video_size'])
     value = dict(config=dict(processor_profile=str(path), processor_profile_sha256=digest),
         protocol=dict(processor_profile=dict(sha256=digest, profile=profile,
+            runtime_source_sha256=summary.warm.file_sha(Path(summary.__file__).with_name('processor_profile_runtime.py')),
             actual_processor_instantiated=True, actual_encodings=[audit]),
             cuda_process_peak_memory=dict(status='COLLECTED',
                 max_memory_allocated_bytes=100, max_memory_reserved_bytes=110)),
@@ -87,3 +88,13 @@ def test_full512_must_match_its_own_peak_input_and_ar(field, value):
     full['rows']['peak'][field] = value
     with pytest.raises(ValueError, match='own peak gate'):
         summary.match_peak_row(gate, full)
+
+
+def test_same_shape_different_pixels_cannot_replace_validated_input():
+    expected = {(512,'v'):dict(input_identity={'pixels':'a'},input_ids_len=24010,cache_sha256='c')}
+    actual = dict(rows={'v':dict(input_identity={'pixels':'a'},prompt_len=24010,
+        timeline={'cache_sha256':'c'})})
+    summary.match_validated_inputs(actual,expected,512)
+    actual['rows']['v']['input_identity']['pixels'] = 'b'
+    with pytest.raises(ValueError, match='CPU-validated input'):
+        summary.match_validated_inputs(actual,expected,512)
