@@ -1,5 +1,11 @@
 # GLANCE 当前交接
 
+## 2026-11-13 用户授权训练结束后的空闲占卡
+
+用户明确要求检查并启动 `/czsun/mcy/code-l` 的占卡程序，避免训练结束后空卡。原程序 `/czsun/mcy/code-l/gpu.py` 未运行，现已用tmux `visionspec-idle-fallback` 启动等待器 `repro/local_h100/idle_fallback_after_queue.py`。仅当当前scheduler所有任务均SUCCEEDED/FAILED/BLOCKED、队列有效后，运行原程序的 `--wait-idle --idle-seconds 60 --no-fill-vram`；GPU UUID顺序按NVML物理索引显式对齐。当前排队期间不占卡，避免run_job拒绝外部CUDA进程。此为用户明确新增的空闲负载授权，覆盖此前“不用空算占卡”的限制，仅适用于本等待器。状态/日志位于run的 `control/idle_fallback/`，创建其 `STOP` 可退出。
+
+以后增加新训练前，先设置该STOP并确认fallback所有子进程退出，再入队；后台虽检测新队列会退出，但不能用轮询保证无启动竞争。不得把占卡利用率当训练利用率或科研产出。不修改外部gpu.py，不影响其它watchdog或用户进程。
+
 ## 2026-11-13 夜间任务：用户明确授权排队训练
 
 用户要求“一晚上不断去训练”“把任务都安排上，不要做太多验证”，并重申不要大量保存checkpoint。已追加54个有限任务至现有tmux scheduler，协议 `/czsun/mcy/video_opd_pilot/local_h100_20261112/overnight_timeline_20261113/PROTOCOL.json`。复用 `data/full` 的80 train/40 dev和旧事件时间线prompt，真实128帧、max_new1024、fp32 Target、b63/k8、逐token独立AR门禁。数据split为本机seed20261112，旧成熟head不可用，不声称逐项复现。
