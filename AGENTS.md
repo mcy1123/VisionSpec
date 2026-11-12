@@ -1,5 +1,11 @@
 # GLANCE 当前交接
 
+## 2026-11-13 首夜已结束（07:42 北京时间检查）
+
+夜间54任务46成功、8失败，738更新训练预算已执行完毕。128帧warm τ7.0384；A/B/C/D的λ10分别7.5257/7.5606/7.5571/7.5587，warm加八臂共360/360逐token无损；各架构λ10优于λ0，但C/D相对B区间跨零。全部128输出到1024上限、无自然EOS。64帧八臂均39/40无损，同视频vgWlRdNOGx4在索引65处分叉，必须保留FAILED；未重试、不能作为无损加速正证据。详见既有实验报告11.7与run的overnight_timeline_20261113/DONE.json。当前没有本夜剩余训练预算。
+
+占卡等待器曾因状态文件短暂读取失败而退出；已归档原日志，增加有限读取重试并按既有授权重新启动。八卡占卡负载不计为训练进度；新增科研任务前仍须先STOP等待器并确认子进程退出。
+
 ## 2026-11-13 用户授权训练结束后的空闲占卡
 
 用户明确要求检查并启动 `/czsun/mcy/code-l` 的占卡程序，避免训练结束后空卡。原程序 `/czsun/mcy/code-l/gpu.py` 未运行，现已用tmux `visionspec-idle-fallback` 启动等待器 `repro/local_h100/idle_fallback_after_queue.py`。仅当当前scheduler所有任务均SUCCEEDED/FAILED/BLOCKED、队列有效后，运行原程序的 `--wait-idle --idle-seconds 60 --no-fill-vram`；GPU UUID顺序按NVML物理索引显式对齐。当前排队期间不占卡，避免run_job拒绝外部CUDA进程。此为用户明确新增的空闲负载授权，覆盖此前“不用空算占卡”的限制，仅适用于本等待器。状态/日志位于run的 `control/idle_fallback/`，创建其 `STOP` 可退出。

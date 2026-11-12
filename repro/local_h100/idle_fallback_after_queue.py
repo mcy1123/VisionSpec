@@ -39,12 +39,22 @@ def main():
     cmd=['/opt/conda/bin/python','-u','/czsun/mcy/code-l/gpu.py','--gpus','all','--wait-idle','--idle-seconds','60','--no-fill-vram','--check-interval','1']
     child=subprocess.Popen(cmd,env=env,start_new_session=True)
     status(dict(status='IDLE_FALLBACK_ACTIVE',pid=child.pid,argv=cmd,gpu_uuid_order=[u for i,u in devices]))
+    read_errors = 0
     try:
         while child.poll() is None:
             if (CONTROL/'STOP').exists():break
             # New queue additions revoke fallback. No automatic relaunch/retry.
-            q=json.loads((ROOT/'control/scheduler/queue.json').read_text())
-            s=json.loads((ROOT/'control/scheduler/STATE.json').read_text())
+            try:
+                q=json.loads((ROOT/'control/scheduler/queue.json').read_text())
+                s=json.loads((ROOT/'control/scheduler/STATE.json').read_text())
+                read_errors = 0
+            except (OSError, ValueError) as exc:
+                read_errors += 1
+                status(dict(status='STATE_READ_RETRY', pid=child.pid, error=str(exc), consecutive_errors=read_errors))
+                if read_errors >= 5:
+                    break  # Release our load if scheduler state stays unknown.
+                time.sleep(1)
+                continue
             if not s.get('queue_valid') or any(s['jobs'].get(j['id'],{}).get('status') not in TERMINAL for j in q['jobs']):break
             time.sleep(1)
     finally:
