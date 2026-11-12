@@ -242,3 +242,15 @@ A_plain 本来就可从融合 Target 特征读到视觉位置；B_text 的文本
 排程审计发现 `mature_warm80_*` 与正式同 seed A_plain SFT 的配置完全相同，仅输出目录及 GPU 不同。它们是误排的重复运行，不能计作额外强基线或独立证据；原产物完整保留，正式 factorial 汇总仅使用正式 ID。两者并非逐位相同，数值差异另行审计，不声明训练逐位可复现。更正记录见 `DECISIONS.jsonl` 和 `analysis/mature_factorial_duplicate_config_audit.json`。
 
 独立的 packed OPD scoring 候选仅完成 CPU 证明及回归，没有接入当前 12 臂。bf16 梯度分组会改变数值，不能声称更新等价；启用前还需要单独的 CUDA 数值与显存检查。主结果仍等待完整配对评测，不预判视觉读出或 OPD 协同有效。
+
+### 11.1 扩大训练前的决策窗口（11:32 UTC 截面）
+
+用户于 10:59 UTC 要求尽量两小时内给出扩大训练的准确结论；目标时间为 12:59 UTC，持续监控仍未解除。执行记录为 `DECISION_WINDOW_20261112.json`，不是所有后续评测都必须在该时间前完成的保证。
+
+截至本截面，正式 A/B 两种 SFT 的 step80、两 seed 共 160 次生成全部自然 EOS、逐 token 无损。每视频有效 token/轮分别为 A=2.924449/2.922614，B=2.980026/2.966488；B−A 为 +0.055577、95% CI [0.039416,0.072776]，以及 +0.043874、CI [0.025077,0.062925]。这支持额外读出能力，尚不支持视觉专用收益或 OPD 协同。C 及 OPD 的完整配对结果仍待完成，权威汇总为 `analysis/factorial80_summary.json`；只纳入完整 dev40，不用先完成的行替代全集。
+
+同一 40 个 dev 视频的 256/512 帧数据已完成 80 次实际 CPU 编码，原始像素、真实源帧索引和 PTS 严格嵌套。实际输入分别 12,034–12,065、24,010–24,072 token，视觉 token 为 10,752、21,504。`LONG_INPUT_DEV40_PROTOCOL.json` 固定十二个 step80 头和共同 warm20，逐头最长输入门禁后做完整 dev40；预算 13 个单源门禁、26 个完整条件，共 1,053 对 AR/SPEC，零训练更新。优先 512 帧 C/B，256 帧为次要条件。`summarize_long_dev.py` 同时绑定固定最长源、自身门禁、原始与长输入来源 SHA、预先实际编码的 tensor SHA、Target/decoder/Head 身份和完整配对 AR 输出。不同帧数之间不假设相同 teacher 输出。
+
+恢复审计发现，原 SFT pilot 只有推理权重，原 OPD 虽有 master/Adam 但缺完整 RNG；两者都不能冒充完整断点续训。新隔离入口 `train_video_sft_long.py`、`train_video_opd_long.py` 保留原训练数学，保存完整 Head/master/Adam/Python/NumPy/torch/CUDA RNG、绝对日程游标及严格模型/数据/源码身份，每段写新目录。40 项 CPU 数学与恢复检查通过，真实数据预检不初始化 CUDA。GPU 验证由 `LONG_RESUME_GPU_GATE_PROTOCOL.json` 固定：SFT C 和 OPD C 各从正式 step80 权重新开诊断，连续两步保存 step1/2，再新进程从 step1 恢复只做第二步；共六次实际更新、24 QA，另八对部署 AR/SPEC。恢复后、下一更新前必须零容差回读全部状态；第二步的跨进程数值一致性单独量化，不事后放宽容差，不从 CPU 成功推断 CUDA 逐位等价。此截面 GPU 门禁已入队，尚未完成。
+
+数据扩容也有独立边界：现有 900 源按原 45–600 秒资格并排除 dev40/holdout80 后，最多只有 347 个整段训练源，当前 320 仅能再加 27。另有 399 个未用长源，可按四个等分区间各取一个 151–300 秒真实窗口，理论合计 1,943 个训练样本、746 个独立源。`build_window_probe.py` 已在固定四源的 16 个窗口上完成 32 次训练/评测编码一致性检查，保持源时间轴，每窗 128 独立帧，同源四窗不交；缓存约 0.259 GiB。该小样未使用 dev/holdout，16 窗仍只有四个独立源；全量窗口尚未构建，teacher 输出检查单独入队，不把理论规模写成已就绪。证据见 `analysis/scale_training_feasibility.json`、`analysis/scale_window_expansion_feasibility.json`、`analysis/MULTIWINDOW_PROBE_DELIVERY.json`。
