@@ -292,3 +292,15 @@ A_plain 本来就可从融合 Target 特征读到视觉位置；B_text 的文本
 另外，[旧 VideoDetailCaption 结果](2026-10-26-video-caption-opd.md)为 warm 3.7266→OPD3e 3.7841（+0.0575），且同 lr/步数的 SFT 退化，OPD−SFT=+0.3844；这与本轮 SFT 更强的结果确实方向不同，但数据、起点、SFT 训练实现和预算并未保持一致。[11月11日整理](2026-11-11-consolidated-video-token-multimodal.md)中 3.8796/3.8740 及 3.9046 的高 token 正结果，输入只有 16 个独立帧复制至 128 帧，亦不能等同本机真实 128 帧长视频。
 
 下一项更有判别力的比较应在本机固定当前起点、视频与 prompt、训练日程和部署协议，给原结构及匹配 B/C 分别补 λ10 与已有 λ0 的同预算对照；先区分辅助目标收益和新增视觉结构收益，再决定是否扩大数据及训练。当前没有由本次历史核查启动任何新训练，也未恢复持续监控。
+
+### 11.4 用户授权的 λ10 同条件补充（13:05 UTC 已入队）
+
+用户随后明确同意补齐 λ10。分支核对：本机仍在 `run/local-h100-fresh-20261112`，fetch 后历史视觉 OPD、真实视频夜间和视觉读出三个远端分支都已是当前 HEAD 的祖先；历史 `runtime.score` 的 λ10 数值计算也已存在，相关 diff 仅含目标名称/边界的注释澄清。此前 λ0-only 架构筛查不等于复现旧最佳辅助目标，本次补齐这一缺项，不切换运行中工作树。
+
+`LAMBDA10_PROTOCOL.json` 固定 A_plain/B_text/C_visual × seed20261112/20261113 六臂，各80连续更新、4 QA/update。逐臂直接复制原 λ0 CLI，只替换输出目录和 `--e2e-tv-weight 10`；初始权重、320源 train、两份完整 shuffle schedule、三段摘要 prompt、原 trainer/scorer、lr1e-5、fp32 Target/master 与 bf16 原 Head、fp32 readout 及同一物理 UUID 都保持一致。每臂 fresh Adam，不能从 λ0 step80 或门禁训练结果接着跑。六个真实数据 CPU dry-run 已通过全协议比较：去除各自协议摘要后，唯一差异为 `config.e2e_tv_weight=10`。没有分配 GPU 或生成模型输出来完成预检。
+
+正式预算480次更新；三架构最长输入重复两个 update 的 full-Adam 门禁另计6次，共486次真实更新、1944 QA。门禁各配dev2，正式各配完整dev40，另每头512帧最长源门禁及256/512帧完整dev40，共732对部署 AR/SPEC；零容差无损，失败停止依赖链，不自动重试。保存20/40/60/80；为尽快回答本问题，主统计固定step80，不追加中间点评测。约27份新 fullstate 的空间已按现有真实 checkpoint 大小及额外150GiB余量核对，未删除历史产物。
+
+队列新增37个有限任务，先三架构peak2和独立AR门禁，再六臂正式训练和128帧dev40，随后长输入；尚未完成的旧 C/B λ0 长输入主要对照保留优先级，已启动任务定义不变。`repro/local_h100/prepare_lambda10.py` 负责原子采纳、CPU预检及预算约束，`summarize_lambda10.py` 对完整40源、实际输入SHA、独立AR、checkpoint identity及新旧训练协议进行严格核验，并在六个正式dev40全部完成后生成 `analysis/lambda10_summary.json`。同时给出每seed λ10−λ0、λ10−SFT、λ10内C−B，以及 `(C10−B10)−(C0−B0)`；不把两seed当80源，不把开发集复用和并发墙钟写成独立确认或正式速度证据。
+
+CPU验证覆盖真实 A/B/C forward 的 full-vocabulary softmax→截取top8→overlap→prefix-product 公式、loss/梯度、原GPU-memory/boundary入口组合，以及拒绝额外更改起点/日程/源码/预算的统计契约。该补充保留原 global_pooled 的基础分母，辅助项只加到 numerator，不能用 Pool 的辅助增广 denominator 偷换归一化。本机任务仍是自然三段摘要；此次对照若为正，只证明旧辅助目标可迁移到这个新任务，不能宣称旧服务器 checkpoint 或千token完整报告已经复现。持续监控维持关闭。

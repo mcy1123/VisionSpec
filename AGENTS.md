@@ -1,5 +1,11 @@
 # GLANCE 当前交接
 
+## 2026-11-12 13:05 UTC 用户授权补齐 λ10
+
+用户明确要求“对，补上吧，你是不是分支搞错了，你现在是哪个分支”。当前仍为 `run/local-h100-fresh-20261112`；fetch 后确认包含 `origin/exp/visual-opd@06ca7a7`、`origin/run/real-video-20261111@2d39df7`、`origin/feat/temporal-evidence-readout@1aa387c` 和 `origin/fix/visual-opd-long-video-protocol@ab6e2fa`。此前缺少的是实际参数中的 λ10 对照，历史辅助项代码已在当前分支。
+
+新增有限授权及队列见本机 run 的 `LAMBDA10_PROTOCOL.json`：A/B/C × 两 seed，各从与原 λ0 相同的初始化 fresh Adam 训练80步，唯一改变 `e2e_tv_weight:0→10`；正式480次更新，另三架构各2步门禁，共486次真实更新、1944 QA。六个真实数据 dry-run 已逐字段证明训练协议仅 λ 不同，禁止 CUDA 初始化的预检通过。沿用原 pilot 入口/数值数学以保持可比，不从 λ0 step80 或 smoke 继续，不冒充旧 checkpoint 的完整 resume。保存20/40/60/80，完整dev40及真实256/512帧部署门禁；全部新增评测732对 AR/SPEC。协议和37个新增有限任务已入队，先架构 full-Adam peak2+dev2 门禁，失败不重试/不加预算，已有任务定义及产物不变。后台 tmux scheduler 继续；下文监控解除仍然有效，不恢复遥测或持续人工监控。
+
 ## 2026-11-12 11:34 UTC 用户解除持续监控
 
 用户明确要求“别监控了，你预计一下结果啥时候出来”。已设置本机 run 的 `control/STOP_MONITOR`，结束人工及遥测持续监控；已有 tmux 调度、有限训练与评测队列继续，未设置 STOP_TRAIN/STOP_SCHEDULER，不追加大训练。此条覆盖下文持续监控要求。最新冻结预算另含长输入 1,053 对 AR/SPEC，以及完整恢复诊断六次实际更新、八对部署 AR/SPEC；详见 run 内 `LONG_INPUT_DEV40_PROTOCOL.json`、`LONG_RESUME_GPU_GATE_PROTOCOL.json`。后续进度仍读取 scheduler `STATE.json`；GPU_STATUS 已停止刷新，不能当实时状态。
