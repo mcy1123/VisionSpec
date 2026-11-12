@@ -254,3 +254,19 @@ A_plain 本来就可从融合 Target 特征读到视觉位置；B_text 的文本
 恢复审计发现，原 SFT pilot 只有推理权重，原 OPD 虽有 master/Adam 但缺完整 RNG；两者都不能冒充完整断点续训。新隔离入口 `train_video_sft_long.py`、`train_video_opd_long.py` 保留原训练数学，保存完整 Head/master/Adam/Python/NumPy/torch/CUDA RNG、绝对日程游标及严格模型/数据/源码身份，每段写新目录。40 项 CPU 数学与恢复检查通过，真实数据预检不初始化 CUDA。GPU 验证由 `LONG_RESUME_GPU_GATE_PROTOCOL.json` 固定：SFT C 和 OPD C 各从正式 step80 权重新开诊断，连续两步保存 step1/2，再新进程从 step1 恢复只做第二步；共六次实际更新、24 QA，另八对部署 AR/SPEC。恢复后、下一更新前必须零容差回读全部状态；第二步的跨进程数值一致性单独量化，不事后放宽容差，不从 CPU 成功推断 CUDA 逐位等价。此截面 GPU 门禁已入队，尚未完成。
 
 数据扩容也有独立边界：现有 900 源按原 45–600 秒资格并排除 dev40/holdout80 后，最多只有 347 个整段训练源，当前 320 仅能再加 27。另有 399 个未用长源，可按四个等分区间各取一个 151–300 秒真实窗口，理论合计 1,943 个训练样本、746 个独立源。`build_window_probe.py` 已在固定四源的 16 个窗口上完成 32 次训练/评测编码一致性检查，保持源时间轴，每窗 128 独立帧，同源四窗不交；缓存约 0.259 GiB。该小样未使用 dev/holdout，16 窗仍只有四个独立源；全量窗口尚未构建，teacher 输出检查单独入队，不把理论规模写成已就绪。证据见 `analysis/scale_training_feasibility.json`、`analysis/scale_window_expansion_feasibility.json`、`analysis/MULTIWINDOW_PROBE_DELIVERY.json`。
+
+### 11.2 一次性结果检查（12:43–12:46 UTC）
+
+用户要求停止持续监控后再次发起一次检查。未恢复遥测，也未启动大规模训练。十二臂各 80 次更新及其最终 dev40 已全部完成：480 次 SPEC 均逐 token 等于独立 AR，全部自然 EOS。以下为每视频有效 token/轮的均值，两个 seed 使用同一批 40 个开发源，不能视作 80 个独立源。
+
+| 架构 | SFT seed12 | SFT seed13 | OPD seed12 | OPD seed13 |
+|---|---:|---:|---:|---:|
+| A_plain | 2.924449 | 2.922614 | 2.878231 | 2.882840 |
+| B_text | 2.980026 | 2.966488 | 2.920861 | 2.927028 |
+| C_visual | 2.975184 | 2.960712 | 2.929128 | 2.932589 |
+
+相对同容量 B，视觉读出在 SFT 的差为 −0.004843/−0.005775，在 OPD 的差为 +0.008268/+0.005562；OPD 第一个 seed 的 C−B 区间跨零，第二个为 [0.000340,0.011389]。交互 `(C_OPD−B_OPD)−(C_SFT−B_SFT)` 为 +0.013110/+0.011337，两个探索性区间都在零以上，但绝对量很小，且 C_OPD 仍低于 C_SFT：差 −0.046055、CI [−0.080969,−0.010081]；以及 −0.028123、CI [−0.059281,+0.003034]。因此现阶段支持“额外读出容量有用，有很弱的视觉/目标交互信号”，不足以支持直接扩大当前视觉 OPD 配方。原假设尚待长输入完整配对，不能把这些接受效率差写成墙钟加速。权威证据为 `analysis/factorial80_summary.json` 和 `analysis/factorial80_objective_contrasts.json`，开发集复用及未做多重比较校正的边界不变。
+
+恢复诊断的六次实际更新已完成，SFT 和 OPD 的 `RESTORE_AUDIT.json` 均为 `EXACT_RESTORE_VERIFIED`，在下一次更新前确认完整 Head/master/Adam/RNG 零容差载入；四个 step2 checkpoint 的 dev2 合计八次部署检查全部无损。连续/恢复第二步的细粒度比较另行生成，完整加载成功本身不等于跨进程更新逐位一致。窗口小样的 16 条 teacher 也全部自然 EOS、零截断，平均 245.125 token；仍只有四个独立视频源。
+
+本次发现长输入 OPD 队列有一处 prerequisite 路径错误：该 pilot 把训练协议存于 `run/PROTOCOL.json`，排程误等待不存在的 `step80/TRAINING_PROTOCOL.json`，造成物理 0/6/7 空闲。已逐头核实 checkpoint identity 的协议 SHA 与实际文件一致，只替换 18 个尚未派发任务的只读输入路径；未改已启动定义、评测数学、数据或训练预算。三条相应最长输入门禁已开始，失败记录中的一项首 anchor 历史错误及其两条 BLOCKED 保持原样，未出现新的 GPU 失败。预计关键长输入 OPD 完整对照仍需约 60–90 分钟，不从已完成的 SFT 小子集推断 OPD 的长输入收益。
