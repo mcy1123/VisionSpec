@@ -1,4 +1,19 @@
-# GLANCE 当前交接（2026-10-19）
+# GLANCE 当前交接
+
+## 2026-11-12 本机 H100 独立重建与持续监控
+
+用户已明确授权在当前服务器从公共模型重新训练，使用八张 H100 执行实际实验，要求利用率至少 50%，并持续监控直到用户明确解除。本节覆盖下文旧服务器的已耗尽预算及“不持续监控”状态；每个新任务仍须记录明确预算，不盲目重试失败任务，不用空算占卡。加载、保存和 CPU 处理会出现低谷，必须如实报告，不能声称始终满足利用率要求。
+
+- 本机代码 `/czsun/mcy/VisionSpec` 是 Git 工作树，当前分支 `run/local-h100-fresh-20261112`；Python `/czsun/mcy/envs/visionspec/bin/python`。用户已指定本机模型和数据放 `/czsun/mcy`，下文 `/home/mcy`、`/mnt/local*` 属旧服务器，不能用于本机路径推断。
+- 本机 run：`/czsun/mcy/video_opd_pilot/local_h100_20261112`。模型为经官方 SHA 核验的 Qwen3-VL-8B-Instruct 与公共 Qwen3-8B-DFlash-b16；没有使用另一服务器的训练 checkpoint。“从零”指本机重新适配公共预训练草稿，不是随机初始化。
+- 使用 GPU UUID 与 `CUDA_DEVICE_ORDER=PCI_BUS_ID`。tmux `visionspec-monitor` 每 5 秒记录，`visionspec-scheduler` 调度显式有限任务。实时状态以 `control/GPU_STATUS.json`、`control/scheduler/STATE.json` 为准，不能把本文时间截面的进度当实时结果。队列不允许修改已启动定义；失败及 BLOCKED 不自动重试。
+- 正在执行 128 帧、320 train / 40 dev 的 A_plain/B_text/C_visual × SFT/OPD × 两 seed，每臂 80 连续更新、4 QA/update、fresh GPU fp32-master Adam、lr1e-5。全部共用本机 warm20，B/C 新增参数匹配、显式时间编码置零并冻结。主比较是 C−B 及其 SFT/OPD 交互；generic OPD λ0 尚无视觉条件损失加权。协议 `FACTORIAL80_PROTOCOL.json`，小型审计在 `analysis/`。
+- 80 个后续 holdout 仅冻结来源，未生成/评测。当前 bounded summary 自然输出约 215–233 token，不能写成千 token 长推理。旧自由生成的重复尾部及高 τ 属诊断，不能混入当前结果。已有 512 帧、24,071 输入 token / 21,504 视觉 token 的单视频独立 AR/SPEC 无损门禁，不构成长输入方法有效性的统计证据。
+- `mature_warm80_*` 与同 seed `factorial80_*_A_plain_sft_*` 是误排的重复配置，不是额外强基线或独立 seed。原始结果保留，正式统计只用 factorial ID；差异及解释更正在 `analysis/mature_factorial_duplicate_config_audit.json` 与 `DECISIONS.jsonl`。
+- 部署仍必须 fp32、逐 token SPEC=独立 AR。并发运行的墙钟数据只作描述性诊断。现有 12 臂不切换实验性的 packed OPD scorer；该候选仅完成 CPU 检查，bf16 更新数值会变化，尚未获 CUDA 数值/显存验证。
+- 本机执行说明追加到[视觉读出实验计划](docs/reports/2026-11-12-temporal-evidence-architecture-plan.md)。不删除既有 checkpoint、原始结果或其它用户进程；下文其余方法契约仍适用。
+
+## 2026-10-19 及后续旧服务器交接
 
 本文件只记录当前有效状态与工作规则。整理前全文见[本次归档](docs/archive/AGENTS-before-cleanup-20261019_135449.md)，切换前交接见[历史 AGENTS](docs/archive/AGENTS-before-pure-default-20261019.md)。历史文档中的“默认 serial”“尚未启动”“正在运行”和旧授权均是当时状态，不是当前指令；完整结果从[报告索引](docs/reports/README.md)查阅。
 

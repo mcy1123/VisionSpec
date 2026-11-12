@@ -213,3 +213,32 @@ bash scripts/run_temporal_evidence_pilot.sh。
 不要把权重、帧cache或memory bank推入Git。最终说明支持哪条架构结论、哪些证据
 不足，不能因为C>A就直接宣称架构与OPD的特有协同。
 ```
+
+## 11. 本机八卡 H100 独立重建（2026-11-12，进行中）
+
+本节是用户授权的另一次本机实验，不能与上述另一服务器的三臂 60 步方案或旧长生成结果合并。原始 run 为 `/czsun/mcy/video_opd_pilot/local_h100_20261112`；实时进度读取其中 `control/scheduler/STATE.json`。用户要求持续使用八卡执行实际任务、监控到明确解除；5 秒 telemetry 和 tmux 调度已启用。加载与 checkpoint 保存会出现低于 50% 的短暂低谷，尚不能保证每个采样时刻达标。
+
+本机使用官方 SHA 核验的 Qwen3-VL-8B-Instruct 和公共 Qwen3-8B-DFlash-b16 重新适配，未复制另一台服务器的训练 head。Video-MME 来源已扩到 320 train、40 dev；另外 80 holdout 只冻结来源、未做生成。64/128 帧的 640 条 teacher 均自然 EOS、零截断，平均输出分别 214.52/214.73 token。稳定三段摘要任务用于排除重复尾部污染，不能被描述为千 token 长推理任务；早先自由 prompt 的高 τ 只保留作诊断。
+
+当前主实验 `FACTORIAL80_PROTOCOL.json` 固定：
+
+| 项目 | 本机执行 |
+|---|---|
+| 架构 | A_plain 原草稿；B_text 同容量文本位置读出；C_visual 视觉位置读出 |
+| 初始化 | 共同本机 warm20；B/C 新增权重逐 tensor 一致、旧 58 个 tensor 保留 |
+| 训练 | SFT/OPD × seed20261112/20261113，共 12 臂；每臂 80 连续更新 × 4 QA，320 源各一次 |
+| 精度与优化器 | fp32 Target、bf16 原 Head、fp32 readout、GPU fp32 master/Adam，lr1e-5；fresh optimizer |
+| 新增路径 | dim256、memory128、spatial_bins2；显式 time weight 置零并冻结 |
+| OPD | 原 Bernoulli forward-KL + rejected k3，global_pooled，λ0；尚未加入视觉条件加权 |
+| 评测 | step20/40/80，各完整 dev40，fp32、b63k8、独立 AR 逐 token 无损、自然 EOS |
+| 主要比较 | 每 seed 的 C−B，以及 (C_OPD−B_OPD)−(C_SFT−B_SFT)；不把两 seed 当 n=80 |
+
+A_plain 本来就可从融合 Target 特征读到视觉位置；B_text 的文本位置也已受 Target 多模态上下文影响，不能称为“完全无视觉”对照。新增容量的匹配、精度、独立输出门禁、真实输入 SHA 和完整开发集身份由单独审计检查。并发墙钟只能作描述性数据，接受率增益不能直接写成端到端加速。
+
+本机修复了 visual OPD 首个 scoring anchor 的边界：`prompt_len-1` 已包含全部视觉位置，缺少的只是最后一个已知文本 root。新包装器仅接受视觉位置全部已知的这个特例，保持完整请求身份，不补未来特征，不更改 anchor/loss。旧失败 run 保留；新入口两次完整 Adam-state 峰值探针及 dev2 严格无损通过后才进入主实验。
+
+工程上另做固定空间分辨率的嵌套 256/512 帧输入：真实视觉 token 为 10,752/21,504，最长 train 探针实际输入为 12,064/24,071。公共草稿和 warm20 的四次单视频 AR/SPEC 门禁均通过，512 帧峰值 allocated/reserved 约 62.30/63.25 GiB。这只说明本机单卡能运行该长输入协议；默认 processor 会随帧数降低空间分辨率，因此固定像素预算写入独立 `PROCESSOR_PROFILE.json` 并核对实际 grid 和编码 SHA。
+
+排程审计发现 `mature_warm80_*` 与正式同 seed A_plain SFT 的配置完全相同，仅输出目录及 GPU 不同。它们是误排的重复运行，不能计作额外强基线或独立证据；原产物完整保留，正式 factorial 汇总仅使用正式 ID。两者并非逐位相同，数值差异另行审计，不声明训练逐位可复现。更正记录见 `DECISIONS.jsonl` 和 `analysis/mature_factorial_duplicate_config_audit.json`。
+
+独立的 packed OPD scoring 候选仅完成 CPU 证明及回归，没有接入当前 12 臂。bf16 梯度分组会改变数值，不能声称更新等价；启用前还需要单独的 CUDA 数值与显存检查。主结果仍等待完整配对评测，不预判视觉读出或 OPD 协同有效。
