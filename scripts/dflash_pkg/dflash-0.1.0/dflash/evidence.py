@@ -142,8 +142,15 @@ class EvidenceReadout(nn.Module):
 
     def _visual(self, source, prefix_len):
         request = self.request
-        if prefix_len + source.shape[1] < len(request["prompt_visual_mask"]):
-            raise ValueError("visual evidence cannot precede the complete known prompt")
+        prompt_mask = request["prompt_visual_mask"]
+        # Training scores the first block just before the final prompt root is
+        # committed, so source can be one (or a few text) rows shorter than the
+        # full prompt. That is safe only when every visual position is already
+        # present; otherwise evidence would be silently truncated.
+        if prefix_len + source.shape[1] < len(prompt_mask):
+            covered = min(prefix_len + source.shape[1], len(prompt_mask))
+            if bool(prompt_mask[covered:].any()):
+                raise ValueError("visual evidence cannot precede the complete known prompt (missing visual rows)")
         prepared = request.get("prepared_visual")
         if prepared is not None:
             if prepared.get("identity") != request["identity"] or prepared.get("config") != self._config_key():
@@ -156,8 +163,11 @@ class EvidenceReadout(nn.Module):
             self._stats["visual_prepare_hits"] += 1
         else:
             mask = request["prompt_visual_mask"].to(source.device)
-            if prefix_len != 0 or source.shape[1] < len(mask):
-                raise ValueError("first visual evidence call must include the complete prompt")
+            n_known = min(prefix_len + source.shape[1], len(mask))
+            if prefix_len != 0:
+                raise ValueError("first visual evidence call must start at stream position zero")
+            if bool(mask[n_known:].any()):
+                raise ValueError("first visual evidence call must include the complete known prompt (missing visual rows)")
             t, h, w = request["grid_thw"]
             merge = request["spatial_merge_size"]
             h, w = h // merge, w // merge
@@ -165,7 +175,7 @@ class EvidenceReadout(nn.Module):
             if by * bx > self.max_tokens:
                 raise ValueError("evidence_max_tokens is smaller than one spatial group")
             groups = min(t, self.max_tokens // (by * bx))
-            visual = source[0, :len(mask)][mask].float().reshape(t, h, w, self.hidden_size)
+            visual = source[0, :n_known][mask[:n_known]].float().reshape(t, h, w, self.hidden_size)
             features = F.adaptive_avg_pool3d(visual.permute(3, 0, 1, 2)[None],
                                              (groups, by, bx))[0].permute(1, 2, 3, 0).reshape(-1, self.hidden_size)
             group_times = F.adaptive_avg_pool1d(request["time_values"].to(source.device).float()[None, None], groups)[0, 0]
