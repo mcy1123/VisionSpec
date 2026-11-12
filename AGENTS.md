@@ -1,5 +1,13 @@
 # GLANCE 当前交接
 
+## 2026-11-13 夜间任务：用户明确授权排队训练
+
+用户要求“一晚上不断去训练”“把任务都安排上，不要做太多验证”，并重申不要大量保存checkpoint。已追加54个有限任务至现有tmux scheduler，协议 `/czsun/mcy/video_opd_pilot/local_h100_20261112/overnight_timeline_20261113/PROTOCOL.json`。复用 `data/full` 的80 train/40 dev和旧事件时间线prompt，真实128帧、max_new1024、fp32 Target、b63/k8、逐token独立AR门禁。数据split为本机seed20261112，旧成熟head不可用，不声称逐项复现。
+
+公共DFlash先做SFT80作为共同起点；A原结构、B同容量文本读出、C视觉spatial_bins2、D视觉spatial_bins1，分别OPD λ0/10各80更新，共八臂，seed20261113。C/D均time_encoding off，D不是新的时间编码架构。共738更新（warm80、正式640、必要gate18），2952 QA。门禁失败仅阻断依赖分支，不自动重试或扩大预算；未上线新视觉加权损失。各头完整128/64帧dev40，单seed开发筛选，不动holdout。
+
+每训练任务save_every=updates，只存终点；warm及八臂终点保留，门禁二进制由配套reporter在对应评测成功后按审计流程退休。SFT为weights-only，OPD保留最终fullstate但不承诺精确resume；不为省空间改运行中训练数学。预计正式checkpoint约130GiB量级，另初始化约8GiB，禁用频繁中间点。tmux `visionspec-overnight-report` 每分钟收集已有结果/清理gate，最长14小时，不读GPU遥测；训练由有限队列自然结束，14小时仅是reporter上限。未恢复人工持续监控。首夜完成架构×λ筛选；第二seed与新多模态loss仍属于后续阶段，未冒充已经运行。
+
 ## 2026-11-12 用户授权清理 checkpoint 与稀疏保存
 
 用户明确要求“保存的太多了，清理一些，以及不要这么频繁地保存”。本条覆盖下文禁止删除历史 checkpoint 的规则，但仅限本次 run 经依赖检查确认可退休的中间/诊断二进制；不得删除日志、评测 JSON、曲线或协议。未来训练默认只保存最终/分段终点（显式 `--save-every` 取该任务完整更新预算），只有实际中间评测或恢复需要才额外保存。不得沿用本轮每20步保存为未来默认。

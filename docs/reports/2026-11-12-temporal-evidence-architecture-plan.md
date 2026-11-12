@@ -312,3 +312,11 @@ CPU验证覆盖真实 A/B/C forward 的 full-vocabulary softmax→截取top8→o
 清理工具 `repro/local_h100/checkpoint_retention.py` 只删除已发布、已确认无用途保存点中的两种大二进制；检查队列版本、文件身份和路径，删除前归档原JSON并记录清单。所有原日志、评测JSON、曲线、协议保留；已退休点的原SHA仅为历史身份记录，不能继续推理或恢复。保留全部正式step80、实际排队引用、公共初始化、λ10每臂最新发布点及两份指定完整恢复step1。六项CPU测试覆盖依赖保护、最新点、dry-run与幂等、队列/文件变动拒绝和未知/未完成/软链接保护，均通过。
 
 未来训练默认只保存最终或分段终点，显式设置 `--save-every` 等于完整更新预算，需要额外中间评测或恢复时才另定。已运行六臂的save_every20已在进程内冻结；不修改运行中源码/CLI、不重启配对轨迹，由有限tmux自动回收后续不再引用的中间点。该文件回收任务在六臂和原中间点评测结束时退出，最长12小时，不恢复GPU遥测，也不追加训练预算。权威审计为 run 下 `analysis/checkpoint_cleanup_20261112/{deleted.jsonl,STATUS.json,metadata/}`，策略为 `control/CHECKPOINT_POLICY.json`。
+
+### 11.6 旧时间线任务的首夜架构筛选（用户授权已入队）
+
+新增54个有限任务，代码 `prepare_overnight_timeline.py`；复用旧事件时间线prompt和本机真实80/40数据，主128帧、迁移64帧、max_new1024、b63/k8、fp32 Target、独立AR逐token无损。旧成熟checkpoint不可用，本机split也不同，故是任务协议对齐后的重新适配。公共DFlash经SFT80得到共同起点，再进行A原结构/B文本读出/C视觉spatial_bins2/D视觉spatial_bins1 × OPD λ0/10，八臂各80步，同seed20261113、同shuffle日程、fresh Adam。所有证据读出time_encoding off；D只比较池化几何，不声称时间编码创新。总预算738更新、2952 QA，包含18次必要门禁更新；门禁权重不作正式初始化。
+
+每臂仅保存最终点，8个OPD终点约126GiB，加warm约2GiB和匹配初始化约8GiB；门禁产物在自身独立AR评测完成后按原清理审计退休。训练失败不重试，依赖分支停止，其余独立分支继续。八个teacher shard、共同warm、必要门禁、初始化、正式训练、完整dev40的128/64帧评测均已排进现有tmux scheduler。`report_overnight_timeline.py` 独立有限tmux每分钟汇总tau与接受长度直方图、同源配对bootstrap和无损率，并清理已用完gate；最长14小时后退出，不操作GPU或训练进程。产物根为 run 下 `overnight_timeline_20261113/`，含冻结协议、队列快照、STATUS和完成后的DONE。
+
+本轮只做单seed架构筛选与已有λ目标比较，不使用holdout，不声称新视觉依赖加权损失或第二seed已上线。所有训练预算有限，不保证每时每刻八卡满载；公共起点的依赖阶段可能有空卡，不用空算填充。
