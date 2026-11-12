@@ -116,7 +116,7 @@
 
 - 数据：`/mnt/local/mcy/GLANCE/results/real_video_20261111/data_parallel/`（80 train/40 dev，64/128）
 - 真实帧 cache：`/mnt/local3/mcy/GLANCE/results/real_video_20261111/frame_cache_parallel/`
-- 训练：`arms/seed20261111_lambda0/step20,step35`、`arms/seed20261111_lambda10/step20,step21`
+- 训练：保留 `arms/seed20261111_lambda0/step20`、`arms/seed20261111_lambda10/step20` 的 model.safetensors；step35/step21/64u10 及所有 training_state 已于 2026-11-12 清理（eval JSON 保留）
 - 评测：`eval/dev20_baseline128.json`、`eval/dev20_lambda0_20.json`、`eval/dev20_lambda10_20.json`、`eval/gate_128.json`、`eval/baseline_64/128`、`eval/zero_visual_128.json`
 - 日志/协议：`logs/`、`PROTOCOL.json`、`STATUS.md`、`RUN_STATUS.json`
 - 代码：worktree `run/real-video-20261111`，基于 `ab6e2fa`；新增并行缓存构建与 PyAV ffprobe fallback（仅构建侧，未改 decoder/verifier）。
@@ -132,3 +132,8 @@
 3. 做 64 vs128 的同预算训练对照，判断“真实帧数”而非输入差。
 4. 加长 max_new / 自然 EOS 任务，人工审阅事件顺序，确认不是 cap 下的接受率假象。
 5. 若继续视觉结构：先做 EvidenceReadout/时间组 memory 的 CPU 原型与单卡 gate，不直接把旧 B/C 搬进来。
+
+
+## 9. 2026-11-12 存储清理
+
+保留真实 λ0/λ10 step20 与合成 TV20 step10 的 model.safetensors、所有 eval/report/log；删除 step35/step21/64u10、旧 32f1x/64f1x/layer_gate/xattn 与 training_state；清单 `/mnt/local/mcy/GLANCE/results/CLEANUP_20261112_REAL_VIDEO.json`，释放约 **247 GiB**（local 215→305G，local3 143→300G 空闲）。
