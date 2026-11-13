@@ -1,0 +1,287 @@
+{
+ "schema": "temporal_evidence_pilot_summary_v1",
+ "date": "2026-11-13",
+ "run_root": "/mnt/local3/mcy/GLANCE/results/temporal_evidence_20261112_094528",
+ "branch": "run/temporal-evidence-20261112",
+ "base_commit": "1aa387c",
+ "head_note": "report commit after run; code fix d42e228",
+ "budget": {
+  "planned_updates": 180,
+  "completed": {
+   "A": 60,
+   "B": 60,
+   "C": 60
+  },
+  "c_failed_before_patch": 0
+ },
+ "gpus": {
+  "A": "3x RTX A6000",
+  "B": "2x RTX A6000",
+  "C": "2x RTX A6000",
+  "note": "user requested two A6000 left free; B/C reduced from 3 to 2 cards, wall clock not directly comparable"
+ },
+ "training": {
+  "A": {
+   "mean_s_per_update": 242.1,
+   "wall_h": 4.03,
+   "loss_first": 3.793,
+   "loss_last": 2.942
+  },
+  "B": {
+   "mean_s_per_update": 247.9,
+   "wall_h": 4.13,
+   "loss_first": 3.793,
+   "loss_last": 2.916
+  },
+  "C": {
+   "mean_s_per_update": 245.5,
+   "wall_h": 4.09,
+   "loss_first": 3.793,
+   "loss_last": 2.903
+  }
+ },
+ "arms": {
+  "A": {
+   "n_videos": 40,
+   "mean_tau": 7.547936856415693,
+   "mean_effective_tokens_per_round": 7.494458501916299,
+   "mean_output_tokens": 1024.0,
+   "hit_eos": 0,
+   "truncated": 40,
+   "all_lossless": true
+  },
+  "B": {
+   "n_videos": 40,
+   "mean_tau": 7.548997200407825,
+   "mean_effective_tokens_per_round": 7.49709776929199,
+   "mean_output_tokens": 1024.0,
+   "hit_eos": 0,
+   "truncated": 40,
+   "all_lossless": true
+  },
+  "C": {
+   "n_videos": 40,
+   "mean_tau": 7.556737489179699,
+   "mean_effective_tokens_per_round": 7.501819473251851,
+   "mean_output_tokens": 1024.0,
+   "hit_eos": 0,
+   "truncated": 40,
+   "all_lossless": true
+  },
+  "bypass": {
+   "n_videos": 40,
+   "mean_tau": 7.560372001831948,
+   "mean_effective_tokens_per_round": 7.5075799726803725,
+   "mean_output_tokens": 1024.0,
+   "hit_eos": 0,
+   "truncated": 40,
+   "all_lossless": true
+  },
+  "zero": {
+   "n_videos": 40,
+   "mean_tau": 7.560372001831948,
+   "mean_effective_tokens_per_round": 7.5075799726803725,
+   "mean_output_tokens": 1024.0,
+   "hit_eos": 0,
+   "truncated": 40,
+   "all_lossless": true
+  },
+  "time_shuffle": {
+   "n_videos": 40,
+   "mean_tau": 7.556737489179699,
+   "mean_effective_tokens_per_round": 7.501819473251851,
+   "mean_output_tokens": 1024.0,
+   "hit_eos": 0,
+   "truncated": 40,
+   "all_lossless": true
+  },
+  "wrong_video": {
+   "n_videos": 40,
+   "mean_tau": 7.5546828308511635,
+   "mean_effective_tokens_per_round": 7.499774013536383,
+   "mean_output_tokens": 1024.0,
+   "hit_eos": 0,
+   "truncated": 40,
+   "all_lossless": true
+  }
+ },
+ "comparisons": {
+  "C_minus_A": {
+   "tau": {
+    "paired_mean_difference": 0.008800632764004935,
+    "ci95": [
+     -0.007548549974610392,
+     0.02527109120328332
+    ],
+    "wins": 14,
+    "ties": 15
+   },
+   "effective_tokens_per_round": {
+    "paired_mean_difference": 0.007360971335553024,
+    "ci95": [
+     -0.007363503535148798,
+     0.02175450329407952
+    ],
+    "wins": 11,
+    "ties": 20
+   }
+  },
+  "C_minus_B": {
+   "tau": {
+    "paired_mean_difference": 0.007740288771872272,
+    "ci95": [
+     -0.005055372758116924,
+     0.02398093416125973
+    ],
+    "wins": 9,
+    "ties": 24
+   },
+   "effective_tokens_per_round": {
+    "paired_mean_difference": 0.004721703959861578,
+    "ci95": [
+     -0.005357513384161432,
+     0.015480540369796916
+    ],
+    "wins": 8,
+    "ties": 26
+   }
+  },
+  "B_minus_A": {
+   "tau": {
+    "paired_mean_difference": 0.0010603439921326619,
+    "ci95": [
+     -0.017639341370876867,
+     0.018872084187594347
+    ],
+    "wins": 14,
+    "ties": 13
+   },
+   "effective_tokens_per_round": {
+    "paired_mean_difference": 0.0026392673756914452,
+    "ci95": [
+     -0.013867664294523342,
+     0.01900325334785389
+    ],
+    "wins": 12,
+    "ties": 16
+   }
+  },
+  "C_minus_bypass": {
+   "tau": {
+    "paired_mean_difference": -0.003634512652251387,
+    "ci95": [
+     -0.022587052976918275,
+     0.015276581606518383
+    ],
+    "wins": 12,
+    "ties": 14
+   },
+   "effective_tokens_per_round": {
+    "paired_mean_difference": -0.00576049942851915,
+    "ci95": [
+     -0.024276027358659805,
+     0.012944149366302235
+    ],
+    "wins": 10,
+    "ties": 17
+   }
+  },
+  "C_minus_zero": {
+   "tau": {
+    "paired_mean_difference": -0.003634512652251387,
+    "ci95": [
+     -0.022587052976918275,
+     0.015276581606518383
+    ],
+    "wins": 12,
+    "ties": 14
+   },
+   "effective_tokens_per_round": {
+    "paired_mean_difference": -0.00576049942851915,
+    "ci95": [
+     -0.024276027358659805,
+     0.012944149366302235
+    ],
+    "wins": 10,
+    "ties": 17
+   }
+  },
+  "C_minus_time_shuffle": {
+   "tau": {
+    "paired_mean_difference": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "wins": 0,
+    "ties": 40
+   },
+   "effective_tokens_per_round": {
+    "paired_mean_difference": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "wins": 0,
+    "ties": 40
+   }
+  },
+  "C_minus_wrong_video": {
+   "tau": {
+    "paired_mean_difference": 0.002054658328533776,
+    "ci95": [
+     -0.0012460156476383766,
+     0.006438308753844213
+    ],
+    "wins": 2,
+    "ties": 37
+   },
+   "effective_tokens_per_round": {
+    "paired_mean_difference": 0.002045459715469011,
+    "ci95": [
+     -0.0012363566116101675,
+     0.006415082009700579
+    ],
+    "wins": 2,
+    "ties": 37
+   }
+  }
+ },
+ "identity": {
+  "verified": true,
+  "optimizer_step": 60,
+  "common_initial_head_weights_sha256": {
+   "model.safetensors": "d13635c759fcfba754f0741a85ad3b27ae8f86fa967c2ed363acc07dad50ca46"
+  },
+  "pool_sha256": "6998ae6afb48338f378cbc7e4592abb3292847a6e5e3c2ce9a59cc072c756ef9",
+  "schedule_sha256": "b46091782c5665bc06e5146b017786d6a603baf87cf2226b017d75d622e8ff3f"
+ },
+ "limitations": [
+  "One seed does not measure training randomness.",
+  "Video bootstrap does not remove shared-load or execution-order timing bias.",
+  "Repeated use of development videos is not independent final confirmation.",
+  "All outputs hit max_new=1024 and hit_eos=0; tau is capped-output acceptance, not report quality.",
+  "A used 3 GPUs while B/C used 2; only acceptance/lossless are matched."
+ ],
+ "source_files": {
+  "A": "/mnt/local3/mcy/GLANCE/results/temporal_evidence_20261112_094528/eval/A.json",
+  "B": "/mnt/local3/mcy/GLANCE/results/temporal_evidence_20261112_094528/eval/B.json",
+  "C": "/mnt/local3/mcy/GLANCE/results/temporal_evidence_20261112_094528/eval/C.json",
+  "bypass": "/mnt/local3/mcy/GLANCE/results/temporal_evidence_20261112_094528/eval/C_bypass.json",
+  "zero": "/mnt/local3/mcy/GLANCE/results/temporal_evidence_20261112_094528/eval/C_zero.json",
+  "time_shuffle": "/mnt/local3/mcy/GLANCE/results/temporal_evidence_20261112_094528/eval/C_time_shuffle.json",
+  "wrong_video": "/mnt/local3/mcy/GLANCE/results/temporal_evidence_20261112_094528/eval/C_wrong_video.json"
+ },
+ "probes": {
+  "bypass": "C_bypass",
+  "zero": "C_zero",
+  "time_shuffle": "C_time_shuffle",
+  "wrong_video": "C_wrong_video"
+ },
+ "not_committed": [
+  "weights",
+  "frame cache",
+  "memory bank",
+  "per-video eval JSON"
+ ]
+}

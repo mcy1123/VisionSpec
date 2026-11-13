@@ -8,6 +8,7 @@
 
 | 日期 | 报告 | 结论 / 状态 |
 |---|---|---|
+| 2026-11-13 | [时间分组视觉读出架构 pilot：阴性结果](2026-11-13-temporal-evidence-pilot.md) | A/B/C各60步、40/40无损；C−A +0.0088 [−0.0075,+0.0253]、C−B +0.0077 [−0.0051,+0.0240]；bypass/zero/time_shuffle均无机制效应；不支持视觉读出增益 |
 | 2026-11-12 | [真实视频的时间感知视觉读出架构实验](2026-11-12-temporal-evidence-architecture-plan.md) | 新增时间分组视觉/文本 readout、逐QA memory绑定、配对初始化及评测；A/B/C各60步执行计划，GPU验证在目标服务器进行 |
 | 2026-09-25 | [GLANCE 复现：TextVQA+COCO 训练 → ChartQA 接受率与加速比](2026-09-25-reproduction-history.md) | 原 repro README；含已被后续审计替代的历史表述 |
 | 2026-09-28 | [EAGLE-3 对比：阶段 0 交接](2026-09-28-eagle3-stage0.md) | M-RoPE 静默失效等实现结论的来源 |
