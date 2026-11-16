@@ -1,0 +1,135 @@
+{
+ "schema": "video_budget_multimodal_summary_v1",
+ "date": "2026-11-17",
+ "deadline": "2026-11-17T08:00:00+08:00",
+ "run_root": "/mnt/local3/mcy/GLANCE/results/video_multimodal_20261116",
+ "branch": "run/video-multimodal-20261116",
+ "base_commit": "7a09095",
+ "budget": {
+  "new_updates": {
+   "D64": 60,
+   "M20": 20
+  },
+  "total": 80
+ },
+ "training": {
+  "D64": {
+   "frames": 64,
+   "updates": 60,
+   "mean_s": 143.4,
+   "wall_h": 2.39,
+   "loss_first": 3.493,
+   "loss_last": 3.395
+  },
+  "M20": {
+   "frames": "mixed64/128",
+   "updates": 20,
+   "mean_s": 195.1,
+   "wall_h": 1.08,
+   "loss_first": 3.787,
+   "loss_last": 3.828
+  }
+ },
+ "eval": {
+  "D64_64_dev40": {
+   "n": 40,
+   "tau": 9.3888,
+   "lossless": 40,
+   "eff": 9.327,
+   "gen": 1024
+  },
+  "D64_128_dev40": {
+   "n": 40,
+   "tau": 7.3547,
+   "lossless": 40,
+   "eff": 7.301,
+   "gen": 1024
+  },
+  "M20_64_dev20": {
+   "n": 20,
+   "tau": 9.1087,
+   "lossless": 20,
+   "eff": 9.029
+  },
+  "M20_128_dev20": {
+   "n": 20,
+   "tau": 7.319,
+   "lossless": 20,
+   "eff": 7.277
+  },
+  "A_128_dev20": {
+   "n": 20,
+   "tau": 7.5308,
+   "lossless": 20
+  },
+  "transfer_128trained_on64_dev20": {
+   "n": 20,
+   "tau": 8.9696,
+   "lossless": 20
+  }
+ },
+ "paired": {
+  "D64_minus_transfer_on64_dev20": {
+   "delta": 0.384,
+   "ci95": [
+    0.3059,
+    0.4618
+   ],
+   "wins": 20,
+   "losses": 0
+  },
+  "M20_minus_D64_on64_dev20": {
+   "delta": -0.2448,
+   "ci95": [
+    -0.3299,
+    -0.1683
+   ],
+   "wins": 0,
+   "losses": 19
+  },
+  "M20_minus_D64_on128_dev20": {
+   "delta": -0.0384,
+   "ci95": [
+    -0.1012,
+    0.0259
+   ],
+   "wins": 5,
+   "losses": 14
+  },
+  "M20_minus_A_on128_dev20": {
+   "delta": -0.2118,
+   "ci95": [
+    -0.2902,
+    -0.1376
+   ],
+   "wins": 3,
+   "losses": 17
+  }
+ },
+ "budget_router": {
+  "64_head": "D64",
+  "128_head": "A",
+  "two_tier_mean_dev40": 8.4684,
+  "note": "tier-stratified mean, not one mixed-inference model"
+ },
+ "verdict": "64-frame specialized OPD training is the best current budget; mixed-budget single head does not match specialized heads; budget-conditioned registry/adapter is the next architecture target; prior temporal visual readout was null",
+ "limitations": [
+  "single seed",
+  "dev40 reused",
+  "M20 only 20 updates",
+  "all outputs cap 1024/no EOS",
+  "D64 2xA6000 vs A prior 3xA6000",
+  "registry mean is stratified not single-model"
+ ],
+ "not_committed": [
+  "weights",
+  "frame cache",
+  "per-video eval JSON"
+ ],
+ "source_files": {
+  "D64_64": "/mnt/local3/mcy/GLANCE/results/video_multimodal_20261116/eval/D64_64.json",
+  "D64_128": "/mnt/local3/mcy/GLANCE/results/video_multimodal_20261116/eval/D64_128.json",
+  "M20_64": "/mnt/local3/mcy/GLANCE/results/video_multimodal_20261116/eval/M20_64.json",
+  "M20_128": "/mnt/local3/mcy/GLANCE/results/video_multimodal_20261116/eval/M20_128.json"
+ }
+}

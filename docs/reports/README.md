@@ -8,6 +8,7 @@
 
 | 日期 | 报告 | 结论 / 状态 |
 |---|---|---|
+| 2026-11-17 | [视频帧预算作为多模态架构变量：64-frame OPD 与混合预算 pilot](2026-11-17-video-budget-multimodal-opd.md) | D64 64帧 τ9.389（40/40无损），比128-trained迁移 +0.384 [0.306,0.462] 20/0；D64跑128仅7.355；M20混合未超专用head；支持budget-conditioned registry，不支持混合单head自动适配 |
 | 2026-11-13 | [时间分组视觉读出架构 pilot：阴性结果](2026-11-13-temporal-evidence-pilot.md) | A/B/C各60步、40/40无损；C−A +0.0088 [−0.0075,+0.0253]、C−B +0.0077 [−0.0051,+0.0240]；bypass/zero/time_shuffle均无机制效应；不支持视觉读出增益 |
 | 2026-11-12 | [真实视频的时间感知视觉读出架构实验](2026-11-12-temporal-evidence-architecture-plan.md) | 新增时间分组视觉/文本 readout、逐QA memory绑定、配对初始化及评测；A/B/C各60步执行计划，GPU验证在目标服务器进行 |
 | 2026-09-25 | [GLANCE 复现：TextVQA+COCO 训练 → ChartQA 接受率与加速比](2026-09-25-reproduction-history.md) | 原 repro README；含已被后续审计替代的历史表述 |
