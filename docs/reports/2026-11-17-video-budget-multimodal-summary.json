@@ -71,6 +71,13 @@
    "n": 40,
    "tau": 9.3318,
    "lossless": 40
+  },
+  "D64_64_zero_dev20": {
+   "n": 20,
+   "tau": 9.0392,
+   "lossless": 20,
+   "spec_ids_equal_real": 20,
+   "ar_ids_equal_real": 20
   }
  },
  "paired": {
@@ -128,6 +135,16 @@
    ],
    "wins": 35,
    "losses": 5
+  },
+  "D64_zero_minus_real_on64_dev20": {
+   "delta": -0.3143,
+   "ci95": [
+    -0.4157,
+    -0.2109
+   ],
+   "wins": 2,
+   "losses": 17,
+   "note": "zero-visual; same output text, shorter acceptance path"
   }
  },
  "budget_router": {
@@ -165,5 +182,10 @@
   "oracle_tau_128": 7.5518,
   "oracle_gain_over_A_128": 0.0039,
   "verdict": "per-sample head routing has little headroom; budget-level selection/conditioning is the main lever"
+ },
+ "visual_reliance_by_budget": {
+  "64_zero_visual_delta": -0.3143,
+  "128_lambda10_zero_visual_delta": -0.093,
+  "interpretation": "visual-row dependence is stronger at 64; preserve visual path at 64, solve long-context fusion at 128"
  }
 }
