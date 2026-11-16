@@ -134,7 +134,10 @@
   "64_head": "D64",
   "128_head": "A",
   "two_tier_mean_dev40": 8.4684,
-  "note": "tier-stratified mean, not one mixed-inference model"
+  "note": "tier-stratified mean, not one mixed-inference model",
+  "implementation": "repro/evaluation/budget_head_router.py",
+  "output": "/mnt/local3/mcy/GLANCE/results/video_multimodal_20261116/eval/budget_router_D64_A.json",
+  "lossless": true
  },
  "verdict": "64-frame specialized OPD training is the best current budget; mixed-budget single head does not match specialized heads; budget-conditioned registry/adapter is the next architecture target; prior temporal visual readout was null",
  "limitations": [

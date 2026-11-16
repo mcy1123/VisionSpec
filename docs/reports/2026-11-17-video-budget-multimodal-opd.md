@@ -97,6 +97,8 @@ dev20（与 D64 相同 20 条）：
 
 registry 的 8.468 高于 D64 单 head 平均 8.372（+0.096，描述性），说明**按预算路由**比强行一个 head 同时覆盖两档更合理。它不是新训练架构，但给出了下一阶段 **budget-conditioned adapter / mixture-of-heads** 的明确目标。
 
+已实现可执行组件 `repro/evaluation/budget_head_router.py`，在 D64_64 + A_128 两个 eval 上生成 `eval/budget_router_D64_A.json`：两层平均 **8.46838**，两层均 40/40 无损。该 JSON 显式标记为 **known-tier registry / stratified mean，不是单模型混合推理**。
+
 ## 6.1 样本自适应 head 路由的 headroom
 
 在相同 40 条上把 A（128-trained）也跑 64 输入，和 D64 做逐视频比较：
@@ -134,5 +136,6 @@ registry 的 8.468 高于 D64 单 head 平均 8.372（+0.096，描述性），�
   - `eval/D64_{64,128}.json`、`eval/M20_{64,128}.json`、`eval/gate64_base.json`
   - `schedule_64.jsonl`、`train_mixed.parquet`、`schedule_mixed20.jsonl`
 - 小型摘要：`docs/reports/2026-11-17-video-budget-multimodal-summary.json`
+- 路由组件：`repro/evaluation/budget_head_router.py`；组合结果 `eval/budget_router_D64_A.json`
 - 代码：无新算法修改；使用现有 `train_video_9k.py` 与 `eval_video_opd.py`。
 - **未提交权重、cache、逐视频 JSON。**
