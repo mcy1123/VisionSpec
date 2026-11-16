@@ -66,6 +66,11 @@
    "n": 20,
    "tau": 8.9696,
    "lossless": 20
+  },
+  "A_64_dev40": {
+   "n": 40,
+   "tau": 9.3318,
+   "lossless": 40
   }
  },
  "paired": {
@@ -104,6 +109,25 @@
    ],
    "wins": 3,
    "losses": 17
+  },
+  "D64_minus_A_on64_dev40": {
+   "delta": 0.057,
+   "ci95": [
+    -0.001,
+    0.1112
+   ],
+   "wins": 25,
+   "losses": 14,
+   "note": "D64-A; A-D64 CI"
+  },
+  "A_minus_D64_on128_dev40": {
+   "delta": 0.1933,
+   "ci95": [
+    0.1429,
+    0.2452
+   ],
+   "wins": 35,
+   "losses": 5
   }
  },
  "budget_router": {
@@ -131,5 +155,12 @@
   "D64_128": "/mnt/local3/mcy/GLANCE/results/video_multimodal_20261116/eval/D64_128.json",
   "M20_64": "/mnt/local3/mcy/GLANCE/results/video_multimodal_20261116/eval/M20_64.json",
   "M20_128": "/mnt/local3/mcy/GLANCE/results/video_multimodal_20261116/eval/M20_128.json"
+ },
+ "sample_adaptive_head": {
+  "oracle_tau_64": 9.4346,
+  "oracle_gain_over_D64_64": 0.0458,
+  "oracle_tau_128": 7.5518,
+  "oracle_gain_over_A_128": 0.0039,
+  "verdict": "per-sample head routing has little headroom; budget-level selection/conditioning is the main lever"
  }
 }
