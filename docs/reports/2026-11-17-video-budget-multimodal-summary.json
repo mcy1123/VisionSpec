@@ -78,6 +78,11 @@
    "lossless": 20,
    "spec_ids_equal_real": 20,
    "ar_ids_equal_real": 20
+  },
+  "D64_128_zero_dev20": {
+   "n": 20,
+   "tau": 7.2606,
+   "lossless": 20
   }
  },
  "paired": {
@@ -145,6 +150,15 @@
    "wins": 2,
    "losses": 17,
    "note": "zero-visual; same output text, shorter acceptance path"
+  },
+  "D64_zero_minus_real_on128_dev20": {
+   "delta": -0.0968,
+   "ci95": [
+    -0.2186,
+    0.0234
+   ],
+   "wins": 7,
+   "losses": 13
   }
  },
  "budget_router": {
@@ -186,6 +200,7 @@
  "visual_reliance_by_budget": {
   "64_zero_visual_delta": -0.3143,
   "128_lambda10_zero_visual_delta": -0.093,
-  "interpretation": "visual-row dependence is stronger at 64; preserve visual path at 64, solve long-context fusion at 128"
+  "interpretation": "visual-row dependence is stronger at 64; preserve visual path at 64, solve long-context fusion at 128",
+  "128_d64_zero_visual_delta": -0.0968
  }
 }
