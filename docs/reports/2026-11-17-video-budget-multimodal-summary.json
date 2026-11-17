@@ -208,7 +208,9 @@
   "BC20": {
    "64": 8.9604,
    "128": 7.0677,
-   "lossless": 20
+   "lossless": 20,
+   "wall_h": 1.13,
+   "mean_s": 204.0
   },
   "BC20_minus_M20_64": {
    "delta": -0.1483,
@@ -232,7 +234,9 @@
    "updates": "20+40 continuation",
    "64": 9.1639,
    "128": "not completed before deadline",
-   "lossless_64": 20
+   "lossless_64": 20,
+   "wall_h": 2.15,
+   "mean_s": 193.3
   },
   "BC60c_minus_M20_64": {
    "delta": 0.0552,
@@ -255,6 +259,7 @@
   "verdict": "naive budget embedding hurts at 20; longer continuation recovers to no-adapter level but does not beat specialized D64; budget-conditioned architecture remains unproven"
  },
  "incidents": [
-  "BC60 crashed at step30 checkpoint save when /mnt/local3 was full; no optimizer resume; BC60c is weights-only continuation from step20"
+  "BC60 crashed at step30 checkpoint save when /mnt/local3 was full; no optimizer resume; BC60c is weights-only continuation from step20",
+  "BC60 original ran 30 updates (1.65 h) before checkpoint-save disk failure; BC60c is weights-only continuation, not optimizer resume"
  ]
 }
