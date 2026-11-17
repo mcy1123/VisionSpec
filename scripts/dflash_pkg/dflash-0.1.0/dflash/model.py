@@ -576,6 +576,11 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         self.use_visual_film = bool(_draft_value(config, "use_visual_film", False))
         self.use_visual_perceiver = bool(_draft_value(config, "use_visual_perceiver", False))
         self.use_layer_gate = bool(_draft_value(config, "use_layer_gate", False))
+        self.budget_conditioning = bool(_draft_value(config, "budget_conditioning", False))
+        if self.budget_conditioning:
+            self.budget_embedding = nn.Embedding(2, config.hidden_size)
+            nn.init.normal_(self.budget_embedding.weight, mean=0.0, std=0.02)
+            self._budget_id = None
         self.evidence_mode = str(_draft_value(config, "evidence_mode", "none"))
         if self.evidence_mode == "none":
             self._keep_in_fp32_modules_strict = None
@@ -673,6 +678,13 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         **kwargs,
     ) -> torch.Tensor:
         hidden_states = noise_embedding
+        if self.budget_conditioning:
+            budget_id = getattr(self, "_budget_id", None)
+            if budget_id is None:
+                raise ValueError("budget-conditioned head requires set_budget_id(0|1) before forward")
+            budget = torch.tensor([int(budget_id)], dtype=torch.long,
+                                  device=hidden_states.device)
+            hidden_states = hidden_states + self.budget_embedding(budget).to(hidden_states.dtype)
         evidence = None
         if self.evidence_mode != "none":
             # Last retained target layer (layer 33 in the supported 8B head).
@@ -722,6 +734,13 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         if evidence is not None:
             hidden_states = self.evidence_readout(hidden_states, evidence)
         return hidden_states
+
+    def set_budget_id(self, budget_id):
+        if not self.budget_conditioning:
+            raise ValueError("head was not constructed with budget_conditioning")
+        if budget_id not in (0, 1):
+            raise ValueError("budget_id must be 0 (64 frames) or 1 (128 frames)")
+        self._budget_id = int(budget_id)
 
     def set_evidence_request(self, request):
         if self.evidence_mode == "none":

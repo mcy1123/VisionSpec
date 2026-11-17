@@ -180,6 +180,10 @@ def move_training_trace(trace, device):
 
 def score_training_trace(target, head, trace, *, e2e_tv_weight, diagnostics=None):
     """Rebind each QA before scoring, never inherit the last collected video."""
+    if getattr(head, "budget_conditioning", False):
+        if "budget_id" not in trace:
+            raise ValueError("budget-conditioned training trace has no budget_id")
+        head.set_budget_id(trace["budget_id"])
     if evidence_settings(head)["mode"] != "none":
         if "evidence_request" not in trace:
             raise ValueError("evidence training trace has no request identity")
@@ -542,10 +546,14 @@ def main(argv=None):
                 if evidence_config["mode"] != "none":
                     request = build_evidence_request(inputs, row, processor)
                     configure_evidence(head, request)
+                budget_id = 0 if int(row.get("n_frames", 0)) <= 64 else 1
+                if getattr(head, "budget_conditioning", False):
+                    head.set_budget_id(budget_id)
                 trace = adapters.collect(target, head, inputs,
                                          max_new_tokens=a.max_new_tokens,
                                          max_seq_len=a.max_seq_len,
                                          teacher_verify_impl="pure_block_native")
+                trace["budget_id"] = budget_id
                 if request is not None:
                     trace["evidence_request"] = request
                     evidence_rollout_diagnostics.append(head.evidence_diagnostics())

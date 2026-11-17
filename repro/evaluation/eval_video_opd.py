@@ -443,6 +443,8 @@ def main():
             evidence_request = None
             donor_audit = None
             evidence_prepare_s = 0.0
+            if getattr(head, "budget_conditioning", False):
+                head.set_budget_id(0 if int(row.get("n_frames", 0)) <= 64 else 1)
             if evidence_cfg["mode"] != "none":
                 t_evidence = time.perf_counter()
                 evidence_request = build_evidence_request(
