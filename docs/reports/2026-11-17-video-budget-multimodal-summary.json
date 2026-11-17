@@ -202,5 +202,59 @@
   "128_lambda10_zero_visual_delta": -0.093,
   "interpretation": "visual-row dependence is stronger at 64; preserve visual path at 64, solve long-context fusion at 128",
   "128_d64_zero_visual_delta": -0.0968
- }
+ },
+ "budget_conditioned": {
+  "implementation": "budget_embedding added to DFlashDraftModel; init_budget_head.py",
+  "BC20": {
+   "64": 8.9604,
+   "128": 7.0677,
+   "lossless": 20
+  },
+  "BC20_minus_M20_64": {
+   "delta": -0.1483,
+   "ci95": [
+    -0.2114,
+    -0.0775
+   ],
+   "wins": 4,
+   "losses": 16
+  },
+  "BC20_minus_M20_128": {
+   "delta": -0.2513,
+   "ci95": [
+    -0.2974,
+    -0.2071
+   ],
+   "wins": 0,
+   "losses": 20
+  },
+  "BC60c": {
+   "updates": "20+40 continuation",
+   "64": 9.1639,
+   "128": "not completed before deadline",
+   "lossless_64": 20
+  },
+  "BC60c_minus_M20_64": {
+   "delta": 0.0552,
+   "ci95": [
+    -0.0377,
+    0.1528
+   ],
+   "wins": 9,
+   "losses": 11
+  },
+  "BC60c_minus_D64_64": {
+   "delta": -0.1897,
+   "ci95": [
+    -0.2552,
+    -0.1264
+   ],
+   "wins": 2,
+   "losses": 18
+  },
+  "verdict": "naive budget embedding hurts at 20; longer continuation recovers to no-adapter level but does not beat specialized D64; budget-conditioned architecture remains unproven"
+ },
+ "incidents": [
+  "BC60 crashed at step30 checkpoint save when /mnt/local3 was full; no optimizer resume; BC60c is weights-only continuation from step20"
+ ]
 }

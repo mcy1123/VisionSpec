@@ -140,6 +140,23 @@ registry 的 8.468 高于 D64 单 head 平均 8.372（+0.096，描述性），�
 - **逐视频 oracle 选择**（事后知道哪 head 更好）只把 64 从 9.389 提到 **9.435（+0.046）**，把 128 从 7.548 提到 **7.552（+0.004）**。
 - 因此**样本自适应 head 路由的 headroom 很小**；主要收益来自“按预算选 head”，不是 per-sample 路由。下一阶段应做 **budget-conditioned adapter**，而不是再训练一个 per-sample gate。
 
+## 6.2 budget-conditioned head：实现与结果
+
+实现：`DFlashDraftModel.budget_conditioning` 增加 `nn.Embedding(2, hidden)`，按请求 64/128 帧把 budget vector 加到 draft query；trainer 在 collect/scoring 前设置 budget_id，eval 按 `n_frames` 设置。初始化 `init_budget_head.py` 从共同 base 复制，只新增 `budget_embedding.weight`，源张量逐项相等。
+
+| arm | 训练 | 64 τ | 128 τ | 64/128 无损 |
+|---|---|---:|---:|---:|
+| M20 混合无 adapter | 20 | 9.1087 | 7.3190 | 20/20 |
+| **BC20 +budget embed** | 20 | **8.9604** | **7.0677** | 20/20 |
+| BC20−M20 | — | **−0.148 [−0.211,−0.078]** | **−0.251 [−0.297,−0.207]** | 4/16、0/20 |
+| D64 专用 | 60 | 9.3536 | 7.3573 | 20/20 |
+| BC60c continuation | 20+40 | **9.1639** | 未在截止前完成 | 20/20 |
+
+- 20 步时**朴素 budget embedding 明显有害**：两档都低于无 adapter 的 M20，128 上 0/20 胜。
+- BC60 首跑在 step30 checkpoint 写入时遇到 `/mnt/local3` **磁盘满**（0 avail），`training_state.pt` 写入失败；已清理中间 checkpoint，释放 133G。为在截止前得到更长训练，使用 **BC60 step20 权重继续 40 updates（weights-only continuation，非 optimizer resume）** 得 BC60c。
+- BC60c 64 帧 **9.1639**，相对 M20 **+0.055 [−0.038,+0.153]**（CI 跨零），仍低于 D64 **−0.190 [−0.255,−0.126]**。**更多训练让 budget embed 恢复，但没有超过无 adapter 或专用 head。**
+- BC60c 的 128 帧评测在 08:00 截止时尚未完成；不能用 BC20 的 128 结果替代它。
+
 ## 7. 与上一轮 temporal readout 的关系
 
 - 上一轮 C（temporal visual evidence readout）在 128 帧、A/B/C 各60下 **C−A +0.0088 [−0.0075,+0.0253]**，bypass/zero/time_shuffle 均无机制效应。
@@ -151,6 +168,12 @@ registry 的 8.468 高于 D64 单 head 平均 8.372（+0.096，描述性），�
 - 64 专用：zero-visual **−0.314**（17/20 降），视觉 rows 有实质因果贡献。
 - 128-trained λ10：zero-visual **−0.093 [−0.200,+0.010]**（上一轮），视觉 rows 贡献小。
 - 这解释了为什么“统一视觉 readout”在 128 上无效，却不能据此说 64 也一样：**视觉依赖是预算相关的**，架构应按预算保留不同通路。
+
+## 7.2 失败与资源事件
+
+- 首次 BC60 在 step30 保存时磁盘满崩溃（`unexpected pos ...`），step10/20 完整，step30 未完成；无 optimizer resume，未把 continuation 当连续60。
+- 已删除 D64 step20/40、M20 step10、BC20 step10、BC60 step10 及四个 final training_state，释放到 133G；最终 eval JSON/模型保留。
+- **BC60c 是 step20 权重 + 新 40-update 训练**，总更新数仍计 20+40=60，但不是单进程连续60；报告单独标注。
 
 ## 8. 限制
 
