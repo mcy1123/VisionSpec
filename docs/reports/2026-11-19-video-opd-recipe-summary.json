@@ -46,6 +46,16 @@
   "D64_lambda10_step60_same20": {
    "tau": 9.3536,
    "lossless": 20
+  },
+  "L0_60_full40": {
+   "lambda": 0,
+   "tau": 9.3488,
+   "lossless": 40
+  },
+  "D64_full40": {
+   "lambda": 10,
+   "tau": 9.3888,
+   "lossless": 40
   }
  },
  "paired": {
@@ -77,7 +87,15 @@
    "losses": 4
   },
   "L10_20_to_D64_60": 0.2306,
-  "L0_20_to_L0_60": 0.2045
+  "L0_20_to_L0_60": 0.2045,
+  "D64_minus_L0_full40": {
+   "delta": 0.04,
+   "ci95": [
+    0.0001,
+    0.0795
+   ],
+   "note": "D64 slightly better; boundary"
+  }
  },
  "training": {
   "L0_lr1e5": {
@@ -113,12 +131,12 @@
  },
  "recommendation": {
   "frames": 64,
-  "lambda": 0,
+  "lambda": 10,
   "lr": "1e-5",
   "loss_normalization": "global_pooled",
   "qa_per_update": 4,
   "updates": 60,
-  "note": "pure OPD is indistinguishable from lambda10/20 at 60 updates and simpler; update budget is the dominant variable"
+  "note": "64 frames, 60 updates, lambda10 D64 is current best (+0.04 over pure lambda0 full40); lambda0 is simpler fallback"
  },
  "limitations": [
   "single seed",
