@@ -193,3 +193,15 @@ registry 的 8.468 高于 D64 单 head 平均 8.372（+0.096，描述性），�
 - 路由组件：`repro/evaluation/budget_head_router.py`；组合结果 `eval/budget_router_D64_A.json`
 - 代码：无新算法修改；使用现有 `train_video_9k.py` 与 `eval_video_opd.py`。
 - **未提交权重、cache、逐视频 JSON。**
+
+## 10. 2026-11-18 checkpoint 清理
+
+按用户要求清理中间 checkpoint，保留最终 `model.safetensors` 和全部 eval/report/log：
+
+- 本 run 删除 BC60c step10/20/30、BC60c step40 的 `training_state.pt`、BC60 crash 的 `.step30.tmp-*`：
+  - 释放 **67.3 GiB**；清单 `/mnt/local3/mcy/GLANCE/results/CLEANUP_20261118_VIDEO_MULTIMODAL.json`
+- 上一轮 temporal run 删除 A/B/C step20/40 与 step60 的 `training_state.pt`，只保留三臂 step60 model：
+  - 释放 **135.2 GiB**；清单 `/mnt/local3/mcy/GLANCE/results/CLEANUP_20261118_TEMPORAL_INTERMEDIATE.json`
+- `/mnt/local3` 空闲从 **71 GiB → 273 GiB**。
+- 保留：`D64_lambda10/step60`、`M20_lambda10/step20`、`BC20/step20`、`BC60/step20`、`BC60c/step40`、`init_budget_head`，以及 temporal `train_{A,B,C}/step60` 的 model。
+- 已删除的 checkpoint 不能 resume；所有最终 eval JSON 保留。

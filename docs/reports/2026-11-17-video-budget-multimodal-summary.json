@@ -261,5 +261,24 @@
  "incidents": [
   "BC60 crashed at step30 checkpoint save when /mnt/local3 was full; no optimizer resume; BC60c is weights-only continuation from step20",
   "BC60 original ran 30 updates (1.65 h) before checkpoint-save disk failure; BC60c is weights-only continuation, not optimizer resume"
- ]
+ ],
+ "cleanup_20261118": {
+  "run_cleanup_gib": 67.3,
+  "temporal_cleanup_gib": 135.2,
+  "local3_free_before_gib": 71,
+  "local3_free_after_gib": 273,
+  "manifests": [
+   "/mnt/local3/mcy/GLANCE/results/CLEANUP_20261118_VIDEO_MULTIMODAL.json",
+   "/mnt/local3/mcy/GLANCE/results/CLEANUP_20261118_TEMPORAL_INTERMEDIATE.json"
+  ],
+  "retained_models": [
+   "D64_lambda10/step60",
+   "M20_lambda10/step20",
+   "BC20/step20",
+   "BC60/step20",
+   "BC60c/step40",
+   "init_budget_head",
+   "temporal train_{A,B,C}/step60"
+  ]
+ }
 }
