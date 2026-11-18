@@ -252,7 +252,8 @@ class EvidenceReadout(nn.Module):
                     features = torch.cat((features.mean(0, keepdim=True), coarse, (grid - coarse[:, None]).abs().amax(dim=1)))
                     times = torch.cat((times.mean().reshape(1), clock[:, 0], clock[:, 0]))
                 else:
-                    raise ValueError(f"unknown video memory layout: {layout}")
+                    from .video_memory import transform
+                    features, times = transform(layout, grid, clock)
         else:
             positions = torch.arange(prefix_len, end, device=source.device)
             mask = self.request["prompt_visual_mask"].to(source.device)
