@@ -1,0 +1,135 @@
+{
+ "schema": "video_opd_recipe_summary_v1",
+ "date": "2026-11-19",
+ "run_root": "/mnt/local3/mcy/GLANCE/results/video_opd_recipe_20261118",
+ "branch": "run/video-opd-recipe-20261118",
+ "base_commit": "73a18a3",
+ "frames": 64,
+ "evals": "dev20 unless noted",
+ "sweep20": {
+  "L0": {
+   "lambda": 0,
+   "lr": "1e-5",
+   "tau": 9.1145,
+   "lossless": 20
+  },
+  "L10": {
+   "lambda": 10,
+   "lr": "1e-5",
+   "tau": 9.123,
+   "lossless": 20
+  },
+  "L20": {
+   "lambda": 20,
+   "lr": "1e-5",
+   "tau": 9.1282,
+   "lossless": 20
+  },
+  "L10_lr5e6": {
+   "lambda": 10,
+   "lr": "5e-6",
+   "tau": 9.0199,
+   "lossless": 20
+  }
+ },
+ "sixty": {
+  "L0_60": {
+   "lambda": 0,
+   "tau": 9.319,
+   "lossless": 20
+  },
+  "L20_60": {
+   "lambda": 20,
+   "tau": 9.3254,
+   "lossless": 20
+  },
+  "D64_lambda10_step60_same20": {
+   "tau": 9.3536,
+   "lossless": 20
+  }
+ },
+ "paired": {
+  "L20_60_minus_L0_60": {
+   "delta": 0.0064,
+   "ci95": [
+    -0.0566,
+    0.0715
+   ],
+   "wins": 10,
+   "losses": 9
+  },
+  "D64_minus_L0_60": {
+   "delta": 0.0346,
+   "ci95": [
+    -0.0213,
+    0.0928
+   ],
+   "wins": 11,
+   "losses": 9
+  },
+  "D64_minus_L20_60": {
+   "delta": 0.0282,
+   "ci95": [
+    -0.0018,
+    0.0573
+   ],
+   "wins": 11,
+   "losses": 4
+  },
+  "L10_20_to_D64_60": 0.2306,
+  "L0_20_to_L0_60": 0.2045
+ },
+ "training": {
+  "L0_lr1e5": {
+   "updates": 20,
+   "mean_s": 141.0,
+   "wall_h": 0.78
+  },
+  "L10_lr1e5": {
+   "updates": 20,
+   "mean_s": 139.8,
+   "wall_h": 0.78
+  },
+  "L20_lr1e5": {
+   "updates": 20,
+   "mean_s": 140.0,
+   "wall_h": 0.78
+  },
+  "L10_lr5e6": {
+   "updates": 20,
+   "mean_s": 142.8,
+   "wall_h": 0.79
+  },
+  "L0_60": {
+   "updates": 60,
+   "mean_s": 135.6,
+   "wall_h": 2.26
+  },
+  "L20_60": {
+   "updates": 60,
+   "mean_s": 136.3,
+   "wall_h": 2.27
+  }
+ },
+ "recommendation": {
+  "frames": 64,
+  "lambda": 0,
+  "lr": "1e-5",
+  "loss_normalization": "global_pooled",
+  "qa_per_update": 4,
+  "updates": 60,
+  "note": "pure OPD is indistinguishable from lambda10/20 at 60 updates and simpler; update budget is the dominant variable"
+ },
+ "limitations": [
+  "single seed",
+  "dev20 for sweep/60 comparisons",
+  "all outputs cap 1024/no EOS",
+  "20/60 arms single-GPU, D64 2-GPU",
+  "no test"
+ ],
+ "not_committed": [
+  "weights",
+  "cache",
+  "per-video eval JSON"
+ ]
+}
