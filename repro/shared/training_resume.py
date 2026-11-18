@@ -112,9 +112,6 @@ def validate_output(path):
 
 def save_atomic_checkpoint(destination, head, state, *, metadata=None):
     """Publish a hashed endpoint, optionally containing only inference weights."""
-    weights_only = (metadata or {}).get("checkpoint_storage") == "weights_only"
-    if weights_only and state != {"protocol_sha256": metadata["protocol_sha256"]}:
-        raise ValueError("weights-only endpoint must not carry optimizer state")
     metadata_json = None
     if metadata is not None:
         if not isinstance(metadata, dict):
@@ -122,6 +119,9 @@ def save_atomic_checkpoint(destination, head, state, *, metadata=None):
         # Validate before creating any files. Tensors and nonfinite numbers do
         # not belong in this lightweight, independently inspectable identity.
         metadata_json = json.dumps(metadata, indent=2, allow_nan=False) + "\n"
+    weights_only = (metadata or {}).get("checkpoint_storage") == "weights_only"
+    if weights_only and state != {"protocol_sha256": metadata["protocol_sha256"]}:
+        raise ValueError("weights-only endpoint must not carry optimizer state")
     dest = Path(destination)
     validate_output(dest)
     if dest.exists():
