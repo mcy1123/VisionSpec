@@ -111,7 +111,10 @@ def validate_output(path):
 
 
 def save_atomic_checkpoint(destination, head, state, *, metadata=None):
-    """Publish a complete, hashed training checkpoint without replacing a prior one."""
+    """Publish a hashed endpoint, optionally containing only inference weights."""
+    weights_only = (metadata or {}).get("checkpoint_storage") == "weights_only"
+    if weights_only and state != {"protocol_sha256": metadata["protocol_sha256"]}:
+        raise ValueError("weights-only endpoint must not carry optimizer state")
     metadata_json = None
     if metadata is not None:
         if not isinstance(metadata, dict):
@@ -127,7 +130,8 @@ def save_atomic_checkpoint(destination, head, state, *, metadata=None):
     tmp = dest.with_name(f".{dest.name}.tmp-{uuid.uuid4().hex}")
     tmp.mkdir()
     head.save_pretrained(tmp)
-    torch.save(state, tmp / "training_state.pt")
+    if not weights_only:
+        torch.save(state, tmp / "training_state.pt")
     if metadata_json is not None:
         (tmp / "CHECKPOINT_IDENTITY.json").write_text(metadata_json)
     hashes = {p.name: file_hash(p) for p in tmp.iterdir() if p.is_file()}

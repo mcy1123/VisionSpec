@@ -420,6 +420,7 @@ def parser():
     ap.add_argument("--device-map", default="balanced")
     ap.add_argument("--master-weights", choices=["cpu", "gpu"], default="cpu")
     ap.add_argument("--save-every", type=int, default=30)
+    ap.add_argument("--weights-only-final", action="store_true", default=argparse.SUPPRESS)
     ap.add_argument("--time-mode", choices=["legacy", "real"], default="legacy",
                     help="real requires unique frame indices and original source timeline metadata")
     ap.add_argument("--loss-normalization", choices=LOSS_NORMALIZATIONS,
@@ -443,6 +444,9 @@ def main(argv=None):
     for name in ("updates", "qa_per_update", "save_every", "max_new_tokens", "max_seq_len"):
         if getattr(a, name) < 1:
             ap.error(f"--{name.replace('_', '-')} must be positive")
+    weights_only = getattr(a, "weights_only_final", False)
+    if weights_only and a.save_every != a.updates:
+        ap.error("--weights-only-final requires --save-every equal to --updates")
     if a.max_seq_len <= a.max_new_tokens:
         ap.error("max-seq-len must leave room for prompt and max-new-tokens")
     for name in ("lr", "clip", "e2e_tv_weight"):
@@ -496,6 +500,13 @@ def main(argv=None):
                                   where=a.master_weights, clip=a.clip)
 
     def save_checkpoint(step):
+        metadata = checkpoint_identity(protocol, step)
+        if weights_only:
+            metadata.update(checkpoint_storage="weights_only", optimizer_state_saved=False)
+            training_resume.save_atomic_checkpoint(
+                out / f"step{step}", head, {"protocol_sha256": protocol["protocol_sha256"]},
+                metadata=metadata)
+            return
         training_resume.save_atomic_checkpoint(
             out / f"step{step}", head,
             dict(head=head.state_dict(), master_optimizer=optimizer.state_dict(),
@@ -508,7 +519,7 @@ def main(argv=None):
                  loss_normalization=a.loss_normalization, time_mode=a.time_mode,
                  diagnostic_only=True, smoke=False, opd_mode="pure_block",
                  block_native=True, teacher_verify_impl="pure_block_native"),
-            metadata=checkpoint_identity(protocol, step))
+            metadata=metadata)
 
     for cursor in range(a.updates):
         reason = stop_reason(deadline, a.stop_file)

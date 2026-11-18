@@ -99,9 +99,11 @@ def memory_runtime(trainer, mode):
         result['optimizer_where'] = 'gpu'
         result['local_gpu_memory_entry'] = 'local_h100/train_video_opd_gpu_memory.py'
         result['hashes']['local_gpu_memory_entry'] = wrapper_sha
+        weights_only = getattr(args, 'weights_only_final', False)
+        storage = 'weights_only' if weights_only else 'unchanged_full_training_state'
         result['gpu_memory_policy'] = dict(
-            selected_evidence_mode=mode, checkpoint_storage='unchanged_full_training_state',
-            optimizer_state_saved=True, resume_supported=False,
+            selected_evidence_mode=mode, checkpoint_storage=storage,
+            optimizer_state_saved=not weights_only, resume_supported=False,
             objective_optimizer_zero_grad_and_rng='unchanged',
             metrics='process allocator peaks and actual master/Adam moment devices at checkpoint',
             counters_reset=False, cpu_gpu_bitwise_equivalence_claimed=False)
