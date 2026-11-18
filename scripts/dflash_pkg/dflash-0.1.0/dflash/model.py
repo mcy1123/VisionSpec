@@ -594,6 +594,7 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
                 max_tokens=int(_draft_value(config, "evidence_max_tokens", 256)),
                 spatial_bins=int(_draft_value(config, "evidence_spatial_bins", 2)),
                 mode=self.evidence_mode)
+            self.evidence_readout.video_layout = _draft_value(config, "video_layout", "grid")
         if self.use_visual_perceiver:
             latents = 32
             self.visual_perceiver_latents = nn.Parameter(

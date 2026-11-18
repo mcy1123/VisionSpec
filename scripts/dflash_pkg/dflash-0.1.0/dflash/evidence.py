@@ -233,6 +233,26 @@ class EvidenceReadout(nn.Module):
         state = {"owner": self._owner(), "end": end}
         if self.mode == "visual":
             features, times = self._visual(source, prefix_len)
+            layout = getattr(self, "video_layout", "grid")
+            if layout != "grid":
+                bins = self.request["prepared_visual"]["spatial_bins"]
+                grid = features.reshape(-1, bins, self.hidden_size)
+                clock = times.reshape(-1, bins)
+                if layout == "global":
+                    features, times = features.mean(0, keepdim=True), times.mean().reshape(1)
+                elif layout == "motion":
+                    features = torch.cat((grid[:1], grid[1:] - grid[:-1])).flatten(0, 1)
+                elif layout == "event":
+                    change = (grid[1:] - grid[:-1]).square().mean(dim=(1, 2))
+                    keep = change.topk(max(1, len(grid) // 2 - 1)).indices + 1
+                    ids = torch.cat((keep.new_zeros(1), keep)).sort().values
+                    features, times = grid[ids].flatten(0, 1), clock[ids].flatten()
+                elif layout == "multiscale":
+                    coarse = grid.mean(dim=1)
+                    features = torch.cat((features.mean(0, keepdim=True), coarse, (grid - coarse[:, None]).abs().amax(dim=1)))
+                    times = torch.cat((times.mean().reshape(1), clock[:, 0], clock[:, 0]))
+                else:
+                    raise ValueError(f"unknown video memory layout: {layout}")
         else:
             positions = torch.arange(prefix_len, end, device=source.device)
             mask = self.request["prompt_visual_mask"].to(source.device)
