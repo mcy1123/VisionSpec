@@ -142,6 +142,13 @@ class EvidenceReadout(nn.Module):
 
     def _visual(self, source, prefix_len):
         request = self.request
+        if getattr(self, "paper_method", None):
+            prepared = request.get("prepared_visual")
+            if (prepared is None or prepared.get("feature_source") != "qwen3_vl_vision_merger_output"
+                    or prepared["identity"] != request["identity"] or prepared["config"] != self._config_key()):
+                raise ValueError("paper readout requires projector features from this exact video prefill")
+            self._stats["visual_prepare_hits"] += 1
+            return prepared["features"].to(source.device), prepared["times"].to(source.device)
         if prefix_len + source.shape[1] < len(request["prompt_visual_mask"]):
             raise ValueError("visual evidence cannot precede the complete known prompt")
         prepared = request.get("prepared_visual")

@@ -50,6 +50,9 @@ def evidence_runtime(trainer):
             request_policy='existing identity-bound per-trace request; clear head binding after collect/score',
             parameter_dtype='float32',
             optimization='unchanged original OPD runtime and normalization')
+        paper = json.loads((Path(args.init_from) / 'config.json').read_text())['dflash_config'].get('paper_method')
+        if paper:
+            result['evidence_architecture'].update(implementation=paper, feature_source='qwen3_vl_vision_merger_output', paper_module_transfer=True)
         result['local_evidence_entry'] = 'local_h100/train_video_evidence_opd.py'
         result['hashes']['local_evidence_entry'] = training_resume.file_hash(__file__)
         result['hashes']['local_evidence_policy'] = training_resume.file_hash(evidence.__file__)
@@ -60,7 +63,9 @@ def evidence_runtime(trainer):
     def collect(target, head, *args, **kwargs):
         evidence.assert_time_off(head)
         try:
-            return originals['collect'](target, head, *args, **kwargs)
+            from dflash.paper_transfer import capture_projector
+            with capture_projector(target, head, head.evidence_readout.request):
+                return originals['collect'](target, head, *args, **kwargs)
         finally:
             clear_request(head)
 

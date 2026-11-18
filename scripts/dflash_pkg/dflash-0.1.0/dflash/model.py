@@ -367,6 +367,25 @@ class Qwen3DFlashAttention(nn.Module):
         self.is_causal = layer_type == "sliding_attention" if is_causal is None else bool(is_causal)
         self.sliding_window = config.sliding_window if layer_type == "sliding_attention" else None
 
+    def _vispec_kv(self, prefix, hidden, cache):
+        # Keep these static, unrotated keys separate from the committed-token
+        # cache. The decoder crops that cache by absolute original positions.
+        cacheable = cache is not None and not torch.is_grad_enabled()
+        if cacheable:
+            signature = (hidden.device, hidden.dtype, tuple(
+                parameter._version for projection in (self.k_proj, self.v_proj, self.k_norm)
+                for parameter in projection.parameters()))
+            cached = getattr(cache, "_vispec_prefix_kv", None)
+            if cached is not None and cached[0] is prefix and cached[1] == signature:
+                return cached[2:]
+        rows = prefix.to(device=hidden.device, dtype=hidden.dtype)
+        key = self.k_proj(rows).reshape(1, len(rows), -1, self.head_dim)
+        value = self.v_proj(rows).reshape(1, len(rows), -1, self.head_dim)
+        key, value = self.k_norm(key).transpose(1, 2), value.transpose(1, 2)
+        if cacheable:
+            cache._vispec_prefix_kv = prefix, signature, key, value
+        return key, value
+
     def forward(
         self,
         hidden_states: torch.Tensor,
@@ -375,6 +394,7 @@ class Qwen3DFlashAttention(nn.Module):
         attention_mask: torch.Tensor | None,
         past_key_values: Cache | None = None,
         cache_position: torch.LongTensor | None = None,
+        vispec_prefix=None,
         **kwargs,
     ) -> tuple[torch.Tensor, torch.Tensor | None]:
         bsz, q_len = hidden_states.shape[:-1]
@@ -405,6 +425,17 @@ class Qwen3DFlashAttention(nn.Module):
                 is_causal=self.is_causal,
                 sliding_window=self.sliding_window,
             )
+        if vispec_prefix is not None:
+            features, positions, prefix_cos, prefix_sin = vispec_prefix
+            prefix_k, prefix_v = self._vispec_kv(features, hidden_states, past_key_values)
+            prefix_k = prefix_k * prefix_cos.unsqueeze(1) + rotate_half(prefix_k) * prefix_sin.unsqueeze(1)
+            k = torch.cat((prefix_k, k), dim=-2)
+            v = torch.cat((prefix_v, v), dim=-2)
+            if attention_mask is not None:
+                # Preserve the visibility of each group's original last visual
+                # position, including anchor masks and sliding attention.
+                prefix_mask = attention_mask.index_select(-1, positions.to(attention_mask.device))
+                attention_mask = torch.cat((prefix_mask, attention_mask), dim=-1)
         attn_output, attn_weights = ALL_ATTENTION_FUNCTIONS["sdpa"](
             self,
             q,
@@ -579,6 +610,7 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         self.evidence_position = _draft_value(config, "evidence_position", "output")
         if self.evidence_position not in ("input", "output"):
             raise ValueError("evidence_position must be input or output")
+        self.paper_method = _draft_value(config, "paper_method", None)
         self.evidence_mode = str(_draft_value(config, "evidence_mode", "none"))
         if self.evidence_mode == "none":
             self._keep_in_fp32_modules_strict = None
@@ -588,8 +620,13 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
             if any((self.use_xattn, self.use_visual_xattn, self.use_visual_fovea,
                     self.use_visual_film, self.use_visual_perceiver, self.use_layer_gate)):
                 raise ValueError("evidence readout must be tested separately from legacy adapters")
-            self.evidence_readout = EvidenceReadout(
-                config.hidden_size,
+            factory = EvidenceReadout
+            if self.paper_method:
+                from functools import partial
+                from .paper_transfer import paper_readout
+                factory = partial(paper_readout, self.paper_method)
+            self.evidence_readout = factory(
+                hidden_size=config.hidden_size,
                 dim=int(_draft_value(config, "evidence_dim", 256)),
                 max_tokens=int(_draft_value(config, "evidence_max_tokens", 256)),
                 spatial_bins=int(_draft_value(config, "evidence_spatial_bins", 2)),
@@ -678,13 +715,22 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
     ) -> torch.Tensor:
         hidden_states = noise_embedding
         evidence = None
+        vispec_features = None
         if self.evidence_mode != "none":
             # Last retained target layer (layer 33 in the supported 8B head).
             # Only committed target context, never draft/noise states, is memory.
             evidence = self.evidence_readout.prepare(
                 target_hidden[..., -self.config.hidden_size:], position_ids,
                 past_key_values, use_cache)
-        if evidence is not None and self.evidence_position == "input":
+        if evidence is not None and self.paper_method == "vispec":
+            # All packed training anchors see the same fully available video.
+            # Reuse one differentiable compression graph across their blocks.
+            packed = isinstance(evidence, list)
+            vispec_features, global_feature = self.evidence_readout.prefix_and_global(
+                evidence[0] if packed else evidence)
+            hidden_states = self.evidence_readout(
+                hidden_states, [global_feature] * len(evidence) if packed else global_feature)
+        elif evidence is not None and self.paper_method != "fovea" and self.evidence_position == "input":
             hidden_states = self.evidence_readout(hidden_states, evidence)
         visual_memory = getattr(self, "visual_memory", None)
         if visual_memory is not None and self.use_visual_xattn:
@@ -710,8 +756,17 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
             hidden_states = hidden_states + self.xattn_scale * self.xattn_out(
                 x).to(hidden_states.dtype)
         target_hidden = self.hidden_norm(self.fc(target_hidden))
-        position_embeddings = self.rotary_emb(hidden_states, position_ids)
-        for layer in self.layers:
+        vispec_prefix = None
+        if vispec_features is None:
+            position_embeddings = self.rotary_emb(hidden_states, position_ids)
+        else:
+            prefix_ids = self.evidence_readout.prefix_positions(len(vispec_features), position_ids.device)
+            combined = torch.cat((prefix_ids[None], position_ids), dim=1)
+            cos, sin = self.rotary_emb(hidden_states, combined)
+            n = len(prefix_ids)
+            vispec_prefix = (vispec_features, prefix_ids, cos[:, :n], sin[:, :n])
+            position_embeddings = (cos[:, n:], sin[:, n:])
+        for index, layer in enumerate(self.layers):
             hidden_states = layer(
                 hidden_states=hidden_states,
                 target_hidden=target_hidden,
@@ -720,12 +775,15 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
                 past_key_value=past_key_values,
                 use_cache=use_cache,
                 position_embeddings=position_embeddings,
+                vispec_prefix=vispec_prefix if index == 0 else None,
                 **kwargs,
             )
+        if evidence is not None and self.paper_method == "fovea":
+            hidden_states = self.evidence_readout(hidden_states, evidence)
         hidden_states = self.norm(hidden_states)
         hidden_states = self._visual_film(hidden_states)
         hidden_states = self._visual_fovea(hidden_states)
-        if evidence is not None and self.evidence_position == "output":
+        if evidence is not None and self.paper_method not in ("vispec", "fovea") and self.evidence_position == "output":
             hidden_states = self.evidence_readout(hidden_states, evidence)
         return hidden_states
 

@@ -33,6 +33,11 @@ def known_visual_prefix(head, prompt_len, request):
         raise ValueError('first OPD scoring anchor does not contain every visual position')
     if request.get('intervention', 'normal') != 'normal':
         raise ValueError('boundary training adapter accepts only normal visual evidence')
+    if getattr(module, 'paper_method', None):
+        if 'prepared_visual' not in request:
+            raise ValueError('missing captured vision projector output for scoring')
+        yield
+        return
     def visual(source, prefix_len):
         # This override is installed only around the known first anchor call.
         if prefix_len != 0 or source.shape[1] != prompt_len - 1:

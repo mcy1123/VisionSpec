@@ -456,12 +456,14 @@ def main():
                 evidence_prepare_s = time.perf_counter() - t_evidence
             head.visual_memory = (visual_memory[row["video_name"]].to(dev)
                                   if visual_memory and row["video_name"] in visual_memory else None)
-            out, stats = glance.generate(head, target, ids, a.max_new, [eos],
-                                         budget=a.budget, branch_k=a.branch,
-                                         temperature=0.0, positions=pos,
-                                         return_stats=True, timing="decode_only",
-                                         eos_stop=a.eos_stop,
-                                         on_round=rounds.append)
+            from dflash.paper_transfer import capture_projector
+            with capture_projector(target, head, evidence_request):
+                out, stats = glance.generate(head, target, ids, a.max_new, [eos],
+                                             budget=a.budget, branch_k=a.branch,
+                                             temperature=0.0, positions=pos,
+                                             return_stats=True, timing="decode_only",
+                                             eos_stop=a.eos_stop,
+                                             on_round=rounds.append)
             torch.cuda.synchronize()
             elapsed = time.perf_counter() - t0
             evidence_audit = ({"identity": evidence_request["identity"],

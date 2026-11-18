@@ -1,0 +1,27 @@
+# GPU6 视频草稿的论文模块迁移
+
+这次比较回答一个问题：在同一个 Qwen3-VL-8B + DFlash 并行草稿和 OPD 训练目标下，哪种已有视觉接口能提高长事件描述的每轮接受长度？2026-11-18 撤下的 48 项手工特征组合没有启动。旧队列及已完成的独立实验仍保存在原目录。
+
+## 模块与迁移边界
+
+所有新臂复用 target 正常 prefill 时的 Qwen3-VL vision merger 输出，以 request identity 绑定视频。位置留给 Qwen 实际的时间 patch 分组。普通 DFlash 主路继续读已提交上下文的五层 target hidden。论文模块按本机头训练，实验比较其在 DFlash 上的实现。
+
+| 臂 | 论文操作 | 当前实现的选择 |
+|---|---|---|
+| ViSpec | 每组学习一个压缩 token，跨组聚合全局特征并注入每个文本位置。[论文附录 B.2](https://arxiv.org/html/2509.15235v5#A2.SS2) | 两个可学习查询分别产出组 token 与全局分量。压缩前缀在第一层草稿注意力中与原序列一起做 softmax，全局向量广播到块内位置。原论文使用单层树状草稿。 |
+| FOVEA | 草稿状态与深度查询视觉记忆，按累计概率选有界子集，再以门控残差校正。[算法 1](https://arxiv.org/html/2608.22883v1) | 并行块的位置对应树深度，质量阈值 0.8、32–256 条，校正在最终 RMSNorm 前。 |
+| Flamingo | Perceiver Resampler 与 gated cross-attention / FF 残差。[论文](https://arxiv.org/abs/2204.14198) | 一个窄的 resampler 层和 8 个 latent，在草稿入口注入，每个请求只有一个视频。 |
+| ToMe | 二分匹配相似 token，按成员数加权合并。[论文](https://arxiv.org/abs/2210.09461) | 在每个时间组至多 4×4 的空间网格上按 projector 特征余弦相似度做匹配，再压至至多 128 个 token 接入共同读出。 |
+| LLaVA-OneVision | 对每个时间组的视觉特征做步长 2 的双线性空间降采样。[附录 C.1](https://arxiv.org/html/2408.03326v2#A3.SS1) | 沿用 Qwen 时间组和 DFlash 读出，再施加与 projector_grid 相同的 128-token 网格容量。 |
+| projector_grid | 同源对照 | 将相同 merger 输出直接平均池化，以相同草稿入口读取。与此前第 33 层网格、运动和文本读出分别记录。 |
+
+旧版 ViSpec 风格移植曾用 16 个 latent 重建所有视觉 KV。历史视频报告记录 29 个配对样本全部下降；本次逐组学习压缩前缀与当时的重建路径不同。[历史评测记录](../../repro/evaluation/vispec_report.py)
+
+## 排队与判读
+
+teleai_gpu6 的 tmux 为 `visionspec-paper-transfer`。运行根目录是 `/czsun/mcy/video_opd_pilot/local_h100_20261112/paper_transfer_gpu6_20261119`。精确命令、协议、运行状态和配对结果分别在 SCREEN_COMMANDS.json、QUEUE_PROTOCOL.json、STATUS.json、RESULTS.json。截止北京时间 2026-11-19 09:00。
+
+- 使用同一训练起点、seed 20261118、相同 80 条 QA 的日程。每臂 20 次更新，4 QA/update，64 帧，OPD λ=10。筛选训练共 120 次更新。
+- 128 帧 Video-MME 衍生的事件描述 dev40，最多生成 1024 token，fp32 target，b63/k8。每臂分两个不重叠的片，每条都比对独立 AR 的完整输出。以逐视频平均 τ 筛选，同时保存有效 token/轮和配对区间。共享负载计时只作描述。
+- 在完整无损且输入与 AR token 都匹配的臂中，最高 τ 须同时超过同源 projector_grid 和已有最强后端文本头，才将赢家和该文本头各追加 60 步。两头都从自己的 step20 加载权重、重置 Adam、使用同一后续日程。总新增上限 240 步。每个训练阶段只存终点，同一开发集用于选优。
+- 接入点、参数量与实际读入的视觉 token 数可因模块而异；结果解释为整种实现的差异。前端接入的旧文本对照给出位置匹配的参考，后端文本对照给出最强已有成绩。若仅 τ 上升，需另外同卡实测才能主张端到端速度提升。

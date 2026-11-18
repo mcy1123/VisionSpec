@@ -52,6 +52,9 @@ def evidence_settings(config_or_path_or_head):
         taps = cfg.get("target_layer_ids", value.get("target_layer_ids"))
         if not isinstance(taps, (list, tuple)) or not taps or taps[-1] != FEATURE_LAYER:
             raise ValueError("evidence readout requires last retained target layer 33")
+    if cfg.get("paper_method"):
+        result.update(paper_method=cfg["paper_method"], feature_layer=None,
+                      feature_protocol="qwen3_vl_vision_merger_output")
     return result
 
 
@@ -168,4 +171,7 @@ def configure_evidence(head, request):
     setter = getattr(head, "set_evidence_request", None)
     if not callable(setter):
         raise ValueError("head config enables evidence but model lacks set_evidence_request")
+    if getattr(head, "paper_method", None):
+        request["metadata"].update(feature_layer=None, feature_protocol="qwen3_vl_vision_merger_output",
+                                   paper_method=head.paper_method)
     setter(request)
