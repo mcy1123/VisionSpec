@@ -576,6 +576,9 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         self.use_visual_film = bool(_draft_value(config, "use_visual_film", False))
         self.use_visual_perceiver = bool(_draft_value(config, "use_visual_perceiver", False))
         self.use_layer_gate = bool(_draft_value(config, "use_layer_gate", False))
+        self.evidence_position = _draft_value(config, "evidence_position", "output")
+        if self.evidence_position not in ("input", "output"):
+            raise ValueError("evidence_position must be input or output")
         self.evidence_mode = str(_draft_value(config, "evidence_mode", "none"))
         if self.evidence_mode == "none":
             self._keep_in_fp32_modules_strict = None
@@ -680,6 +683,8 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
             evidence = self.evidence_readout.prepare(
                 target_hidden[..., -self.config.hidden_size:], position_ids,
                 past_key_values, use_cache)
+        if evidence is not None and self.evidence_position == "input":
+            hidden_states = self.evidence_readout(hidden_states, evidence)
         visual_memory = getattr(self, "visual_memory", None)
         if visual_memory is not None and self.use_visual_xattn:
             q = self.visual_q_norm(hidden_states.float())
@@ -719,7 +724,7 @@ class DFlashDraftModel(Qwen3PreTrainedModel):
         hidden_states = self.norm(hidden_states)
         hidden_states = self._visual_film(hidden_states)
         hidden_states = self._visual_fovea(hidden_states)
-        if evidence is not None:
+        if evidence is not None and self.evidence_position == "output":
             hidden_states = self.evidence_readout(hidden_states, evidence)
         return hidden_states
 
