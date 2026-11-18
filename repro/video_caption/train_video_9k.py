@@ -464,6 +464,8 @@ def main(argv=None):
     model_dimensions = validate_model_contract(a.target, a.init_from)
     evidence_config = validate_training_head(a.init_from, a.time_mode, a.loss_normalization)
     protocol = make_protocol(a, inputs_summary, model_dimensions)
+    # Resolve endpoint identity before allocating a GPU or consuming a training update.
+    checkpoint_identity(protocol, 0)
     if a.dry_run:
         print(json.dumps(protocol, indent=2))
         return protocol
